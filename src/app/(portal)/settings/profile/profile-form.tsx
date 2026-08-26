@@ -1,0 +1,88 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { apiFetch } from "@/lib/api/client";
+import { ApiError, toApiError } from "@/lib/api/errors";
+import { updateProfileSchema, type UpdateProfileInput } from "@/lib/api/schemas";
+import type { User } from "@/lib/api/types";
+
+export function ProfileForm({ user }: { user: User }) {
+  const router = useRouter();
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<UpdateProfileInput>({
+    resolver: zodResolver(updateProfileSchema),
+    defaultValues: {
+      description: user.description ?? "",
+      email: user.email ?? "",
+    },
+  });
+
+  const mutation = useMutation({
+    mutationFn: (values: UpdateProfileInput) =>
+      apiFetch<User>("account/users/v1/profile", {
+        method: "PATCH",
+        body: { description: values.description, email: values.email || null },
+      }),
+    onSuccess: () => {
+      toast.success("Profile updated.");
+      router.refresh();
+    },
+    onError: (error) => {
+      const apiError = toApiError(error);
+      if (apiError instanceof ApiError && apiError.inputErrors.length > 0) {
+        for (const inputError of apiError.inputErrors) {
+          if (inputError.field === "description" || inputError.field === "email") {
+            setError(inputError.field, { message: inputError.message });
+          }
+        }
+        return;
+      }
+      toast.error(apiError.message);
+    },
+  });
+
+  return (
+    <form
+      onSubmit={handleSubmit((values) => mutation.mutate(values))}
+      className="max-w-md space-y-4"
+    >
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input id="email" type="email" autoComplete="email" {...register("email")} />
+        {errors.email ? (
+          <p className="text-destructive text-sm">{errors.email.message}</p>
+        ) : null}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description">Description</Label>
+        <Input id="description" {...register("description")} />
+        {errors.description ? (
+          <p className="text-destructive text-sm">{errors.description.message}</p>
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            A short note about your role, shown to your teammates.
+          </p>
+        )}
+      </div>
+
+      <Button type="submit" disabled={mutation.isPending}>
+        {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+        Save changes
+      </Button>
+    </form>
+  );
+}

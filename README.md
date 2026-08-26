@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CoreConcept Tech Portal
 
-## Getting Started
+Web portal for **CoreConcept Tech** — a CRM integrated with WhatsApp Business. It is a
+Next.js App Router front end for the `wawa-go` API.
 
-First, run the development server:
+## Requirements
+
+- Node.js 20+
+- A running `wawa-go` API (default `http://localhost:9000`)
+
+## Setup
 
 ```bash
+npm install
+cp .env.example .env.local   # then fill in the values
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Purpose |
+| --- | --- |
+| `API_BASE_URL` | Base URL of the wawa-go API |
+| `PORTAL_ORIGIN` | Origin this portal is served from |
+| `SESSION_COOKIE_NAME` | Session cookie issued by the API (`wawa_session`) |
+| `NEXT_META_APP_ID` | Meta app ID used by Embedded Signup |
+| `NEXT_META_EMBEDDED_SIGNUP_CONFIG_ID` | Meta login configuration ID |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### The `PORTAL_ORIGIN` caveat
 
-## Learn More
+`wawa-go` protects every non-`GET` request with an Origin check: the request's `Origin`
+header must exactly equal the API's own `PORTAL_ORIGIN` setting, otherwise it answers
+`403 invalid request origin`. Because the portal talks to the API from the server side,
+the BFF proxy sets that header explicitly. Keep `PORTAL_ORIGIN` identical in both
+`wawa-web/.env.local` and `wawa-go/.env`.
 
-To learn more about Next.js, take a look at the following resources:
+## Architecture
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **BFF proxy** — the browser never talks to the API directly. Requests go to
+  `/api/bff/<upstream path>`, which forwards them server-side with the session cookie and
+  the required `Origin` header. Only paths on the allow-list in `src/lib/api/allowlist.ts`
+  are forwarded, so the route cannot be used as an open proxy.
+- **Sessions** — the API issues an httpOnly `wawa_session` cookie. Login is a Server
+  Action that re-issues that cookie on the portal's own origin. `src/proxy.ts` does a cheap
+  cookie-presence redirect; `requireUser()` performs the real check against `/auth/v1/me`.
+  A stale cookie is cleared by `/session/end`.
+- **Data fetching** — server components use `serverFetch()`; client components use
+  `apiFetch()` through TanStack Query.
+- **Time zone** — all user-visible timestamps render in US Eastern (`America/New_York`)
+  via `src/lib/format.ts`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Scripts
 
-## Deploy on Vercel
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the dev server |
+| `npm run build` | Production build |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | TypeScript, no emit |
+| `npm run format` | Prettier write |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Status
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Auth, dashboard, WhatsApp phone numbers, Embedded Signup onboarding and account settings
+are wired to the live API. Contacts, Conversations and Campaigns are UI previews backed by
+mock data until the corresponding API endpoints exist.
