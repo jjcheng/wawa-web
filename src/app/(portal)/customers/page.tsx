@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
 
 import { PreviewPage } from "@/components/preview-page";
-import { mockContacts } from "@/lib/mock/crm";
+import { mockCustomers } from "@/lib/mock/crm";
 
-export const metadata: Metadata = { title: "Contacts" };
+export const metadata: Metadata = { title: "Customers" };
 
-export default function ContactsPage() {
+export default function CustomersPage() {
   return (
     <PreviewPage
-      title="Contacts"
+      title="Customers"
       description="People who have messaged your WhatsApp Business numbers."
       columns={["Name", "Phone", "Tags", "Last contact"]}
-      rows={mockContacts}
+      rows={mockCustomers}
     />
   );
 }

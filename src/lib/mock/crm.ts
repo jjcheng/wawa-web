@@ -1,4 +1,4 @@
-export const mockContacts = [
+export const mockCustomers = [
   {
     Name: "Amelia Tan",
     Phone: "+65 9123 4567",
@@ -65,5 +65,71 @@ export const mockCampaigns = [
     Status: "Running",
     Sent: "318",
     "Open rate": "74%",
+  },
+];
+
+export const mockWorkflows = [
+  {
+    Name: "Abandoned cart nudge",
+    Trigger: "Cart idle 2h",
+    Steps: "3",
+    Status: "Active",
+    "Last run": "12 minutes ago",
+  },
+  {
+    Name: "Post-purchase survey",
+    Trigger: "Order delivered",
+    Steps: "2",
+    Status: "Active",
+    "Last run": "Yesterday",
+  },
+  {
+    Name: "Win-back",
+    Trigger: "No order 90 days",
+    Steps: "4",
+    Status: "Paused",
+    "Last run": "3 weeks ago",
+  },
+];
+
+export const mockUsage = [
+  {
+    Month: "Aug 2026",
+    "Marketing conversations": "4,120",
+    "Utility conversations": "2,880",
+    "Service conversations": "1,904",
+    Cost: "SGD 812.40",
+  },
+  {
+    Month: "Jul 2026",
+    "Marketing conversations": "3,640",
+    "Utility conversations": "2,510",
+    "Service conversations": "1,732",
+    Cost: "SGD 724.15",
+  },
+  {
+    Month: "Jun 2026",
+    "Marketing conversations": "2,980",
+    "Utility conversations": "2,204",
+    "Service conversations": "1,588",
+    Cost: "SGD 631.80",
+  },
+];
+
+export const mockDeliveryReports = [
+  {
+    Template: "hello_world",
+    Sent: "2,410",
+    Delivered: "2,377",
+    Read: "1,905",
+    Failed: "33",
+  },
+  { Template: "greeting", Sent: "1,204", Delivered: "1,190", Read: "864", Failed: "14" },
+  {
+    Template: "order_confirmation",
+    Sent: "988",
+    Delivered: "981",
+    Read: "742",
+    Failed: "7",
   },
 ];

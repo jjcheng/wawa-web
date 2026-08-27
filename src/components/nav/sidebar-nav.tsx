@@ -1,12 +1,14 @@
 "use client";
 
 import {
+  BarChart3,
+  CircleDollarSign,
   FileText,
   LayoutDashboard,
-  MessagesSquare,
   Megaphone,
   Phone,
   Users,
+  Workflow,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -20,18 +22,25 @@ const SECTIONS = [
     items: [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }],
   },
   {
-    label: "WhatsApp",
+    label: "Communication",
     items: [
-      { href: "/whatsapp/numbers", label: "Phone numbers", icon: Phone },
-      { href: "/whatsapp/templates", label: "Templates", icon: FileText },
+      { href: "/customers", label: "Customers", icon: Users },
+      { href: "/campaigns", label: "Campaigns", icon: Megaphone },
     ],
   },
   {
-    label: "CRM",
+    label: "Assets",
     items: [
-      { href: "/contacts", label: "Contacts", icon: Users },
-      { href: "/conversations", label: "Conversations", icon: MessagesSquare },
-      { href: "/campaigns", label: "Campaigns", icon: Megaphone },
+      { href: "/whatsapp/numbers", label: "Phone Numbers", icon: Phone },
+      { href: "/whatsapp/templates", label: "Message Templates", icon: FileText },
+      { href: "/workflows", label: "Workflows", icon: Workflow },
+    ],
+  },
+  {
+    label: "Analytics",
+    items: [
+      { href: "/analytics/usage", label: "Usage & Costs", icon: CircleDollarSign },
+      { href: "/analytics/delivery", label: "Delivery Reports", icon: BarChart3 },
     ],
   },
 ];
