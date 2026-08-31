@@ -11,30 +11,19 @@ import {
 } from "@/components/ui/card";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
-import type { PhoneNumber } from "@/lib/api/types";
-import { CreateTemplateForm, type WabaOption } from "./create-template-form";
+import type { BusinessAccount } from "@/lib/api/types";
+import { toWabaOptions, type WabaOption } from "@/lib/waba-options";
+import { CreateTemplateForm } from "./create-template-form";
 
 export const metadata: Metadata = { title: "Create template" };
-
-function toWabaOptions(phoneNumbers: PhoneNumber[]): WabaOption[] {
-  const byId = new Map<string, WabaOption>();
-  for (const phoneNumber of phoneNumbers) {
-    const metaWabaId = phoneNumber.meta_waba_id;
-    if (!metaWabaId || byId.has(metaWabaId)) continue;
-    byId.set(metaWabaId, {
-      metaWabaId,
-      name: phoneNumber.business_account?.name || metaWabaId,
-    });
-  }
-  return [...byId.values()];
-}
 
 export default async function CreateTemplatePage() {
   let wabas: WabaOption[] = [];
   let loadError: string | null = null;
   try {
-    const phoneNumbers = (await serverFetch<PhoneNumber[]>("/wa/v1/user-phone-numbers")) ?? [];
-    wabas = toWabaOptions(phoneNumbers);
+    const businessAccounts =
+      (await serverFetch<BusinessAccount[]>("/v1/wa/business-accounts")) ?? [];
+    wabas = toWabaOptions(businessAccounts);
   } catch (error) {
     loadError =
       error instanceof ApiError ? error.message : "Could not load your business accounts.";

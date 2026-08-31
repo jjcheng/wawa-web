@@ -34,16 +34,24 @@ header must exactly equal the API's own `PORTAL_ORIGIN` setting, otherwise it an
 the BFF proxy sets that header explicitly. Keep `PORTAL_ORIGIN` identical in both
 `wawa-web/.env.local` and `wawa-go/.env`.
 
+### Authentication header
+
+The API now authenticates requests with the `x-wawa-user-access-token` header instead of relying
+on the session cookie alone. The portal still stores the token in its own `wawa_session`
+cookie for same-origin routing, but every upstream request includes the active token in the
+new header, while keeping the older `x-user-access-token` name as a compatibility fallback.
+
 ## Architecture
 
 - **BFF proxy** — the browser never talks to the API directly. Requests go to
-  `/api/bff/<upstream path>`, which forwards them server-side with the session cookie and
-  the required `Origin` header. Only paths on the allow-list in `src/lib/api/allowlist.ts`
-  are forwarded, so the route cannot be used as an open proxy.
-- **Sessions** — the API issues an httpOnly `wawa_session` cookie. Login is a Server
-  Action that re-issues that cookie on the portal's own origin. `src/proxy.ts` does a cheap
-  cookie-presence redirect; `requireUser()` performs the real check against `/auth/v1/me`.
-  A stale cookie is cleared by `/session/end`.
+  `/api/bff/<upstream path>`, which forwards them server-side with the `x-wawa-user-access-token`
+  header (and compatibility fallback), the required `Origin` header, and the portal cookie when
+  present. Only paths on the allow-list in `src/lib/api/allowlist.ts` are forwarded, so the route
+  cannot be used as an open proxy.
+- **Sessions** — the API issues an access token via `x-wawa-user-access-token`. Login is a Server
+  Action that re-issues the token onto the portal's own origin via the `wawa_session` cookie.
+  `src/proxy.ts` does a cheap cookie-presence redirect; `requireUser()` performs the real check
+  against `/auth/v1/me`. A stale token is cleared by `/session/end`.
 - **Data fetching** — server components use `serverFetch()`; client components use
   `apiFetch()` through TanStack Query.
 - **Time zone** — all user-visible timestamps render in US Eastern (`America/New_York`)

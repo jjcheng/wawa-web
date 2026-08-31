@@ -28,9 +28,8 @@ import {
   type CreateTemplateInput,
 } from "@/lib/api/schemas";
 import type { Template } from "@/lib/api/types";
+import type { WabaOption } from "@/lib/waba-options";
 import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
-
-export type WabaOption = { metaWabaId: string; name: string };
 
 const FORM_FIELDS: (keyof CreateTemplateInput)[] = [
   "meta_waba_id",
@@ -62,7 +61,7 @@ export function CreateTemplateForm({ wabas }: { wabas: WabaOption[] }) {
 
   const mutation = useMutation({
     mutationFn: (values: CreateTemplateInput) =>
-      apiFetch<Template>("wa/v1/templates", {
+      apiFetch<Template>("v1/wa/templates", {
         method: "POST",
         body: {
           meta_waba_id: values.meta_waba_id,
@@ -74,7 +73,7 @@ export function CreateTemplateForm({ wabas }: { wabas: WabaOption[] }) {
       }),
     onSuccess: () => {
       toast.success("Template submitted to Meta for review.");
-      router.push("/whatsapp/templates");
+      router.push("/templates");
       router.refresh();
     },
     onError: (error) => {

@@ -14,7 +14,7 @@ export const getCurrentUser = cache(async (): Promise<User | null> => {
   if (!token) return null;
 
   try {
-    return await serverFetch<User>("/auth/v1/me");
+    return await serverFetch<User>("/v1/auth/me");
   } catch (error) {
     if (error instanceof ApiError && error.isUnauthorized) return null;
     throw error;

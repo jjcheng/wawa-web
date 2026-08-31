@@ -115,21 +115,3 @@ export const mockUsage = [
     Cost: "SGD 631.80",
   },
 ];
-
-export const mockDeliveryReports = [
-  {
-    Template: "hello_world",
-    Sent: "2,410",
-    Delivered: "2,377",
-    Read: "1,905",
-    Failed: "33",
-  },
-  { Template: "greeting", Sent: "1,204", Delivered: "1,190", Read: "864", Failed: "14" },
-  {
-    Template: "order_confirmation",
-    Sent: "988",
-    Delivered: "981",
-    Read: "742",
-    Failed: "7",
-  },
-];

@@ -32,7 +32,7 @@ export function ProfileForm({ user }: { user: User }) {
 
   const mutation = useMutation({
     mutationFn: (values: UpdateProfileInput) =>
-      apiFetch<User>("account/users/v1/profile", {
+      apiFetch<User>("v1/account/users/profile", {
         method: "PATCH",
         body: { description: values.description, email: values.email || null },
       }),

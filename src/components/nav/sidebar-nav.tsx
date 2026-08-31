@@ -1,9 +1,9 @@
 "use client";
 
 import {
-  BarChart3,
   CircleDollarSign,
   FileText,
+  Gauge,
   LayoutDashboard,
   Megaphone,
   Phone,
@@ -31,16 +31,16 @@ const SECTIONS = [
   {
     label: "Assets",
     items: [
-      { href: "/whatsapp/numbers", label: "Phone Numbers", icon: Phone },
-      { href: "/whatsapp/templates", label: "Message Templates", icon: FileText },
+      { href: "/numbers", label: "Phone Numbers", icon: Phone },
+      { href: "/templates", label: "Templates", icon: FileText },
       { href: "/workflows", label: "Workflows", icon: Workflow },
     ],
   },
   {
     label: "Analytics",
     items: [
-      { href: "/analytics/usage", label: "Usage & Costs", icon: CircleDollarSign },
-      { href: "/analytics/delivery", label: "Delivery Reports", icon: BarChart3 },
+      { href: "/usage", label: "Usage", icon: Gauge },
+      { href: "/costs", label: "Costs", icon: CircleDollarSign },
     ],
   },
 ];

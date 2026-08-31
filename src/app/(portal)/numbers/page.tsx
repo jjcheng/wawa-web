@@ -31,7 +31,7 @@ export default async function PhoneNumbersPage() {
   let phoneNumbers: PhoneNumber[] = [];
   let loadError: string | null = null;
   try {
-    phoneNumbers = (await serverFetch<PhoneNumber[]>("/wa/v1/user-phone-numbers")) ?? [];
+    phoneNumbers = (await serverFetch<PhoneNumber[]>("/v1/wa/user-phone-numbers")) ?? [];
   } catch (error) {
     loadError =
       error instanceof ApiError ? error.message : "Could not load your WhatsApp numbers.";

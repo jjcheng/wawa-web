@@ -38,7 +38,7 @@ export function PasswordForm() {
 
   const mutation = useMutation({
     mutationFn: (values: ChangePasswordInput) =>
-      apiFetch<User>("account/users/v1/password", { method: "PATCH", body: values }),
+      apiFetch<User>("v1/account/users/password", { method: "PATCH", body: values }),
     onSuccess: () => {
       toast.success("Password changed.");
       reset();

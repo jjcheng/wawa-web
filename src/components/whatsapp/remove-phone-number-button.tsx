@@ -34,7 +34,7 @@ export function RemovePhoneNumberButton({
 
   const mutation = useMutation({
     mutationFn: () =>
-      apiFetch("wa/v1/phone-numbers", {
+      apiFetch("v1/wa/phone-numbers", {
         method: "DELETE",
         body: { phone_number_id: id },
       }),

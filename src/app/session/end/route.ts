@@ -9,7 +9,7 @@ import { serverEnv } from "@/lib/env.server";
 // themselves, so requireUser() redirects here instead.
 export async function GET(request: NextRequest) {
   try {
-    await rawServerFetch("/auth/v1/logout", { method: "POST", body: {} });
+    await rawServerFetch("/v1/auth/logout", { method: "POST", body: {} });
   } catch {
     // Clearing the local cookie is enough to end the browser session.
   }

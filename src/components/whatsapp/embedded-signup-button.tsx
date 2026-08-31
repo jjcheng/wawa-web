@@ -43,7 +43,7 @@ export function EmbeddedSignupButton({
   configId,
   label = DEFAULT_LABEL,
   className,
-  redirectTo = "/whatsapp/numbers",
+  redirectTo = "/numbers",
 }: {
   appId: string;
   configId: string;

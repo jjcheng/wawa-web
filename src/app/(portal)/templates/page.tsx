@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { TemplateAccountFilter } from "@/components/whatsapp/template-account-filter";
 import { DeleteTemplateButton } from "@/components/whatsapp/delete-template-button";
 import { TemplateStatusBadge } from "@/components/whatsapp/template-status-badge";
 import { ViewTemplateButton } from "@/components/whatsapp/view-template-button";
@@ -25,7 +26,8 @@ import {
 } from "@/components/ui/table";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
-import type { Template } from "@/lib/api/types";
+import type { BusinessAccount, Template, TemplateListResponse } from "@/lib/api/types";
+import { toWabaOptions, type WabaOption } from "@/lib/waba-options";
 import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Templates" };
@@ -41,11 +43,34 @@ function qualityVariant(score?: string) {
   }
 }
 
-export default async function TemplatesPage() {
+export default async function TemplatesPage({ searchParams }: PageProps<"/templates">) {
+  let wabas: WabaOption[] = [];
+  let wabaError: string | null = null;
   let templates: Template[] = [];
   let loadError: string | null = null;
+
   try {
-    templates = (await serverFetch<Template[]>("/wa/v1/templates")) ?? [];
+    const businessAccounts =
+      (await serverFetch<BusinessAccount[]>("/v1/wa/business-accounts")) ?? [];
+    wabas = toWabaOptions(businessAccounts);
+  } catch (error) {
+    wabaError = error instanceof ApiError ? error.message : "Could not load your business accounts.";
+  }
+
+  const params = await searchParams;
+  const requested = typeof params.meta_waba_id === "string" ? params.meta_waba_id : undefined;
+  const selected =
+    (requested && wabas.some((waba) => waba.metaWabaId === requested)
+      ? requested
+      : wabas[0]?.metaWabaId) ?? "";
+
+  try {
+    if (selected) {
+      const response = await serverFetch<TemplateListResponse>("/v1/wa/templates", {
+        query: { meta_waba_id: selected, limit: "100" },
+      });
+      templates = response?.items ?? [];
+    }
   } catch (error) {
     loadError =
       error instanceof ApiError ? error.message : "Could not load your message templates.";
@@ -54,14 +79,23 @@ export default async function TemplatesPage() {
   return (
     <>
       <PageHeader
-        title="Message templates"
+        title="Templates"
         description="WhatsApp message templates from your business accounts, as approved by Meta."
         action={
-          <Button asChild className={MEDIUM_BUTTON_HEIGHT}>
-            <Link href="/whatsapp/templates/new">Create template</Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {selected ? <TemplateAccountFilter wabas={wabas} selected={selected} /> : null}
+            <Button asChild className={MEDIUM_BUTTON_HEIGHT}>
+              <Link href="/templates/new">Create template</Link>
+            </Button>
+          </div>
         }
       />
+
+      {wabaError ? (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{wabaError}</AlertDescription>
+        </Alert>
+      ) : null}
 
       {loadError ? (
         <Alert variant="destructive" className="mb-4">

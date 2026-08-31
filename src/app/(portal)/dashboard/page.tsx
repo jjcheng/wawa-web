@@ -26,7 +26,7 @@ export default async function DashboardPage() {
   let phoneNumbers: PhoneNumber[] = [];
   let loadError: string | null = null;
   try {
-    phoneNumbers = (await serverFetch<PhoneNumber[]>("/wa/v1/user-phone-numbers")) ?? [];
+    phoneNumbers = (await serverFetch<PhoneNumber[]>("/v1/wa/user-phone-numbers")) ?? [];
   } catch (error) {
     loadError =
       error instanceof ApiError ? error.message : "Could not load your WhatsApp numbers.";
@@ -80,7 +80,7 @@ export default async function DashboardPage() {
                   No WhatsApp Business number is connected yet.
                 </p>
                 <Button asChild size="sm">
-                  <Link href="/whatsapp/connect">Start onboarding</Link>
+                  <Link href="/connect">Start onboarding</Link>
                 </Button>
               </div>
             ) : (

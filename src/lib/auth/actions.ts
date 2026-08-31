@@ -7,7 +7,11 @@ import { ApiError } from "@/lib/api/errors";
 import { loginSchema } from "@/lib/api/schemas";
 import { rawServerFetch } from "@/lib/api/server-client";
 import type { ApiEnvelope, InputError, User } from "@/lib/api/types";
-import { readUpstreamSession, sessionCookieOptions } from "@/lib/auth/cookies";
+import {
+  readUpstreamAccessToken,
+  readUpstreamSession,
+  sessionCookieOptions,
+} from "@/lib/auth/cookies";
 import { serverEnv } from "@/lib/env.server";
 
 export type LoginState = {
@@ -41,7 +45,7 @@ export async function loginAction(
 
   let upstream: Response;
   try {
-    upstream = await rawServerFetch("/auth/v1/login", {
+    upstream = await rawServerFetch("/v1/auth/login", {
       method: "POST",
       body: parsed.data,
     });
@@ -58,15 +62,19 @@ export async function loginAction(
     };
   }
 
+  const payloadUser = envelope?.data as User | null | undefined;
+  const accessToken =
+    payloadUser?.access_token ?? readUpstreamAccessToken(upstream.headers) ?? undefined;
   const session = readUpstreamSession(upstream.headers.getSetCookie());
-  if (!session?.value) {
-    return { message: "Sign in succeeded but no session was issued." };
+  const tokenValue = accessToken ?? session?.value;
+  if (!tokenValue) {
+    return { message: "Sign in succeeded but no access token was issued." };
   }
 
   (await cookies()).set(
     serverEnv.SESSION_COOKIE_NAME,
-    session.value,
-    sessionCookieOptions(session.maxAge),
+    tokenValue,
+    sessionCookieOptions(session?.maxAge ?? 7 * 24 * 60 * 60),
   );
 
   redirect(safeNextPath(formData.get("next")));
@@ -75,7 +83,7 @@ export async function loginAction(
 export async function logoutAction() {
   const cookieStore = await cookies();
   try {
-    await rawServerFetch("/auth/v1/logout", { method: "POST", body: {} });
+    await rawServerFetch("/v1/auth/logout", { method: "POST", body: {} });
   } catch {
     // Clearing the local cookie is enough to end the browser session.
   }

@@ -22,6 +22,22 @@ export function sessionCookieOptions(
  * Reads the session cookie out of an upstream `Set-Cookie` list. Returns null
  * when the API did not touch the session, and an empty value when it cleared it.
  */
+export function readUpstreamAccessToken(headers: Headers): string | null {
+  for (const headerName of ["x-wawa-user-access-token", "x-user-access-token"]) {
+    const headerValue = headers.get(headerName);
+    if (headerValue && headerValue.trim()) return headerValue.trim();
+  }
+
+  const cookies = headers.getSetCookie?.() ?? [];
+  const name = serverEnv.SESSION_COOKIE_NAME;
+  const raw = cookies.find((cookie) => cookie.startsWith(`${name}=`));
+  if (!raw) return null;
+
+  const [pair] = raw.split(";").map((part) => part.trim());
+  const value = decodeURIComponent(pair.slice(name.length + 1));
+  return value || null;
+}
+
 export function readUpstreamSession(
   setCookies: string[],
 ): { value: string; maxAge: number } | null {

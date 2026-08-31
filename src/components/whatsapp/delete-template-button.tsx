@@ -34,7 +34,7 @@ export function DeleteTemplateButton({
 
   const mutation = useMutation({
     mutationFn: () =>
-      apiFetch("wa/v1/templates", {
+      apiFetch("v1/wa/templates", {
         method: "DELETE",
         body: { meta_waba_id: metaWabaId, name, id },
       }),

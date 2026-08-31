@@ -9,7 +9,7 @@ import type { ApiEnvelope } from "./types";
 type RequestOptions = {
   method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
-  query?: Record<string, string | undefined>;
+  query?: Record<string, string | string[] | undefined>;
   /** Pass an explicit session token when it is not yet in the cookie store. */
   sessionToken?: string;
 };
@@ -17,7 +17,9 @@ type RequestOptions = {
 function buildUrl(path: string, query?: RequestOptions["query"]) {
   const url = new URL(path.startsWith("/") ? path : `/${path}`, `${serverEnv.API_BASE_URL}/`);
   for (const [key, value] of Object.entries(query ?? {})) {
-    if (value !== undefined && value !== "") url.searchParams.set(key, value);
+    for (const item of Array.isArray(value) ? value : [value]) {
+      if (item !== undefined && item !== "") url.searchParams.append(key, item);
+    }
   }
   return url.toString();
 }
@@ -34,6 +36,9 @@ export async function buildUpstreamHeaders(
   }
   const token = sessionToken ?? (await cookies()).get(serverEnv.SESSION_COOKIE_NAME)?.value;
   if (token) {
+    headers.set("x-wawa-user-access-token", token);
+    headers.set("x-user-access-token", token);
+    // Keep the legacy cookie header for compatibility with older API builds.
     headers.set("Cookie", `${serverEnv.SESSION_COOKIE_NAME}=${token}`);
   }
   return headers;

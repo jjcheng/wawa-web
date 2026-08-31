@@ -38,7 +38,17 @@ async function proxyRequest(request: NextRequest, context: Context) {
     }
   }
 
-  const query = Object.fromEntries(request.nextUrl.searchParams.entries());
+  const query: Record<string, string | string[]> = {};
+  for (const key of new Set(request.nextUrl.searchParams.keys())) {
+    const values = request.nextUrl.searchParams.getAll(key);
+    query[key] = values.length === 1 ? values[0] : values;
+  }
+
+  const accessToken =
+    request.headers.get("x-wawa-user-access-token") ??
+    request.headers.get("x-user-access-token") ??
+    request.cookies.get(serverEnv.SESSION_COOKIE_NAME)?.value ??
+    undefined;
 
   let upstream: Response;
   try {
@@ -46,6 +56,7 @@ async function proxyRequest(request: NextRequest, context: Context) {
       method: method as "GET" | "POST" | "PATCH" | "PUT" | "DELETE",
       body,
       query,
+      sessionToken: accessToken,
     });
   } catch {
     return envelope(502, "unable to reach the API");
@@ -59,18 +70,21 @@ async function proxyRequest(request: NextRequest, context: Context) {
     },
   });
 
+  const upstreamAccessToken =
+    upstream.headers.get("x-user-access-token") ?? upstream.headers.get("x-user-access-token");
+
   // Re-issue the API's session cookie on the portal's own origin.
   const session = readUpstreamSession(upstream.headers.getSetCookie());
-  if (session) {
-    if (!session.value || session.maxAge <= 0) {
-      response.cookies.delete(serverEnv.SESSION_COOKIE_NAME);
-    } else {
-      response.cookies.set(
-        serverEnv.SESSION_COOKIE_NAME,
-        session.value,
-        sessionCookieOptions(session.maxAge),
-      );
-    }
+  const tokenValue = upstreamAccessToken ?? session?.value;
+  if (tokenValue) {
+    response.headers.set("x-user-access-token", tokenValue);
+    response.cookies.set(
+      serverEnv.SESSION_COOKIE_NAME,
+      tokenValue,
+      sessionCookieOptions(session?.maxAge ?? 7 * 24 * 60 * 60),
+    );
+  } else if (session) {
+    response.cookies.delete(serverEnv.SESSION_COOKIE_NAME);
   }
 
   return response;

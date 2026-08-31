@@ -4,7 +4,7 @@ import type { ApiEnvelope } from "./types";
 type ClientOptions = {
   method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
-  query?: Record<string, string | undefined>;
+  query?: Record<string, string | string[] | undefined>;
   signal?: AbortSignal;
 };
 
@@ -15,7 +15,9 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const url = new URL(`/api/bff/${path.replace(/^\/+/, "")}`, window.location.origin);
   for (const [key, value] of Object.entries(query ?? {})) {
-    if (value !== undefined && value !== "") url.searchParams.set(key, value);
+    for (const item of Array.isArray(value) ? value : [value]) {
+      if (item !== undefined && item !== "") url.searchParams.append(key, item);
+    }
   }
 
   let response: Response;
