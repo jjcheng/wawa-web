@@ -23,7 +23,6 @@ const ALLOWED: { method: string; pattern: RegExp }[] = [
   { method: "PATCH", pattern: /^v1\/wa\/business-accounts\/name$/ },
   { method: "GET", pattern: /^v1\/wa\/business-portfolios$/ },
   { method: "PATCH", pattern: /^v1\/wa\/business-portfolios\/name$/ },
-  { method: "POST", pattern: /^v1\/wa\/embedded-signup$/ },
 ];
 
 export function isAllowedUpstream(method: string, path: string) {

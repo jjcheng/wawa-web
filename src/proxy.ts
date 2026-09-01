@@ -5,8 +5,8 @@ const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME ?? "wawa_session";
 
 const PUBLIC_PATHS = ["/login"];
 
-// Clears its own cookie, so it must stay reachable in both states.
-const UNGUARDED_PATHS = ["/session/end"];
+// These routes must stay reachable in both session states.
+const UNGUARDED_PATHS = ["/session/end", "/embedded-signup"];
 
 // Cheap cookie-presence gate only — the session is actually validated
 // server-side by requireUser().

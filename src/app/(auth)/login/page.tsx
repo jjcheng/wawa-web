@@ -10,7 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { serverEnv } from "@/lib/env.server";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -40,8 +39,6 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           </div>
 
           <EmbeddedSignupButton
-            appId={serverEnv.NEXT_META_APP_ID}
-            configId={serverEnv.NEXT_META_EMBEDDED_SIGNUP_CONFIG_ID}
             label="Onboard with WhatsApp Business Number"
             className="w-full"
             redirectTo={null}

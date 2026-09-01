@@ -39,13 +39,18 @@ export const changePasswordSchema = z
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
 export const embeddedSignupSchema = z.object({
-  event: z.literal("whatsapp_embedded_signup"),
+  type: z.literal("WA_EMBEDDED_SIGNUP"),
+  event: z.literal("FINISH"),
   data: z.object({
     phone_number_id: z.string().min(1),
     waba_id: z.string().min(1),
     business_id: z.string().min(1),
-    code: z.string().min(1),
+    page_ids: z.array(z.string()).optional(),
+    catalog_ids: z.array(z.string()).optional(),
+    dataset_ids: z.array(z.string()).optional(),
+    instagram_account_ids: z.array(z.string()).optional(),
   }),
+  authorization_code: z.string().min(1),
 });
 export type EmbeddedSignupInput = z.infer<typeof embeddedSignupSchema>;
 

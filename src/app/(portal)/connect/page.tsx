@@ -9,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { serverEnv } from "@/lib/env.server";
 
 export const metadata: Metadata = { title: "Connect WhatsApp" };
 
@@ -37,10 +36,7 @@ export default function ConnectPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <EmbeddedSignupButton
-              appId={serverEnv.NEXT_META_APP_ID}
-              configId={serverEnv.NEXT_META_EMBEDDED_SIGNUP_CONFIG_ID}
-            />
+            <EmbeddedSignupButton />
           </CardContent>
         </Card>
 

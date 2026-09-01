@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
 import { ApiError } from "@/lib/api/errors";
-import { loginSchema } from "@/lib/api/schemas";
+import { embeddedSignupSchema, loginSchema } from "@/lib/api/schemas";
 import { rawServerFetch } from "@/lib/api/server-client";
 import type { ApiEnvelope, InputError, User } from "@/lib/api/types";
 import {
@@ -15,6 +15,11 @@ import {
 import { serverEnv } from "@/lib/env.server";
 
 export type LoginState = {
+  message?: string;
+  inputErrors?: InputError[];
+};
+
+export type EmbeddedSignupState = {
   message?: string;
   inputErrors?: InputError[];
 };
@@ -78,6 +83,51 @@ export async function loginAction(
   );
 
   redirect(safeNextPath(formData.get("next")));
+}
+
+export async function completeEmbeddedSignup(
+  input: unknown,
+): Promise<EmbeddedSignupState> {
+  const parsed = embeddedSignupSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      inputErrors: parsed.error.issues.map((issue) => ({
+        field: String(issue.path.join(".")),
+        message: issue.message,
+      })),
+    };
+  }
+
+  let upstream: Response;
+  try {
+    upstream = await rawServerFetch("/v1/wa/account/embedded-signup", {
+      method: "POST",
+      body: parsed.data,
+    });
+  } catch {
+    return { message: new ApiError("Unable to reach the API.", 0).message };
+  }
+
+  const envelope = (await upstream.json().catch(() => null)) as ApiEnvelope<User> | null;
+  if (!upstream.ok || !envelope?.success) {
+    return {
+      message: envelope?.message ?? "WhatsApp onboarding failed. Please try again.",
+      inputErrors: envelope?.input_errors ?? [],
+    };
+  }
+
+  const accessToken = envelope.data?.access_token;
+  if (!accessToken) {
+    return { message: "WhatsApp onboarding succeeded but no access token was issued." };
+  }
+
+  (await cookies()).set(
+    serverEnv.SESSION_COOKIE_NAME,
+    accessToken,
+    sessionCookieOptions(),
+  );
+
+  return {};
 }
 
 export async function logoutAction() {

@@ -22,7 +22,6 @@ import {
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type { PhoneNumber } from "@/lib/api/types";
-import { serverEnv } from "@/lib/env.server";
 import { formatDateTime, formatPhoneNumber } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Phone numbers" };
@@ -42,12 +41,7 @@ export default async function PhoneNumbersPage() {
       <PageHeader
         title="WhatsApp business numbers"
         description="Numbers from your WhatsApp Business accounts that are assigned to you."
-        action={
-          <EmbeddedSignupButton
-            appId={serverEnv.NEXT_META_APP_ID}
-            configId={serverEnv.NEXT_META_EMBEDDED_SIGNUP_CONFIG_ID}
-          />
-        }
+        action={<EmbeddedSignupButton />}
       />
 
       {loadError ? (
