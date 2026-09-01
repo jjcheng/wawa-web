@@ -89,9 +89,21 @@ export function EmbeddedSignupButton({
         return;
       }
       try {
-        const data = JSON.parse(event.data);
-        if (data.type === "WA_EMBEDDED_SIGNUP" && data.event === "FINISH") {
-          sessionRef.current = data.data ?? {};
+        const data =
+          typeof event.data === "string" ? JSON.parse(event.data) : (event.data as unknown);
+        if (
+          typeof data === "object" &&
+          data !== null &&
+          "type" in data &&
+          "event" in data &&
+          data.type === "WA_EMBEDDED_SIGNUP"
+        ) {
+          if (data.event === "FINISH") {
+            window.alert(JSON.stringify(data, null, 2));
+            sessionRef.current = "data" in data ? (data.data as SignupSession) : {};
+          } else if (data.event === "CANCEL") {
+            toast.info("WhatsApp onboarding was cancelled.");
+          }
         }
       } catch {
         // Ignore non-JSON messages from the dialog.
@@ -156,6 +168,7 @@ export function EmbeddedSignupButton({
       <Script
         src="https://connect.facebook.net/en_US/sdk.js"
         strategy="afterInteractive"
+        crossOrigin="anonymous"
         onReady={initSdk}
       />
       <Button

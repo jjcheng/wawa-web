@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Menu, Settings } from "lucide-react";
+import { ExternalLink, LogOut, Menu, Settings } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
@@ -28,13 +28,15 @@ function initials(user: User) {
 
 type BusinessContext = {
   portfolioName: string | null;
+  portfolioId: string | null;
   accountName: string | null;
+  accountId: string | null;
 };
 
 const businessContextRequests = new Map<string, Promise<BusinessContext>>();
 
 function businessContextStorageKey(user: User) {
-  return `wawa.business-context.v2.${user.id}`;
+  return `wawa.business-context.v3.${user.id}`;
 }
 
 function readBusinessContext(user: User): BusinessContext | null {
@@ -44,7 +46,9 @@ function readBusinessContext(user: User): BusinessContext | null {
 
     const context = JSON.parse(value) as BusinessContext;
     if (typeof context.portfolioName !== "string" && context.portfolioName !== null) return null;
+    if (typeof context.portfolioId !== "string" && context.portfolioId !== null) return null;
     if (typeof context.accountName !== "string" && context.accountName !== null) return null;
+    if (typeof context.accountId !== "string" && context.accountId !== null) return null;
     return context;
   } catch {
     return null;
@@ -52,7 +56,20 @@ function readBusinessContext(user: User): BusinessContext | null {
 }
 
 function hasBusinessContextNames(context: BusinessContext) {
-  return Boolean(context.portfolioName?.trim() && context.accountName?.trim());
+  return Boolean(
+    context.portfolioName?.trim() &&
+      context.portfolioId?.trim() &&
+      context.accountName?.trim() &&
+      context.accountId?.trim(),
+  );
+}
+
+function metaBusinessManagerUrl(context: BusinessContext) {
+  const accountId = context.accountId?.trim();
+  const portfolioId = context.portfolioId?.trim();
+  if (!accountId || !portfolioId) return null;
+
+  return `https://business.facebook.com/latest/whatsapp_manager/accounts/${encodeURIComponent(accountId)}?business_id=${encodeURIComponent(portfolioId)}`;
 }
 
 export function Topbar({ user }: { user: User }) {
@@ -76,7 +93,9 @@ export function Topbar({ user }: { user: User }) {
         apiFetch<BusinessAccount>("/v1/wa/business-accounts"),
       ]).then(([portfolio, account]) => ({
         portfolioName: portfolio.name ?? null,
+        portfolioId: portfolio.meta_business_portfolio_id ?? null,
         accountName: account.name ?? null,
+        accountId: account.meta_waba_id ?? null,
       }));
 
     businessContextRequests.set(storageKey, request);
@@ -113,15 +132,49 @@ export function Topbar({ user }: { user: User }) {
         </SheetContent>
       </Sheet>
 
-      {businessContext?.portfolioName || businessContext?.accountName ? (
-        <div className="min-w-0 leading-tight">
-          {businessContext.portfolioName ? (
-            <p className="truncate text-sm font-medium">{businessContext.portfolioName}</p>
-          ) : null}
-          {businessContext.accountName ? (
-            <p className="text-muted-foreground truncate text-xs">{businessContext.accountName}</p>
-          ) : null}
-        </div>
+      {businessContext && hasBusinessContextNames(businessContext) ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="h-auto min-w-0 justify-start px-2 py-1 text-left leading-tight"
+            >
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-medium">
+                  {businessContext.portfolioName}
+                </span>
+                <span className="text-muted-foreground block truncate text-xs">
+                  {businessContext.accountName}
+                </span>
+              </span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-80 p-2" align="start">
+            <div className="space-y-3 p-1 text-sm">
+              <div>
+                <p className="font-medium">Business Portfolio</p>
+                <p className="text-muted-foreground truncate">{businessContext.portfolioName}</p>
+                <p className="text-muted-foreground font-mono text-xs">
+                  {businessContext.portfolioId}
+                </p>
+              </div>
+              <div>
+                <p className="font-medium">Business Account</p>
+                <p className="text-muted-foreground truncate">{businessContext.accountName}</p>
+                <p className="text-muted-foreground font-mono text-xs">{businessContext.accountId}</p>
+              </div>
+              <Button asChild className="w-full">
+                <a
+                  href={metaBusinessManagerUrl(businessContext) ?? undefined}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  View on Meta <ExternalLink className="size-4" />
+                </a>
+              </Button>
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ) : null}
 
       <div className="ml-auto flex items-center gap-1">
