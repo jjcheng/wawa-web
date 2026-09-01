@@ -25,15 +25,9 @@ function buildUrl(path: string, query?: RequestOptions["query"]) {
 }
 
 export async function buildUpstreamHeaders(
-  method: string,
   sessionToken?: string,
 ): Promise<Headers> {
   const headers = new Headers({ Accept: "application/json" });
-  // The API's CSRF middleware rejects any non-safe request whose Origin does
-  // not exactly match PORTAL_ORIGIN.
-  if (!["GET", "HEAD", "OPTIONS"].includes(method.toUpperCase())) {
-    headers.set("Origin", serverEnv.PORTAL_ORIGIN);
-  }
   const token = sessionToken ?? (await cookies()).get(serverEnv.SESSION_COOKIE_NAME)?.value;
   if (token) {
     headers.set("x-wawa-user-access-token", token);
@@ -48,7 +42,7 @@ export async function rawServerFetch(
   path: string,
   { method = "GET", body, query, sessionToken }: RequestOptions = {},
 ) {
-  const headers = await buildUpstreamHeaders(method, sessionToken);
+  const headers = await buildUpstreamHeaders(sessionToken);
   if (body !== undefined) headers.set("Content-Type", "application/json");
   return fetch(buildUrl(path, query), {
     method,

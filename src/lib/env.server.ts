@@ -4,7 +4,6 @@ import { z } from "zod";
 
 const serverEnvSchema = z.object({
   API_BASE_URL: z.url(),
-  PORTAL_ORIGIN: z.url(),
   SESSION_COOKIE_NAME: z.string().min(1).default("wawa_session"),
   NEXT_META_APP_ID: z.string().default(""),
   NEXT_META_EMBEDDED_SIGNUP_CONFIG_ID: z.string().default(""),
@@ -12,7 +11,6 @@ const serverEnvSchema = z.object({
 
 const parsed = serverEnvSchema.safeParse({
   API_BASE_URL: process.env.API_BASE_URL,
-  PORTAL_ORIGIN: process.env.PORTAL_ORIGIN,
   SESSION_COOKIE_NAME: process.env.SESSION_COOKIE_NAME,
   NEXT_META_APP_ID: process.env.NEXT_META_APP_ID,
   NEXT_META_EMBEDDED_SIGNUP_CONFIG_ID: process.env.NEXT_META_EMBEDDED_SIGNUP_CONFIG_ID,
@@ -28,5 +26,4 @@ if (!parsed.success) {
 export const serverEnv = {
   ...parsed.data,
   API_BASE_URL: parsed.data.API_BASE_URL.replace(/\/+$/, ""),
-  PORTAL_ORIGIN: parsed.data.PORTAL_ORIGIN.replace(/\/+$/, ""),
 };

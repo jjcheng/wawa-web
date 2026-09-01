@@ -21,18 +21,9 @@ npm run dev
 | Variable | Purpose |
 | --- | --- |
 | `API_BASE_URL` | Base URL of the wawa-go API |
-| `PORTAL_ORIGIN` | Origin this portal is served from |
 | `SESSION_COOKIE_NAME` | Session cookie issued by the API (`wawa_session`) |
 | `NEXT_META_APP_ID` | Meta app ID used by Embedded Signup |
 | `NEXT_META_EMBEDDED_SIGNUP_CONFIG_ID` | Meta login configuration ID |
-
-### The `PORTAL_ORIGIN` caveat
-
-`wawa-go` protects every non-`GET` request with an Origin check: the request's `Origin`
-header must exactly equal the API's own `PORTAL_ORIGIN` setting, otherwise it answers
-`403 invalid request origin`. Because the portal talks to the API from the server side,
-the BFF proxy sets that header explicitly. Keep `PORTAL_ORIGIN` identical in both
-`wawa-web/.env.local` and `wawa-go/.env`.
 
 ### Authentication header
 
@@ -45,9 +36,9 @@ new header, while keeping the older `x-user-access-token` name as a compatibilit
 
 - **BFF proxy** — the browser never talks to the API directly. Requests go to
   `/api/bff/<upstream path>`, which forwards them server-side with the `x-wawa-user-access-token`
-  header (and compatibility fallback), the required `Origin` header, and the portal cookie when
-  present. Only paths on the allow-list in `src/lib/api/allowlist.ts` are forwarded, so the route
-  cannot be used as an open proxy.
+  header (and compatibility fallback) and the portal cookie when present. Only paths on the
+  allow-list in `src/lib/api/allowlist.ts` are forwarded, so the route cannot be used as an open
+  proxy.
 - **Sessions** — the API issues an access token via `x-wawa-user-access-token`. Login is a Server
   Action that re-issues the token onto the portal's own origin via the `wawa_session` cookie.
   `src/proxy.ts` does a cheap cookie-presence redirect; `requireUser()` performs the real check
