@@ -20,7 +20,7 @@ type DtoBase = {
 };
 
 export type UserStatus = "ACTIVE" | "PENDING_PASSWORD" | "INACTIVE";
-export type UserType = "ADMIN" | "STAFF";
+export type UserType = "MASTER" | "OPERATOR" | "ACCOUNT";
 
 export type User = DtoBase & {
   name?: string;

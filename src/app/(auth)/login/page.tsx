@@ -20,12 +20,12 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6">
       <Brand />
-      <Card className="w-full max-w-sm">
+      <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Sign in</CardTitle>
-          {/* <CardDescription>
-            Use the phone number registered with your WhatsApp Business account.
-          </CardDescription> */}
+          <CardDescription>
+            Use your registered WhatsApp Business account number.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <LoginForm next={typeof next === "string" ? next : undefined} />
@@ -46,7 +46,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         </CardContent>
       </Card>
       <p className="text-muted-foreground text-xs">
-        © {new Date().getFullYear()} CoreConcept Tech
+        © {new Date().getFullYear()} CoreConcept Pte Ltd
       </p>
     </div>
   );

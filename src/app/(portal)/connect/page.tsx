@@ -16,7 +16,7 @@ const STEPS = [
   "Sign in with the Facebook account that owns your business portfolio.",
   "Pick or create a WhatsApp Business Account and business portfolio.",
   "Verify the phone number you want to use for customer conversations.",
-  "We finish the setup and assign the number to your CoreConcept Tech account.",
+  "We finish the setup and assign the number to your CoreConcept CRM account.",
 ];
 
 export default function ConnectPage() {

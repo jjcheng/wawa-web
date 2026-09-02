@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api/client";
 import { ApiError, toApiError } from "@/lib/api/errors";
 import { updateProfileSchema, type UpdateProfileInput } from "@/lib/api/schemas";
@@ -32,7 +33,7 @@ export function ProfileForm({ user }: { user: User }) {
 
   const mutation = useMutation({
     mutationFn: (values: UpdateProfileInput) =>
-      apiFetch<User>("v1/account/users/profile", {
+      apiFetch<User>("v1/account/users/me/profile", {
         method: "PATCH",
         body: { description: values.description, email: values.email || null },
       }),
@@ -69,7 +70,7 @@ export function ProfileForm({ user }: { user: User }) {
 
       <div className="space-y-2">
         <Label htmlFor="description">Description</Label>
-        <Input id="description" {...register("description")} />
+        <Textarea id="description" {...register("description")} />
         {errors.description ? (
           <p className="text-destructive text-sm">{errors.description.message}</p>
         ) : (

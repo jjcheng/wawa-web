@@ -74,13 +74,14 @@ export function EmbeddedSignupFlow({
         toast.error(result.message);
         return;
       }
-      if (redirectTo) {
-        toast.success("WhatsApp account connected.");
-        router.push(redirectTo);
-        router.refresh();
+      const destination = redirectTo ?? "/dashboard";
+      if (result.status === "PENDING_PASSWORD") {
+        router.push(`/set-password?next=${encodeURIComponent(destination)}`);
         return;
       }
-      toast.success("Number registered. Sign in with it to finish setting up your account.");
+      toast.success("WhatsApp account connected.");
+      router.push(destination);
+      router.refresh();
     },
     onError: () => {
       isSubmittingRef.current = false;
@@ -128,7 +129,7 @@ export function EmbeddedSignupFlow({
         ) {
           const signupMessage = data as SignupMessage;
           if (signupMessage.event === "FINISH") {
-            console.log("Session Logging Response:", signupMessage);
+            // console.log("Session Logging Response:", signupMessage);
             sessionRef.current = signupMessage.data ?? signupMessage;
             submitSignup();
           } else if (signupMessage.event === "CANCEL") {
@@ -175,7 +176,12 @@ export function EmbeddedSignupFlow({
       config_id: configId,
       response_type: "code",
       override_default_response_type: true,
-      extras: { version: "v4" },
+      extras: { version: "v4",
+        featureType: 'whatsapp_business_app_onboarding',
+        sessionInfoVersion: '3',
+        setup: {
+        }
+       },
     });
   }
 
@@ -185,7 +191,7 @@ export function EmbeddedSignupFlow({
       toast.error("WhatsApp onboarding was cancelled.");
       return;
     }
-    console.log("ES Response Code:", code);
+    // console.log("ES Response Code:", code);
     authorizationCodeRef.current = code;
     submitSignup();
   }

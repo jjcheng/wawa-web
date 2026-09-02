@@ -22,6 +22,7 @@ export type LoginState = {
 export type EmbeddedSignupState = {
   message?: string;
   inputErrors?: InputError[];
+  status?: User["status"];
 };
 
 function safeNextPath(value: FormDataEntryValue | null) {
@@ -127,7 +128,7 @@ export async function completeEmbeddedSignup(
     sessionCookieOptions(),
   );
 
-  return {};
+  return { status: envelope.data?.status };
 }
 
 export async function logoutAction() {

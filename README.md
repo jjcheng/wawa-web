@@ -1,6 +1,6 @@
-# CoreConcept Tech Portal
+# CoreConcept CRM Portal
 
-Web portal for **CoreConcept Tech** — a CRM integrated with WhatsApp Business. It is a
+Web portal for **CoreConcept** — a CRM integrated with WhatsApp Business. It is a
 Next.js App Router front end for the `wawa-go` API.
 
 ## Requirements

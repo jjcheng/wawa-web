@@ -18,7 +18,7 @@ export default async function EmbeddedSignupPage({ searchParams }: PageProps<"/e
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6">
       <Brand />
-      <Card className="w-full max-w-lg">
+      <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Onboard the WhatsApp Business Platform With CoreConcept CRM</CardTitle>
           <CardDescription>

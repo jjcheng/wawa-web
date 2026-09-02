@@ -16,7 +16,7 @@ export const metadata: Metadata = { title: "Password" };
 export default function PasswordPage() {
   return (
     <>
-      <PageHeader title="Settings" description="Manage your CoreConcept Tech account." />
+      <PageHeader title="Account Settings" description="Manage your profile and login password" />
       <SettingsTabs />
       <Card>
         <CardHeader>

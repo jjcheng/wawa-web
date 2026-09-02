@@ -107,7 +107,7 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Account</CardTitle>
-            <CardDescription>Your CoreConcept Tech profile.</CardDescription>
+            <CardDescription>Your CoreConcept CRM profile.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between gap-4">

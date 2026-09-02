@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { loginAction, type LoginState } from "@/lib/auth/actions";
 import { cn, MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 
@@ -54,17 +55,16 @@ export function LoginForm({ next }: { next?: string }) {
           <p className="text-destructive text-sm">{fieldError(state, "phone_number")}</p>
         ) : (
           <p className="text-muted-foreground text-sm">
-            Include your country code, only numbers, no space.
+            Start with country code, omit space, + or -.
           </p>
         )}
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
-        <Input
+        <PasswordInput
           id="password"
           name="password"
-          type="password"
           placeholder="enter your password"
           autoComplete="current-password"
           className={MEDIUM_BUTTON_HEIGHT}

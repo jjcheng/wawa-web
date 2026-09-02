@@ -38,6 +38,17 @@ export const changePasswordSchema = z
   });
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
+export const setInitialPasswordSchema = z
+  .object({
+    new_password: password,
+    confirm_new_password: z.string().min(1, "Confirm your new password"),
+  })
+  .refine((values) => values.new_password === values.confirm_new_password, {
+    path: ["confirm_new_password"],
+    message: "Passwords do not match",
+  });
+export type SetInitialPasswordInput = z.infer<typeof setInitialPasswordSchema>;
+
 export const embeddedSignupSchema = z.object({
   type: z.literal("WA_EMBEDDED_SIGNUP"),
   event: z.literal("FINISH"),

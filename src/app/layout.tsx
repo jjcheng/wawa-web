@@ -16,11 +16,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "CoreConcept Tech Portal",
-    template: "%s · CoreConcept Tech",
+    default: "CoreConcept Portal",
+    template: "%s · CoreConcept",
   },
   description:
-    "CoreConcept Tech — WhatsApp-integrated CRM. Manage your WhatsApp Business numbers, contacts and conversations.",
+    "CoreConcept — WhatsApp-integrated CRM. Manage your WhatsApp Business numbers, contacts and conversations.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

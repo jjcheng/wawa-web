@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { requireUser } from "@/lib/auth/session";
 import { formatPhoneNumber } from "@/lib/format";
 import { ProfileForm } from "./profile-form";
@@ -20,11 +21,16 @@ export default async function ProfilePage() {
 
   return (
     <>
-      <PageHeader title="Settings" description="Manage your CoreConcept Tech account." />
+      <PageHeader title="Account Settings" description="Manage your profile and login password" />
       <SettingsTabs />
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Profile</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-base">Profile</CardTitle>
+            {user.type === "MASTER" ? (
+              <Badge className="bg-green-600 text-white dark:bg-green-600">Master</Badge>
+            ) : null}
+          </div>
           <CardDescription>
             Signed in as {formatPhoneNumber(user.phone_number)} — your phone number cannot be
             changed here.
