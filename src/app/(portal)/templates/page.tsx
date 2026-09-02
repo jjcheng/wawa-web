@@ -4,45 +4,22 @@ import { ExternalLink } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DeleteTemplateButton } from "@/components/whatsapp/delete-template-button";
-import { TemplateStatusBadge } from "@/components/whatsapp/template-status-badge";
-import { ViewTemplateButton } from "@/components/whatsapp/view-template-button";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type { BusinessAccount, BusinessPortfolio, Template, TemplateListResponse } from "@/lib/api/types";
 import { metaManageTemplatesUrl } from "@/lib/meta-links";
 import { toWabaOptions, type WabaOption } from "@/lib/waba-options";
 import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
+import { TemplatesTable } from "./templates-table";
 
 export const metadata: Metadata = { title: "Templates" };
-
-function qualityVariant(score?: string) {
-  switch (score?.toUpperCase()) {
-    case "GREEN":
-      return "default" as const;
-    case "RED":
-      return "destructive" as const;
-    default:
-      return "secondary" as const;
-  }
-}
 
 export default async function TemplatesPage({ searchParams }: PageProps<"/templates">) {
   let wabas: WabaOption[] = [];
@@ -71,13 +48,20 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
     (requested && wabas.some((waba) => waba.metaWabaId === requested)
       ? requested
       : wabas[0]?.metaWabaId) ?? "";
+  const limit = typeof params.limit === "string" ? params.limit : "10";
+  let afterCursor: string | undefined;
 
   try {
     if (selected) {
       const response = await serverFetch<TemplateListResponse>("/v1/wa/templates", {
-        query: { meta_waba_id: selected, limit: "100" },
+        query: { meta_waba_id: selected, limit },
       });
       templates = response?.items ?? [];
+      const additionalData = response?.additional_data as
+        | { after?: string; next?: string }
+        | undefined;
+      // next is Meta's paging URL; empty means there's no more to load.
+      afterCursor = additionalData?.next ? additionalData.after : undefined;
     }
   } catch (error) {
     loadError =
@@ -100,7 +84,7 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
               </Button>
             ) : null}
             <Button asChild className={MEDIUM_BUTTON_HEIGHT}>
-              <Link href="/templates/new">Create template</Link>
+              <Link href="/templates/new">Create Template</Link>
             </Button>
           </div>
         }
@@ -131,56 +115,12 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
       ) : null}
 
       {templates.length > 0 ? (
-        <Card>
-          <CardContent className="overflow-x-auto p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Language</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Quality</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {templates.map((template) => (
-                  <TableRow key={template.id}>
-                    <TableCell className="font-medium">{template.name || "—"}</TableCell>
-                    <TableCell>{template.category || "—"}</TableCell>
-                    <TableCell>{template.language || "—"}</TableCell>
-                    <TableCell>
-                      <TemplateStatusBadge
-                        status={template.status}
-                        reason={template.rejected_reason}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {template.quality_score?.score ? (
-                        <Badge variant={qualityVariant(template.quality_score.score)}>
-                          {template.quality_score.score}
-                        </Badge>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <ViewTemplateButton template={template} />
-                        <DeleteTemplateButton
-                          id={template.id}
-                          metaWabaId={template.meta_waba_id ?? ""}
-                          name={template.name ?? ""}
-                        />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <TemplatesTable
+          metaWabaId={selected}
+          limit={limit}
+          initialTemplates={templates}
+          initialAfterCursor={afterCursor}
+        />
       ) : null}
     </>
   );
