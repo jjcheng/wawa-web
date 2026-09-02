@@ -2,45 +2,49 @@ export const mockCustomers = [
   {
     Name: "Amelia Tan",
     Phone: "+65 9123 4567",
-    Tags: "Lead, Retail",
+    Tags: "Instagram",
     "Last contact": "2 hours ago",
   },
   {
     Name: "Ben Ortiz",
     Phone: "+1 415 555 0138",
-    Tags: "Customer",
+    Tags: "Google",
     "Last contact": "Yesterday",
   },
-  { Name: "Chloe Ng", Phone: "+65 8123 9911", Tags: "VIP", "Last contact": "3 days ago" },
+  { Name: "Chloe Ng", Phone: "+65 8123 9911", Tags: "Instagram", "Last contact": "3 days ago" },
   {
     Name: "Daniel Reyes",
     Phone: "+63 917 555 0117",
-    Tags: "Lead",
+    Tags: "Google",
     "Last contact": "1 week ago",
   },
 ];
 
-export const mockConversations = [
+// System/announcement messages sent by CoreConcept to this account's users.
+export const mockInboxMessages = [
   {
-    Contact: "Amelia Tan",
-    Channel: "WhatsApp",
-    Status: "Open",
-    Assignee: "You",
-    Updated: "2 hours ago",
+    subject: "Your WhatsApp Business number is now connected",
+    preview: "Embedded Signup finished successfully. You can start sending templates.",
+    date: "2 hours ago",
+    unread: true,
   },
   {
-    Contact: "Ben Ortiz",
-    Channel: "WhatsApp",
-    Status: "Pending",
-    Assignee: "Unassigned",
-    Updated: "Yesterday",
+    subject: "Scheduled maintenance on Sept 6",
+    preview: "CoreConcept will run brief maintenance between 2–3 AM SGT. No downtime expected.",
+    date: "Yesterday",
+    unread: true,
   },
   {
-    Contact: "Chloe Ng",
-    Channel: "WhatsApp",
-    Status: "Closed",
-    Assignee: "You",
-    Updated: "3 days ago",
+    subject: "New template category: AUTHENTICATION",
+    preview: "Meta now supports one-time password templates. Learn how to create one.",
+    date: "3 days ago",
+    unread: false,
+  },
+  {
+    subject: "Your monthly usage summary is ready",
+    preview: "View your conversation volume and template performance for last month.",
+    date: "1 week ago",
+    unread: false,
   },
 ];
 

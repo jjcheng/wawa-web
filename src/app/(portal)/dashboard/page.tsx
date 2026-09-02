@@ -34,9 +34,9 @@ export default async function DashboardPage() {
 
   const stats = [
     { label: "Connected numbers", value: String(phoneNumbers.length), icon: Phone },
-    { label: "Contacts", value: "1,284", icon: Users, preview: true },
-    { label: "Open conversations", value: "37", icon: MessagesSquare, preview: true },
-    { label: "Messages sent (30d)", value: "8,912", icon: Send, preview: true },
+    { label: "Customers", value: "1,284", icon: Users, preview: false },
+    { label: "Conversations", value: "37", icon: MessagesSquare, preview: false },
+    { label: "Messages sent (30d)", value: "8,912", icon: Send, preview: false },
   ];
 
   return (
@@ -65,7 +65,7 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className="mt-6 grid gap-4 lg:grid-cols-2 hidden">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">WhatsApp numbers</CardTitle>

@@ -19,6 +19,7 @@ import {
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { apiFetch } from "@/lib/api/client";
 import { logoutAction } from "@/lib/auth/actions";
+import { metaBusinessManagerUrl } from "@/lib/meta-links";
 import type { BusinessAccount, BusinessPortfolio, User } from "@/lib/api/types";
 
 function initials(user: User) {
@@ -62,14 +63,6 @@ function hasBusinessContextNames(context: BusinessContext) {
       context.accountName?.trim() &&
       context.accountId?.trim(),
   );
-}
-
-function metaBusinessManagerUrl(context: BusinessContext) {
-  const accountId = context.accountId?.trim();
-  const portfolioId = context.portfolioId?.trim();
-  if (!accountId || !portfolioId) return null;
-
-  return `https://business.facebook.com/latest/whatsapp_manager/accounts/${encodeURIComponent(accountId)}?business_id=${encodeURIComponent(portfolioId)}`;
 }
 
 export function Topbar({ user }: { user: User }) {
@@ -165,11 +158,16 @@ export function Topbar({ user }: { user: User }) {
               </div>
               <Button asChild className="w-full">
                 <a
-                  href={metaBusinessManagerUrl(businessContext) ?? undefined}
+                  href={
+                    metaBusinessManagerUrl({
+                      portfolioId: businessContext.portfolioId,
+                      accountId: businessContext.accountId,
+                    }) ?? undefined
+                  }
                   target="_blank"
                   rel="noreferrer"
                 >
-                  View on Meta <ExternalLink className="size-4" />
+                  WhatsApp Manager <ExternalLink className="size-4" />
                 </a>
               </Button>
             </div>

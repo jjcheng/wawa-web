@@ -21,9 +21,6 @@ export function PreviewPage({
         action={<Badge variant="secondary">Preview — not yet backed by the API</Badge>}
       />
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Sample data</CardTitle>
-        </CardHeader>
         <CardContent className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

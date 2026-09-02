@@ -3,6 +3,7 @@
 import {
   FileText,
   Gauge,
+  Inbox,
   LayoutDashboard,
   Megaphone,
   Phone,
@@ -18,7 +19,10 @@ import { cn } from "@/lib/utils";
 const SECTIONS = [
   {
     label: "Overview",
-    items: [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }],
+    items: [
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/inbox", label: "Inbox", icon: Inbox },
+    ],
   },
   {
     label: "Communication",

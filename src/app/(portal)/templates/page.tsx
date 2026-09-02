@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -25,7 +26,8 @@ import {
 } from "@/components/ui/table";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
-import type { BusinessAccount, Template, TemplateListResponse } from "@/lib/api/types";
+import type { BusinessAccount, BusinessPortfolio, Template, TemplateListResponse } from "@/lib/api/types";
+import { metaManageTemplatesUrl } from "@/lib/meta-links";
 import { toWabaOptions, type WabaOption } from "@/lib/waba-options";
 import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 
@@ -47,10 +49,18 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
   let wabaError: string | null = null;
   let templates: Template[] = [];
   let loadError: string | null = null;
+  let managerUrl: string | null = null;
 
   try {
-    const businessAccount = await serverFetch<BusinessAccount>("/v1/wa/business-accounts");
+    const [businessAccount, businessPortfolio] = await Promise.all([
+      serverFetch<BusinessAccount>("/v1/wa/business-accounts"),
+      serverFetch<BusinessPortfolio>("/v1/wa/business-portfolios"),
+    ]);
     wabas = toWabaOptions(businessAccount ? [businessAccount] : []);
+    managerUrl = metaManageTemplatesUrl({
+      portfolioId: businessPortfolio?.meta_business_portfolio_id,
+      accountId: businessAccount?.meta_waba_id,
+    });
   } catch (error) {
     wabaError = error instanceof ApiError ? error.message : "Could not load your business accounts.";
   }
@@ -78,11 +88,21 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
     <>
       <PageHeader
         title="Templates"
-        description="WhatsApp message templates from your business accounts, as approved by Meta."
+        description="WhatsApp message templates from your business account. Use WhatsApp Manager to create or modify templates."
         action={
-          <Button asChild className={MEDIUM_BUTTON_HEIGHT}>
-            <Link href="/templates/new">Create template</Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {managerUrl ? (
+              <Button asChild variant="outline" className={MEDIUM_BUTTON_HEIGHT}>
+                <a href={managerUrl} target="_blank" rel="noreferrer">
+                  WhatsApp Manager
+                  <ExternalLink className="size-4" />
+                </a>
+              </Button>
+            ) : null}
+            <Button asChild className={MEDIUM_BUTTON_HEIGHT}>
+              <Link href="/templates/new">Create template</Link>
+            </Button>
+          </div>
         }
       />
 

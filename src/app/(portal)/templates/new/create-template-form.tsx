@@ -38,7 +38,7 @@ const FORM_FIELDS: (keyof CreateTemplateInput)[] = [
   "category",
 ];
 
-export function CreateTemplateForm({ wabas }: { wabas: WabaOption[] }) {
+export function CreateTemplateForm({ waba }: { waba: WabaOption }) {
   const router = useRouter();
   const {
     register,
@@ -49,7 +49,7 @@ export function CreateTemplateForm({ wabas }: { wabas: WabaOption[] }) {
   } = useForm<CreateTemplateInput>({
     resolver: zodResolver(createTemplateSchema),
     defaultValues: {
-      meta_waba_id: wabas.length === 1 ? wabas[0].metaWabaId : "",
+      meta_waba_id: waba.metaWabaId,
       name: "",
       language: "en_US",
       category: "UTILITY",
@@ -94,33 +94,9 @@ export function CreateTemplateForm({ wabas }: { wabas: WabaOption[] }) {
       onSubmit={handleSubmit((values) => mutation.mutate(values))}
       className="max-w-xl space-y-4"
     >
-      <div className="space-y-2">
-        <Label htmlFor="meta_waba_id">WhatsApp Business Account</Label>
-        <Controller
-          control={control}
-          name="meta_waba_id"
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger id="meta_waba_id" className="w-full">
-                <SelectValue placeholder="Select an account" />
-              </SelectTrigger>
-              <SelectContent>
-                {wabas.map((waba) => (
-                  <SelectItem key={waba.metaWabaId} value={waba.metaWabaId}>
-                    {waba.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        {errors.meta_waba_id ? (
-          <p className="text-destructive text-sm">{errors.meta_waba_id.message}</p>
-        ) : null}
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="name">Template name</Label>
           <Input id="name" placeholder="order_confirmation" {...register("name")} />
           {errors.name ? (
@@ -196,14 +172,14 @@ export function CreateTemplateForm({ wabas }: { wabas: WabaOption[] }) {
         <Textarea
           id="body_text"
           rows={5}
-          placeholder="Hi {{1}}, your order {{2}} is on its way."
+          placeholder="Hi, your order is on its way."
           {...register("body_text")}
         />
         {errors.body_text ? (
           <p className="text-destructive text-sm">{errors.body_text.message}</p>
         ) : (
           <p className="text-muted-foreground text-sm">
-            {"Use {{1}}, {{2}} for variables Meta will substitute at send time."}
+            {""}
           </p>
         )}
       </div>
