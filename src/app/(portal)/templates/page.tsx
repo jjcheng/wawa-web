@@ -5,7 +5,6 @@ import { PageHeader } from "@/components/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { TemplateAccountFilter } from "@/components/whatsapp/template-account-filter";
 import { DeleteTemplateButton } from "@/components/whatsapp/delete-template-button";
 import { TemplateStatusBadge } from "@/components/whatsapp/template-status-badge";
 import { ViewTemplateButton } from "@/components/whatsapp/view-template-button";
@@ -50,9 +49,8 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
   let loadError: string | null = null;
 
   try {
-    const businessAccounts =
-      (await serverFetch<BusinessAccount[]>("/v1/wa/business-accounts")) ?? [];
-    wabas = toWabaOptions(businessAccounts);
+    const businessAccount = await serverFetch<BusinessAccount>("/v1/wa/business-accounts");
+    wabas = toWabaOptions(businessAccount ? [businessAccount] : []);
   } catch (error) {
     wabaError = error instanceof ApiError ? error.message : "Could not load your business accounts.";
   }
@@ -82,12 +80,9 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
         title="Templates"
         description="WhatsApp message templates from your business accounts, as approved by Meta."
         action={
-          <div className="flex flex-wrap gap-2">
-            {selected ? <TemplateAccountFilter wabas={wabas} selected={selected} /> : null}
-            <Button asChild className={MEDIUM_BUTTON_HEIGHT}>
-              <Link href="/templates/new">Create template</Link>
-            </Button>
-          </div>
+          <Button asChild className={MEDIUM_BUTTON_HEIGHT}>
+            <Link href="/templates/new">Create template</Link>
+          </Button>
         }
       />
 

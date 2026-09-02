@@ -20,9 +20,8 @@ export async function resolveAnalyticsContext(params: SearchParams) {
   let wabas: WabaOption[] = [];
   let wabaError: string | null = null;
   try {
-    const businessAccounts =
-      (await serverFetch<BusinessAccount[]>("/v1/wa/business-accounts")) ?? [];
-    wabas = toWabaOptions(businessAccounts);
+    const businessAccount = await serverFetch<BusinessAccount>("/v1/wa/business-accounts");
+    wabas = toWabaOptions(businessAccount ? [businessAccount] : []);
   } catch (error) {
     wabaError =
       error instanceof ApiError ? error.message : "Could not load your business accounts.";

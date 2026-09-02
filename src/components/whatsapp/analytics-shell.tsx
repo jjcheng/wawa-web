@@ -4,12 +4,10 @@ import { PageHeader } from "@/components/page-header";
 import { AnalyticsFilters } from "@/components/whatsapp/analytics-filters";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { WabaOption } from "@/lib/waba-options";
 
 export function AnalyticsShell({
   title,
   description,
-  wabas,
   wabaError,
   selected,
   rangeDays,
@@ -17,7 +15,6 @@ export function AnalyticsShell({
 }: {
   title: string;
   description: string;
-  wabas: WabaOption[];
   wabaError: string | null;
   selected: string;
   rangeDays: number;
@@ -50,13 +47,7 @@ export function AnalyticsShell({
       <PageHeader
         title={title}
         description={description}
-        action={
-          <AnalyticsFilters
-            wabas={wabas}
-            metaWabaId={selected}
-            range={String(rangeDays)}
-          />
-        }
+        action={<AnalyticsFilters range={String(rangeDays)} />}
       />
       {children}
     </>

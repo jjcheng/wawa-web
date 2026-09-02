@@ -47,14 +47,3 @@ export function templateAnalyticsStart(start: number, end: number) {
 export function formatAnalyticsDate(timestamp: number) {
   return analyticsDateFormatter.format(new Date(timestamp * 1000));
 }
-
-// The costs endpoint spells the same buckets DAILY/MONTHLY, unlike the usage endpoints.
-const COST_GRANULARITY: Record<AnalyticsGranularity, string> = {
-  HALF_HOUR: "HALF_HOUR",
-  DAY: "DAILY",
-  MONTH: "MONTHLY",
-};
-
-export function toCostGranularity(granularity: AnalyticsGranularity) {
-  return COST_GRANULARITY[granularity];
-}

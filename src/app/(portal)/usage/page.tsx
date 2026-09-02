@@ -112,7 +112,6 @@ export default async function UsagePage({ searchParams }: PageProps<"/usage">) {
     <AnalyticsShell
       title="Usage"
       description="Message volume reported by Meta for your WhatsApp Business Accounts."
-      wabas={context.wabas}
       wabaError={context.wabaError}
       selected={context.selected}
       rangeDays={context.rangeDays}

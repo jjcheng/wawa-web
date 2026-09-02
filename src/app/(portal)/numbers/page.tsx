@@ -39,7 +39,7 @@ export default async function PhoneNumbersPage() {
   return (
     <>
       <PageHeader
-        title="WhatsApp business numbers"
+        title="Phone numbers"
         description="Numbers from your WhatsApp Business accounts that are assigned to you."
         action={<EmbeddedSignupButton />}
       />
@@ -69,7 +69,6 @@ export default async function PhoneNumbersPage() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Number</TableHead>
-                  <TableHead>Business account</TableHead>
                   <TableHead>Entry date</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -81,12 +80,6 @@ export default async function PhoneNumbersPage() {
                       {number.name || "Unnamed number"}
                     </TableCell>
                     <TableCell>{formatPhoneNumber(number.phone_number)}</TableCell>
-                    <TableCell>
-                      <p>{number.business_account?.name || "—"}</p>
-                      <p className="text-muted-foreground font-mono text-xs">
-                        {number.meta_waba_id || "—"}
-                      </p>
-                    </TableCell>
                     <TableCell className="text-muted-foreground text-xs">
                       {formatDateTime(number.entry_date)}
                     </TableCell>

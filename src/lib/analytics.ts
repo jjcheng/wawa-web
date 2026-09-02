@@ -1,7 +1,6 @@
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type {
-  ConversationAnalytics,
   MessageAnalytics,
   MessageAnalyticsDataPoint,
   TemplateAnalytics,
@@ -9,16 +8,6 @@ import type {
 
 export function flattenMessagePoints(analytics?: MessageAnalytics | null) {
   return analytics?.data_points ?? [];
-}
-
-/** Currency lives on the parent entry, so fold it into each point. */
-export function flattenCostPoints(analytics?: ConversationAnalytics | null) {
-  return (analytics?.data ?? []).flatMap((entry) =>
-    (entry.data_points ?? []).map((point) => ({
-      ...point,
-      currency: point.currency || entry.currency,
-    })),
-  );
 }
 
 export function totalMessages(
@@ -34,15 +23,6 @@ export function flattenTemplatePoints(analytics?: TemplateAnalytics[] | null) {
 
 export function formatCount(value: number) {
   return value.toLocaleString("en-US");
-}
-
-export function formatCost(value: number, currency?: string) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency || "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 4,
-  }).format(value);
 }
 
 export async function loadAnalytics<T>(

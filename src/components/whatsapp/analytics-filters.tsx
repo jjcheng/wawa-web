@@ -11,17 +11,8 @@ import {
 } from "@/components/ui/select";
 import { useNavigationProgress } from "@/components/nav/navigation-progress";
 import { ANALYTICS_RANGES } from "@/lib/analytics-range";
-import type { WabaOption } from "@/lib/waba-options";
 
-export function AnalyticsFilters({
-  wabas,
-  metaWabaId,
-  range,
-}: {
-  wabas: WabaOption[];
-  metaWabaId: string;
-  range: string;
-}) {
+export function AnalyticsFilters({ range }: { range: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -37,19 +28,6 @@ export function AnalyticsFilters({
 
   return (
     <div className="flex flex-wrap gap-2">
-      <Select value={metaWabaId} onValueChange={(value) => setParam("meta_waba_id", value)}>
-        <SelectTrigger className="w-56" aria-label="WhatsApp Business Account">
-          <SelectValue placeholder="Select an account" />
-        </SelectTrigger>
-        <SelectContent>
-          {wabas.map((waba) => (
-            <SelectItem key={waba.metaWabaId} value={waba.metaWabaId}>
-              {waba.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
       <Select value={range} onValueChange={(value) => setParam("range", value)}>
         <SelectTrigger className="w-40" aria-label="Date range">
           <SelectValue />

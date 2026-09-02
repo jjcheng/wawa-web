@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  CircleDollarSign,
   FileText,
   Gauge,
   LayoutDashboard,
@@ -38,10 +37,7 @@ const SECTIONS = [
   },
   {
     label: "Analytics",
-    items: [
-      { href: "/usage", label: "Usage", icon: Gauge },
-      { href: "/costs", label: "Costs", icon: CircleDollarSign },
-    ],
+    items: [{ href: "/usage", label: "Usage", icon: Gauge }],
   },
 ];
 

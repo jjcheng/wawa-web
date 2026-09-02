@@ -137,7 +137,7 @@ export function Topbar({ user }: { user: User }) {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="h-auto min-w-0 justify-start px-2 py-1 text-left leading-tight"
+              className="h-auto min-w-0 cursor-pointer justify-start px-2 py-1 text-left leading-tight"
             >
               <span className="min-w-0">
                 <span className="block truncate text-sm font-medium">

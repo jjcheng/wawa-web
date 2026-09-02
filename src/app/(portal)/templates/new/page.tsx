@@ -21,9 +21,8 @@ export default async function CreateTemplatePage() {
   let wabas: WabaOption[] = [];
   let loadError: string | null = null;
   try {
-    const businessAccounts =
-      (await serverFetch<BusinessAccount[]>("/v1/wa/business-accounts")) ?? [];
-    wabas = toWabaOptions(businessAccounts);
+    const businessAccount = await serverFetch<BusinessAccount>("/v1/wa/business-accounts");
+    wabas = toWabaOptions(businessAccount ? [businessAccount] : []);
   } catch (error) {
     loadError =
       error instanceof ApiError ? error.message : "Could not load your business accounts.";
