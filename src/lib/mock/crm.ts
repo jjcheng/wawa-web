@@ -1,25 +1,3 @@
-export const mockCustomers = [
-  {
-    Name: "Amelia Tan",
-    Phone: "+65 9123 4567",
-    Tags: "Instagram",
-    "Last contact": "2 hours ago",
-  },
-  {
-    Name: "Ben Ortiz",
-    Phone: "+1 415 555 0138",
-    Tags: "Google",
-    "Last contact": "Yesterday",
-  },
-  { Name: "Chloe Ng", Phone: "+65 8123 9911", Tags: "Instagram", "Last contact": "3 days ago" },
-  {
-    Name: "Daniel Reyes",
-    Phone: "+63 917 555 0117",
-    Tags: "Google",
-    "Last contact": "1 week ago",
-  },
-];
-
 // System/announcement messages sent by CoreConcept to this account's users.
 export const mockInboxMessages = [
   {

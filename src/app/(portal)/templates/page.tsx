@@ -5,21 +5,29 @@ import { ExternalLink } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
+import { TEMPLATE_CATEGORIES } from "@/lib/api/schemas";
 import type { BusinessAccount, BusinessPortfolio, Template, TemplateListResponse } from "@/lib/api/types";
 import { metaManageTemplatesUrl } from "@/lib/meta-links";
 import { toWabaOptions, type WabaOption } from "@/lib/waba-options";
+import { WHATSAPP_LANGUAGE_CODES } from "@/lib/whatsapp-languages";
 import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 import { TemplatesTable } from "./templates-table";
 
 export const metadata: Metadata = { title: "Templates" };
+
+const STATUS_OPTIONS = [
+  "ALL",
+  "APPROVED",
+  "PENDING",
+  "REJECTED",
+  "PAUSED",
+  "DISABLED",
+  "IN_APPEAL",
+  "PENDING_DELETION",
+];
+const QUALITY_SCORE_OPTIONS = ["ALL", "GREEN", "YELLOW", "RED", "UNKNOWN"];
 
 export default async function TemplatesPage({ searchParams }: PageProps<"/templates">) {
   let wabas: WabaOption[] = [];
@@ -49,12 +57,40 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
       ? requested
       : wabas[0]?.metaWabaId) ?? "";
   const limit = typeof params.limit === "string" ? params.limit : "10";
+  const requestedCategory = typeof params.category === "string" ? params.category : undefined;
+  const category =
+    requestedCategory && (TEMPLATE_CATEGORIES as readonly string[]).includes(requestedCategory)
+      ? requestedCategory
+      : "ALL";
+  const nameOrContent =
+    typeof params.name_or_content === "string" ? params.name_or_content : "";
+  const requestedStatus = typeof params.status === "string" ? params.status : undefined;
+  const status = requestedStatus && STATUS_OPTIONS.includes(requestedStatus) ? requestedStatus : "ALL";
+  const requestedQualityScore =
+    typeof params.quality_score === "string" ? params.quality_score : undefined;
+  const qualityScore =
+    requestedQualityScore && QUALITY_SCORE_OPTIONS.includes(requestedQualityScore)
+      ? requestedQualityScore
+      : "ALL";
+  const requestedLanguage = typeof params.language === "string" ? params.language : undefined;
+  const language =
+    requestedLanguage && (WHATSAPP_LANGUAGE_CODES as readonly string[]).includes(requestedLanguage)
+      ? requestedLanguage
+      : "ALL";
   let afterCursor: string | undefined;
 
   try {
     if (selected) {
       const response = await serverFetch<TemplateListResponse>("/v1/wa/templates", {
-        query: { meta_waba_id: selected, limit },
+        query: {
+          meta_waba_id: selected,
+          limit,
+          category: category === "ALL" ? undefined : category,
+          name_or_content: nameOrContent || undefined,
+          status: status === "ALL" ? undefined : status,
+          quality_score: qualityScore === "ALL" ? undefined : qualityScore,
+          language: language === "ALL" ? undefined : language,
+        },
       });
       templates = response?.items ?? [];
       const additionalData = response?.additional_data as
@@ -102,22 +138,16 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
         </Alert>
       ) : null}
 
-      {!loadError && templates.length === 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">No templates yet</CardTitle>
-            <CardDescription>
-              Templates created in WhatsApp Manager will appear here once Meta has reviewed
-              them.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      ) : null}
-
-      {templates.length > 0 ? (
+      {!loadError && selected ? (
         <TemplatesTable
+          key={`${limit}-${category}-${nameOrContent}-${status}-${qualityScore}-${language}`}
           metaWabaId={selected}
           limit={limit}
+          category={category}
+          nameOrContent={nameOrContent}
+          status={status}
+          qualityScore={qualityScore}
+          language={language}
           initialTemplates={templates}
           initialAfterCursor={afterCursor}
         />

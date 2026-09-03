@@ -2,7 +2,6 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -24,12 +23,15 @@ export function DeleteTemplateButton({
   id,
   metaWabaId,
   name,
+  triggerVariant = "outline",
+  onDeleted,
 }: {
   id: string;
   metaWabaId: string;
   name: string;
+  triggerVariant?: "outline" | "destructive";
+  onDeleted?: () => void;
 }) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
 
   const mutation = useMutation({
@@ -41,7 +43,7 @@ export function DeleteTemplateButton({
     onSuccess: () => {
       toast.success("Template deleted.");
       setOpen(false);
-      router.refresh();
+      onDeleted?.();
     },
     onError: (error) => toast.error(toApiError(error).message),
   });
@@ -49,7 +51,7 @@ export function DeleteTemplateButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className={SMALL_BUTTON_HEIGHT}>
+        <Button variant={triggerVariant} size="sm" className={SMALL_BUTTON_HEIGHT}>
           Delete
         </Button>
       </DialogTrigger>

@@ -42,6 +42,11 @@ export function NavigationProgressProvider({ children }: { children: ReactNode }
 
   useEffect(() => {
     window.clearTimeout(timeoutRef.current);
+    const resetId = window.setTimeout(() => {
+      setPending(false);
+      setPendingRoute(null);
+    }, 0);
+    return () => window.clearTimeout(resetId);
   }, [currentRoute]);
 
   useEffect(() => {

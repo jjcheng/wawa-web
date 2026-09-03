@@ -13,7 +13,6 @@ export function metaBusinessManagerUrl({
   return `https://business.facebook.com/latest/whatsapp_manager/overview?business_id=${encodeURIComponent(trimmedPortfolioId)}&asset_id=${encodeURIComponent(trimmedAccountId)}`;
 }
 
-
 /** Builds a link to Meta's WhatsApp Manager message templates tab for a business portfolio/account pair. */
 export function metaManageTemplatesUrl({
   portfolioId,

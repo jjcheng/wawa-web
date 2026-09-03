@@ -21,7 +21,10 @@ export default async function ProfilePage() {
 
   return (
     <>
-      <PageHeader title="Account Settings" description="Manage your profile and login password" />
+      <PageHeader
+        title="Account Settings"
+        description="Manage your profile and login password"
+      />
       <SettingsTabs />
       <Card>
         <CardHeader>
@@ -32,8 +35,8 @@ export default async function ProfilePage() {
             ) : null}
           </div>
           <CardDescription>
-            Signed in as {formatPhoneNumber(user.phone_number)} — your phone number cannot be
-            changed here.
+            Signed in as {formatPhoneNumber(user.phone_number, user.country_code)} — your phone
+            number cannot be changed here.
           </CardDescription>
         </CardHeader>
         <CardContent>

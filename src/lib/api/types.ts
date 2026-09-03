@@ -23,6 +23,7 @@ export type UserStatus = "ACTIVE" | "PENDING_PASSWORD" | "INACTIVE";
 export type UserType = "MASTER" | "OPERATOR" | "ACCOUNT";
 
 export type User = DtoBase & {
+  country_code?: string;
   name?: string;
   phone_number?: string;
   email?: string;
@@ -59,6 +60,17 @@ export type EmbeddedSignupResult = {
   phone_number?: PhoneNumber;
 };
 
+export type Customer = {
+  id: number;
+  entry_date?: string;
+  last_update?: string;
+  display_name: string;
+  country_code: string;
+  phone_number: string;
+  bsuid?: string;
+  tags?: string[];
+};
+
 export type TemplateQualityScore = {
   score?: string;
   date?: number;
@@ -73,10 +85,22 @@ export type Template = {
   category?: string;
   language?: string;
   parameter_format?: string;
+  preview_html?: string;
   components?: Record<string, unknown>[];
   quality_score?: TemplateQualityScore;
   rejected_reason?: string;
   previous_category?: string;
+  meta_edit_template_url?: string;
+};
+
+export type SampleTemplate = {
+  id: number;
+  name?: string;
+  category?: string;
+  language?: string;
+  parameter_format?: string;
+  components?: Record<string, unknown>[];
+  preview_html?: string;
 };
 
 export type TemplateListResponse = {

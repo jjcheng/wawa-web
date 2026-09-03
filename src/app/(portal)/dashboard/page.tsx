@@ -65,7 +65,7 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2 hidden">
+      <div className="mt-6 grid hidden gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">WhatsApp numbers</CardTitle>
@@ -112,7 +112,7 @@ export default async function DashboardPage() {
           <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">Phone</span>
-              <span>{formatPhoneNumber(user.phone_number)}</span>
+              <span>{formatPhoneNumber(user.phone_number, user.country_code)}</span>
             </div>
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">Email</span>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -36,36 +36,14 @@ export default async function CreateTemplatePage() {
 
   return (
     <>
-      <Button asChild variant="ghost" className="-mt-2 -ml-2 mb-2">
+      <Button asChild variant="ghost" className="-mt-2 mb-2 -ml-2">
         <Link href="/templates">
           <ArrowLeft className="size-4" />
           Back
         </Link>
       </Button>
 
-      <PageHeader
-        title="Create template"
-        description={
-          <>
-            For complete template creation features, use{" "}
-            {managerUrl ? (
-              <a
-                href={managerUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-foreground inline-flex items-center gap-1 font-semibold underline underline-offset-2"
-              >
-                WhatsApp Manager
-                <ExternalLink className="size-3.5" />
-              </a>
-            ) : (
-              "WhatsApp Manager"
-            )}
-            , this is recommended by Meta. This page is only suitable to create a simple
-            template with no variable.
-          </>
-        }
-      />
+      <PageHeader title="Create template" />
 
       {loadError ? (
         <Alert variant="destructive" className="mb-4">
@@ -76,6 +54,23 @@ export default async function CreateTemplatePage() {
       {waba && !loadError ? (
         <Card>
           <CardContent>
+            <p className="text-muted-foreground mb-4 text-sm">
+              For complete template creation features, use{" "}
+              {managerUrl ? (
+                <a
+                  href={managerUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-foreground font-semibold underline underline-offset-2"
+                >
+                  WhatsApp Manager
+                </a>
+              ) : (
+                "WhatsApp Manager"
+              )}
+              , this is recommended by Meta. Use this page only to create a simple templates
+              with no variable.
+            </p>
             <CreateTemplateForm waba={waba} />
           </CardContent>
         </Card>

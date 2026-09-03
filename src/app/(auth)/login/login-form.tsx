@@ -6,6 +6,7 @@ import { useFormStatus } from "react-dom";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { CountryCodeSelect } from "@/components/country-code-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -41,21 +42,27 @@ export function LoginForm({ next }: { next?: string }) {
 
       <div className="space-y-2">
         <Label htmlFor="phone_number">Phone number</Label>
-        <Input
-          id="phone_number"
-          name="phone_number"
-          inputMode="tel"
-          autoComplete="username"
-          placeholder="e.g. 6590909090"
-          className={MEDIUM_BUTTON_HEIGHT}
-          aria-invalid={Boolean(fieldError(state, "phone_number"))}
-          required
-        />
+        <div className="flex gap-2">
+          <CountryCodeSelect name="country_code" />
+          <Input
+            id="phone_number"
+            name="phone_number"
+            inputMode="tel"
+            autoComplete="username"
+            placeholder="enter your phone number"
+            className={cn("flex-1", MEDIUM_BUTTON_HEIGHT)}
+            aria-invalid={Boolean(fieldError(state, "phone_number"))}
+            required
+          />
+        </div>
+        {fieldError(state, "country_code") ? (
+          <p className="text-destructive text-sm">{fieldError(state, "country_code")}</p>
+        ) : null}
         {fieldError(state, "phone_number") ? (
           <p className="text-destructive text-sm">{fieldError(state, "phone_number")}</p>
         ) : (
           <p className="text-muted-foreground text-sm">
-            Start with country code, omit space, + or -.
+            Select country code and enter the phone number without it.
           </p>
         )}
       </div>

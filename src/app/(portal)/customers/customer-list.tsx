@@ -1,16 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { apiFetch } from "@/lib/api/client";
+import { toApiError } from "@/lib/api/errors";
 import { cn } from "@/lib/utils";
 
-const COLUMNS = ["Name", "Phone", "Tags", "Last contact"];
-const TAGS = ["All", "Instagram", "Google"] as const;
+const COLUMNS = ["Name", "Phone", "Tags"];
 
-export function CustomerList({ rows }: { rows: Record<string, string>[] }) {
-  const [selectedTag, setSelectedTag] = useState<(typeof TAGS)[number]>("All");
+export function CustomerList({
+  rows,
+  newTags = [],
+}: {
+  rows: Record<string, string>[];
+  newTags?: string[];
+}) {
+  const [tags, setTags] = useState<string[]>([]);
+  const [selectedTag, setSelectedTag] = useState("All");
+  const [tagError, setTagError] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiFetch<string[]>("v1/customers/tags")
+      .then((result) => setTags(Array.isArray(result) ? result : []))
+      .catch((error) => setTagError(toApiError(error).message));
+  }, []);
+
+  const tagOptions = ["All", ...new Set([...tags, ...newTags])];
 
   const filteredRows =
     selectedTag === "All"
@@ -24,7 +41,7 @@ export function CustomerList({ rows }: { rows: Record<string, string>[] }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        {TAGS.map((tag) => (
+        {tagOptions.map((tag) => (
           <Button
             key={tag}
             size="sm"
@@ -36,6 +53,7 @@ export function CustomerList({ rows }: { rows: Record<string, string>[] }) {
           </Button>
         ))}
       </div>
+      {tagError ? <p className="text-destructive text-sm">{tagError}</p> : null}
 
       <Card>
         <CardContent className="overflow-x-auto">

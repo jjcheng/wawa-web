@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -28,6 +29,7 @@ import {
   type CreateTemplateInput,
 } from "@/lib/api/schemas";
 import type { Template } from "@/lib/api/types";
+import { useSelectedSampleTemplate } from "./template-source-context";
 import type { WabaOption } from "@/lib/waba-options";
 import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 
@@ -40,10 +42,12 @@ const FORM_FIELDS: (keyof CreateTemplateInput)[] = [
 
 export function CreateTemplateForm({ waba }: { waba: WabaOption }) {
   const router = useRouter();
+  const selectedSample = useSelectedSampleTemplate();
   const {
     register,
     handleSubmit,
     control,
+    reset,
     setError,
     formState: { errors },
   } = useForm<CreateTemplateInput>({
@@ -58,6 +62,29 @@ export function CreateTemplateForm({ waba }: { waba: WabaOption }) {
       footer_text: "",
     },
   });
+
+  useEffect(() => {
+    if (!selectedSample) return;
+
+    const componentText = (type: string) => {
+      const text = selectedSample.components?.find(
+        (component) => String(component.type ?? "").toUpperCase() === type,
+      )?.text;
+      return typeof text === "string" ? text : "";
+    };
+    const category =
+      TEMPLATE_CATEGORIES.find((option) => option === selectedSample.category) ?? "UTILITY";
+
+    reset({
+      meta_waba_id: waba.metaWabaId,
+      name: selectedSample.name ?? "",
+      language: selectedSample.language ?? "en_US",
+      category,
+      header_text: componentText("HEADER"),
+      body_text: componentText("BODY"),
+      footer_text: componentText("FOOTER"),
+    });
+  }, [reset, selectedSample, waba.metaWabaId]);
 
   const mutation = useMutation({
     mutationFn: (values: CreateTemplateInput) =>
@@ -94,10 +121,9 @@ export function CreateTemplateForm({ waba }: { waba: WabaOption }) {
       onSubmit={handleSubmit((values) => mutation.mutate(values))}
       className="max-w-xl space-y-4"
     >
-
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="name">Template name</Label>
+          <Label htmlFor="name">Name</Label>
           <Input id="name" placeholder="order_confirmation" {...register("name")} />
           {errors.name ? (
             <p className="text-destructive text-sm">{errors.name.message}</p>
@@ -178,9 +204,7 @@ export function CreateTemplateForm({ waba }: { waba: WabaOption }) {
         {errors.body_text ? (
           <p className="text-destructive text-sm">{errors.body_text.message}</p>
         ) : (
-          <p className="text-muted-foreground text-sm">
-            {""}
-          </p>
+          <p className="text-muted-foreground text-sm">{""}</p>
         )}
       </div>
 

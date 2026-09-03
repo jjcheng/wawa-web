@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { WHATSAPP_LANGUAGE_CODES } from "@/lib/whatsapp-languages";
+
 // Mirrors helper.IsValidPhoneNumber in wawa-go.
 const phoneNumber = z
   .string()
@@ -15,6 +17,7 @@ const password = z
   .regex(/\p{N}/u, "Password must contain at least 1 number");
 
 export const loginSchema = z.object({
+  country_code: z.string().trim().min(1, "Select a country code"),
   phone_number: phoneNumber,
   password: z.string().min(1, "Enter your password"),
 });
@@ -67,37 +70,9 @@ export type EmbeddedSignupInput = z.infer<typeof embeddedSignupSchema>;
 
 export const TEMPLATE_CATEGORIES = ["MARKETING", "UTILITY", "AUTHENTICATION"] as const;
 
-// Meta's template language codes, limited to the ones this portal supports.
-export const TEMPLATE_LANGUAGES = [
-  { code: "en_US", label: "English (US)" },
-  { code: "en_GB", label: "English (UK)" },
-  { code: "en", label: "English" },
-  { code: "zh_CN", label: "Chinese (Simplified)" },
-  { code: "zh_HK", label: "Chinese (Hong Kong)" },
-  { code: "zh_TW", label: "Chinese (Traditional)" },
-  { code: "ms", label: "Malay" },
-  { code: "ta", label: "Tamil" },
-  { code: "id", label: "Indonesian" },
-  { code: "th", label: "Thai" },
-  { code: "vi", label: "Vietnamese" },
-  { code: "hi", label: "Hindi" },
-  { code: "ja", label: "Japanese" },
-  { code: "ko", label: "Korean" },
-  { code: "ar", label: "Arabic" },
-  { code: "es", label: "Spanish" },
-  { code: "pt_BR", label: "Portuguese (Brazil)" },
-  { code: "fr", label: "French" },
-  { code: "de", label: "German" },
-  { code: "it", label: "Italian" },
-  { code: "ru", label: "Russian" },
-  { code: "tr", label: "Turkish" },
-  { code: "nl", label: "Dutch" },
-  { code: "fil", label: "Filipino" },
-] as const;
+export { WHATSAPP_LANGUAGES as TEMPLATE_LANGUAGES } from "@/lib/whatsapp-languages";
 
-const TEMPLATE_LANGUAGE_CODES = TEMPLATE_LANGUAGES.map(
-  (language) => language.code,
-) as unknown as [string, ...string[]];
+const TEMPLATE_LANGUAGE_CODES = WHATSAPP_LANGUAGE_CODES;
 
 export const createTemplateSchema = z.object({
   meta_waba_id: z.string().min(1, "Select a WhatsApp Business Account"),
@@ -105,7 +80,7 @@ export const createTemplateSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, "Enter a template name")
+    .min(1, "Enter name")
     .max(512)
     .regex(/^[a-z0-9_]+$/, "Use lowercase letters, numbers and underscores only"),
   language: z.enum(TEMPLATE_LANGUAGE_CODES, { message: "Select a language" }),

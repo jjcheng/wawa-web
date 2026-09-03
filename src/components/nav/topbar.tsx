@@ -19,11 +19,13 @@ import {
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { apiFetch } from "@/lib/api/client";
 import { logoutAction } from "@/lib/auth/actions";
+import { formatPhoneNumber } from "@/lib/format";
 import { metaBusinessManagerUrl } from "@/lib/meta-links";
 import type { BusinessAccount, BusinessPortfolio, User } from "@/lib/api/types";
 
 function initials(user: User) {
-  const source = user.name?.trim() || user.phone_number || "?";
+  const source =
+    user.name?.trim() || formatPhoneNumber(user.phone_number, user.country_code) || "?";
   return source.slice(0, 2).toUpperCase();
 }
 
@@ -46,7 +48,8 @@ function readBusinessContext(user: User): BusinessContext | null {
     if (!value) return null;
 
     const context = JSON.parse(value) as BusinessContext;
-    if (typeof context.portfolioName !== "string" && context.portfolioName !== null) return null;
+    if (typeof context.portfolioName !== "string" && context.portfolioName !== null)
+      return null;
     if (typeof context.portfolioId !== "string" && context.portfolioId !== null) return null;
     if (typeof context.accountName !== "string" && context.accountName !== null) return null;
     if (typeof context.accountId !== "string" && context.accountId !== null) return null;
@@ -59,9 +62,9 @@ function readBusinessContext(user: User): BusinessContext | null {
 function hasBusinessContextNames(context: BusinessContext) {
   return Boolean(
     context.portfolioName?.trim() &&
-      context.portfolioId?.trim() &&
-      context.accountName?.trim() &&
-      context.accountId?.trim(),
+    context.portfolioId?.trim() &&
+    context.accountName?.trim() &&
+    context.accountId?.trim(),
   );
 }
 
@@ -146,7 +149,9 @@ export function Topbar({ user }: { user: User }) {
             <div className="space-y-3 p-1 text-sm">
               <div>
                 <p className="font-medium">Business Portfolio</p>
-                <p className="text-muted-foreground truncate">{businessContext.portfolioName}</p>
+                <p className="text-muted-foreground truncate">
+                  {businessContext.portfolioName}
+                </p>
                 <p className="text-muted-foreground font-mono text-xs">
                   {businessContext.portfolioId}
                 </p>
@@ -154,7 +159,9 @@ export function Topbar({ user }: { user: User }) {
               <div>
                 <p className="font-medium">Business Account</p>
                 <p className="text-muted-foreground truncate">{businessContext.accountName}</p>
-                <p className="text-muted-foreground font-mono text-xs">{businessContext.accountId}</p>
+                <p className="text-muted-foreground font-mono text-xs">
+                  {businessContext.accountId}
+                </p>
               </div>
               <Button asChild className="w-full">
                 <a
@@ -184,7 +191,7 @@ export function Topbar({ user }: { user: User }) {
                 <AvatarFallback className="text-xs">{initials(user)}</AvatarFallback>
               </Avatar>
               <span className="hidden text-sm sm:inline">
-                {user.name || user.phone_number}
+                {user.name || formatPhoneNumber(user.phone_number, user.country_code)}
               </span>
             </Button>
           </DropdownMenuTrigger>
@@ -192,7 +199,7 @@ export function Topbar({ user }: { user: User }) {
             <DropdownMenuLabel className="font-normal">
               <p className="text-sm font-medium">{user.name || "Account"}</p>
               <p className="text-muted-foreground text-xs">
-                {user.email || user.phone_number}
+                {user.email || formatPhoneNumber(user.phone_number, user.country_code)}
               </p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

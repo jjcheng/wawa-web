@@ -1,5 +1,6 @@
 "use client";
 
+import { Eye } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -7,10 +8,12 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { DeleteTemplateButton } from "@/components/whatsapp/delete-template-button";
 import type { Template } from "@/lib/api/types";
 import { SMALL_BUTTON_HEIGHT } from "@/lib/utils";
 
@@ -18,14 +21,21 @@ function componentText(component: Record<string, unknown>) {
   return typeof component.text === "string" ? component.text : null;
 }
 
-export function ViewTemplateButton({ template }: { template: Template }) {
+export function ViewTemplateButton({
+  template,
+  onDeleted,
+  iconOnly = false,
+}: {
+  template: Template;
+  onDeleted?: () => void;
+  iconOnly?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const components = template.components ?? [];
   const qualityReasons = template.quality_score?.reasons ?? [];
 
   const details: { label: string; value: string }[] = [
     { label: "Template ID", value: template.id },
-    { label: "WABA", value: template.meta_waba_id ?? "—" },
     { label: "Parameter format", value: template.parameter_format || "—" },
     { label: "Quality score", value: template.quality_score?.score || "—" },
     { label: "Previous category", value: template.previous_category || "—" },
@@ -35,13 +45,19 @@ export function ViewTemplateButton({ template }: { template: Template }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className={SMALL_BUTTON_HEIGHT}>
-          View
+        <Button
+          variant={iconOnly ? "ghost" : "outline"}
+          size={iconOnly ? "icon-sm" : "sm"}
+          className={iconOnly ? undefined : SMALL_BUTTON_HEIGHT}
+          aria-label={iconOnly ? "Preview template" : undefined}
+          title={iconOnly ? "Preview template" : undefined}
+        >
+          {iconOnly ? <Eye /> : "View"}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[80vh] min-w-0 overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{template.name || "Template"}</DialogTitle>
+          <DialogTitle className="text-lg">{template.name || "Template"}</DialogTitle>
           <DialogDescription>
             {[template.category, template.language, template.status]
               .filter(Boolean)
@@ -71,31 +87,53 @@ export function ViewTemplateButton({ template }: { template: Template }) {
           </div>
         ) : null}
 
-        {components.length === 0 ? (
+        <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">Preview</p>
+        {template.preview_html ? (
+          <div
+            className="min-w-0 overflow-hidden [&>div:first-child]:!w-auto [&>div:first-child]:!max-w-none [&>div:first-child]:!bg-transparent [&>div:first-child]:!p-0 [&_*]:max-w-full"
+            dangerouslySetInnerHTML={{ __html: template.preview_html }}
+          />
+        ) : components.length === 0 ? (
           <p className="text-muted-foreground text-sm">
             Meta did not return any components for this template.
           </p>
         ) : (
-          <div className="space-y-3">
+          <div className="min-w-0 overflow-hidden">
             {components.map((component, index) => {
               const text = componentText(component);
+              if (!text) return null;
+
+              const type = String(component.type ?? "BODY").toUpperCase();
+              const textClassName =
+                type === "HEADER"
+                  ? "font-semibold"
+                  : type === "FOOTER"
+                    ? "text-muted-foreground text-xs"
+                    : "text-sm";
+
               return (
-                <div key={index} className="rounded-md border p-3">
-                  <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                    {String(component.type ?? "COMPONENT")}
-                  </p>
-                  {text ? (
-                    <p className="mt-1 text-sm whitespace-pre-wrap">{text}</p>
-                  ) : (
-                    <pre className="text-muted-foreground mt-1 overflow-x-auto text-xs">
-                      {JSON.stringify(component, null, 2)}
-                    </pre>
-                  )}
-                </div>
+                <p
+                  key={index}
+                  className={`${index > 0 ? "mt-2" : ""} ${textClassName} break-all whitespace-pre-wrap`}
+                >
+                  {text}
+                </p>
               );
             })}
           </div>
         )}
+        <DialogFooter>
+          <DeleteTemplateButton
+            id={template.id}
+            metaWabaId={template.meta_waba_id ?? ""}
+            name={template.name ?? ""}
+            triggerVariant="destructive"
+            onDeleted={() => {
+              setOpen(false);
+              onDeleted?.();
+            }}
+          />
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

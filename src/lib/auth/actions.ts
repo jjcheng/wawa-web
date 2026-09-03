@@ -36,6 +36,7 @@ export async function loginAction(
   formData: FormData,
 ): Promise<LoginState> {
   const parsed = loginSchema.safeParse({
+    country_code: formData.get("country_code"),
     phone_number: formData.get("phone_number"),
     password: formData.get("password"),
   });
@@ -86,9 +87,7 @@ export async function loginAction(
   redirect(safeNextPath(formData.get("next")));
 }
 
-export async function completeEmbeddedSignup(
-  input: unknown,
-): Promise<EmbeddedSignupState> {
+export async function completeEmbeddedSignup(input: unknown): Promise<EmbeddedSignupState> {
   const parsed = embeddedSignupSchema.safeParse(input);
   if (!parsed.success) {
     return {
@@ -122,11 +121,7 @@ export async function completeEmbeddedSignup(
     return { message: "WhatsApp onboarding succeeded but no access token was issued." };
   }
 
-  (await cookies()).set(
-    serverEnv.SESSION_COOKIE_NAME,
-    accessToken,
-    sessionCookieOptions(),
-  );
+  (await cookies()).set(serverEnv.SESSION_COOKIE_NAME, accessToken, sessionCookieOptions());
 
   return { status: envelope.data?.status };
 }

@@ -34,7 +34,9 @@ export function formatDate(value?: string | Date | null) {
   return date ? dateFormatter.format(date) : "—";
 }
 
-export function formatPhoneNumber(value?: string | null) {
+export function formatPhoneNumber(value?: string | null, countryCode?: string | null) {
   if (!value) return "—";
-  return value.startsWith("+") ? value : `+${value}`;
+  if (value.startsWith("+")) return value;
+  const normalizedCountryCode = countryCode?.replace(/^\+/, "").trim();
+  return normalizedCountryCode ? `+${normalizedCountryCode} ${value}` : `+${value}`;
 }
