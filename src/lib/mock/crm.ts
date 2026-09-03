@@ -8,7 +8,8 @@ export const mockInboxMessages = [
   },
   {
     subject: "Scheduled maintenance on Sept 6",
-    preview: "CoreConcept will run brief maintenance between 2–3 AM SGT. No downtime expected.",
+    preview:
+      "CoreConcept will run brief maintenance between 2–3 AM SGT. No downtime expected.",
     date: "Yesterday",
     unread: true,
   },
@@ -23,30 +24,6 @@ export const mockInboxMessages = [
     preview: "View your conversation volume and template performance for last month.",
     date: "1 week ago",
     unread: false,
-  },
-];
-
-export const mockCampaigns = [
-  {
-    Name: "October promo",
-    Audience: "Retail leads",
-    Status: "Draft",
-    Sent: "—",
-    "Open rate": "—",
-  },
-  {
-    Name: "Reorder reminder",
-    Audience: "Repeat customers",
-    Status: "Completed",
-    Sent: "1,204",
-    "Open rate": "62%",
-  },
-  {
-    Name: "Welcome series",
-    Audience: "New signups",
-    Status: "Running",
-    Sent: "318",
-    "Open rate": "74%",
   },
 ];
 

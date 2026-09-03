@@ -82,7 +82,7 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create customer</DialogTitle>
+            <DialogTitle>Add customer</DialogTitle>
             <DialogDescription>Add a customer to your account.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -139,7 +139,7 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
                 mutation.isPending
               }
             >
-              {mutation.isPending ? "Creating..." : "Create customer"}
+              {mutation.isPending ? "Adding..." : "Add"}
             </Button>
           </DialogFooter>
         </DialogContent>

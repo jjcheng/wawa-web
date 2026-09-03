@@ -85,6 +85,7 @@ export type Template = {
   category?: string;
   language?: string;
   parameter_format?: string;
+  raw_html?: string;
   preview_html?: string;
   components?: Record<string, unknown>[];
   quality_score?: TemplateQualityScore;

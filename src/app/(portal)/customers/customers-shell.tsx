@@ -6,17 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { AddCustomerMenu } from "./add-customer-menu";
 import { CustomerList } from "./customer-list";
 import type { Customer } from "@/lib/api/types";
-import { formatPhoneNumber } from "@/lib/format";
-
-function customerRow(customer: Customer): Record<string, string> {
-  return {
-    Name: customer.display_name,
-    Phone: formatPhoneNumber(customer.phone_number, customer.country_code),
-    Tags: customer.tags?.join(", ") ?? "",
-  };
-}
-
-export function CustomersShell({ initialRows }: { initialRows: Record<string, string>[] }) {
+export function CustomersShell({ initialRows }: { initialRows: Customer[] }) {
   const [rows, setRows] = useState(initialRows);
   const [newTags, setNewTags] = useState<string[]>([]);
 
@@ -29,7 +19,7 @@ export function CustomersShell({ initialRows }: { initialRows: Record<string, st
           <div className="mt-2">
             <AddCustomerMenu
               onCreated={(customer) => {
-                setRows((currentRows) => [customerRow(customer), ...currentRows]);
+                setRows((currentRows) => [customer, ...currentRows]);
                 setNewTags((currentTags) => [
                   ...new Set([...currentTags, ...(customer.tags ?? [])]),
                 ]);
@@ -38,7 +28,22 @@ export function CustomersShell({ initialRows }: { initialRows: Record<string, st
           </div>
         }
       />
-      <CustomerList rows={rows} newTags={newTags} />
+      <CustomerList
+        rows={rows}
+        newTags={newTags}
+        onDeleted={(customerId) => {
+          setRows((currentRows) =>
+            currentRows.filter((customer) => customer.id !== customerId),
+          );
+          setNewTags((currentTags) =>
+            currentTags.filter((tag) =>
+              rows.some(
+                (customer) => customer.tags?.includes(tag) && customer.id !== customerId,
+              ),
+            ),
+          );
+        }}
+      />
     </>
   );
 }

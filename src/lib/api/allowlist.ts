@@ -11,6 +11,7 @@ const ALLOWED: { method: string; pattern: RegExp }[] = [
   { method: "POST", pattern: /^v1\/account\/users\/me\/initial-password$/ },
   { method: "POST", pattern: /^v1\/customers$/ },
   { method: "GET", pattern: /^v1\/customers$/ },
+  { method: "DELETE", pattern: /^v1\/customers\/\d+$/ },
   { method: "GET", pattern: /^v1\/customers\/tags$/ },
   { method: "GET", pattern: /^v1\/wa\/user-phone-numbers$/ },
   { method: "DELETE", pattern: /^v1\/wa\/phone-numbers$/ },
