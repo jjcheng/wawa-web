@@ -24,6 +24,7 @@ npm run dev
 | `SESSION_COOKIE_NAME` | Session cookie issued by the API (`wawa_session`) |
 | `NEXT_META_APP_ID` | Meta app ID used by Embedded Signup |
 | `NEXT_META_EMBEDDED_SIGNUP_CONFIG_ID` | Meta login configuration ID |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Maps key with Places API enabled for campaign locations |
 
 ### Authentication header
 
