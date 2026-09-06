@@ -1,6 +1,14 @@
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export function PreviewPage({
   title,
@@ -22,28 +30,24 @@ export function PreviewPage({
       />
       <Card>
         <CardContent className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-muted-foreground border-b text-left">
+          <Table>
+            <TableHeader>
+              <TableRow>
                 {columns.map((column) => (
-                  <th key={column} className="px-2 py-2 font-medium">
-                    {column}
-                  </th>
+                  <TableHead key={column}>{column}</TableHead>
                 ))}
-              </tr>
-            </thead>
-            <tbody>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {rows.map((row, index) => (
-                <tr key={index} className="border-b last:border-0">
+                <TableRow key={index}>
                   {columns.map((column) => (
-                    <td key={column} className="px-2 py-2">
-                      {row[column]}
-                    </td>
+                    <TableCell key={column}>{row[column]}</TableCell>
                   ))}
-                </tr>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </>

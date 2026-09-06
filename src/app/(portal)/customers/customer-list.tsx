@@ -5,16 +5,23 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { TableEmptyState } from "@/components/table-empty-state";
+import { TableHeaderMultiSelect } from "@/components/table-header-multi-select";
 import { CustomerDetailsButton } from "@/components/customer-details-button";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import type { Customer } from "@/lib/api/types";
 import { formatPhoneNumber } from "@/lib/format";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 
 const COLUMNS = ["Name", "Phone", "Tags", "Actions"];
 
@@ -27,24 +34,23 @@ export function CustomerList({
   newTags?: string[];
   onDeleted?: (customerId: number) => void;
 }) {
-  const [tags, setTags] = useState<string[]>([]);
-  const [selectedTag, setSelectedTag] = useState("All");
-  const [tagError, setTagError] = useState<string | null>(null);
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagError, setTagError] = useState<string | null>(null);
+  const tagOptions = [...new Set([...tags, ...newTags])].sort();
+  const filteredRows =
+    selectedTags.size === 0
+      ? rows
+      : rows.filter((row) => row.tags?.some((tag) => selectedTags.has(tag)));
+  const allFilteredRowsSelected =
+    filteredRows.length > 0 && filteredRows.every((row) => selectedRows.has(row.id));
 
   useEffect(() => {
     apiFetch<string[]>("v1/customers/tags")
       .then((result) => setTags(Array.isArray(result) ? result : []))
       .catch((error) => setTagError(toApiError(error).message));
   }, []);
-
-  const tagOptions = ["All", ...new Set([...tags, ...newTags])];
-  const filteredRows =
-    selectedTag === "All"
-      ? rows
-      : rows.filter((row) => (row.tags ?? []).includes(selectedTag));
-  const allFilteredRowsSelected =
-    filteredRows.length > 0 && filteredRows.every((row) => selectedRows.has(row.id));
 
   function toggleAllRows(checked: boolean) {
     setSelectedRows((current) => {
@@ -68,13 +74,6 @@ export function CustomerList({
 
   function handleDeleted(customer: Customer) {
     const remainingRows = rows.filter((row) => row.id !== customer.id);
-    if (
-      customer.tags?.includes(selectedTag) &&
-      !remainingRows.some((row) => row.tags?.includes(selectedTag)) &&
-      !newTags.includes(selectedTag)
-    ) {
-      setSelectedTag("All");
-    }
     setSelectedRows((current) => {
       const next = new Set(current);
       next.delete(customer.id);
@@ -93,90 +92,76 @@ export function CustomerList({
 
   return (
     <div className="space-y-4">
-      {rows.length > 0 ? (
-        <>
-          <div className="flex flex-wrap gap-2">
-            {tagOptions.map((tag) => (
-              <Button
-                key={tag}
-                size="sm"
-                variant={selectedTag === tag ? "default" : "outline"}
-                className="cursor-pointer"
-                onClick={() => setSelectedTag(tag)}
-              >
-                {tag}
-              </Button>
-            ))}
-          </div>
-          {tagError ? <p className="text-destructive text-sm">{tagError}</p> : null}
-        </>
-      ) : null}
-
       <Card>
         <CardContent className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-muted-foreground border-b text-left">
-                <th className="px-2 py-2 font-medium">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>
                   <Checkbox
                     checked={allFilteredRowsSelected}
                     onChange={(event) => toggleAllRows(event.target.checked)}
                     aria-label="Select all customers"
                   />
-                </th>
-                {COLUMNS.map((column) => (
-                  <th
-                    key={column}
-                    className={cn(
-                      "px-2 py-2 font-medium",
-                      column === "Actions" && "text-right",
-                    )}
-                  >
-                    {column}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
+                </TableHead>
+                {COLUMNS.map((column) =>
+                  column === "Tags" ? (
+                    <TableHead key={column}>
+                      <TableHeaderMultiSelect
+                        label="Tags"
+                        options={tagOptions}
+                        selectedValues={selectedTags}
+                        onSelectedValuesChange={setSelectedTags}
+                        emptyMessage={tagError ?? "No tags available."}
+                      />
+                    </TableHead>
+                  ) : (
+                    <TableHead
+                      key={column}
+                      className={column === "Actions" ? "text-right" : undefined}
+                    >
+                      {column}
+                    </TableHead>
+                  ),
+                )}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {filteredRows.length === 0 ? (
                 <TableEmptyState colSpan={COLUMNS.length + 1}>
-                  {rows.length === 0 ? "No customers yet." : "No customers match this tag."}
+                  {rows.length === 0 ? "No customers yet." : "No customers match these tags."}
                 </TableEmptyState>
               ) : (
                 filteredRows.map((row) => (
-                  <tr key={row.id} className="border-b last:border-0">
-                    <td className="px-2 py-2">
+                  <TableRow key={row.id}>
+                    <TableCell>
                       <Checkbox
                         checked={selectedRows.has(row.id)}
                         onChange={(event) => toggleRow(row.id, event.target.checked)}
                         aria-label={`Select ${row.display_name}`}
                       />
-                    </td>
-                    <td className="px-2 py-2">{row.display_name}</td>
-                    <td className="px-2 py-2">
+                    </TableCell>
+                    <TableCell>{row.display_name}</TableCell>
+                    <TableCell>
                       {formatPhoneNumber(row.phone_number, row.country_code)}
-                    </td>
-                    <td className="px-2 py-2">{row.tags?.join(", ")}</td>
-                    <td className="px-2 py-2 text-right">
+                    </TableCell>
+                    <TableCell>{row.tags?.join(", ")}</TableCell>
+                    <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <CustomerDetailsButton
                           customer={row}
                           onDeleted={() => handleDeleted(row)}
                         />
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => toast.info("Customer chat is not available yet.")}
-                        >
-                          Chat
+                        <Button size="sm" variant="outline" asChild>
+                          <Link href={`/customers/${row.id}/chat`}>Chat</Link>
                         </Button>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
       {selectedRows.size > 0 ? (

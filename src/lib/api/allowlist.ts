@@ -14,6 +14,7 @@ const ALLOWED: { method: string; pattern: RegExp }[] = [
   { method: "DELETE", pattern: /^v1\/customers\/\d+$/ },
   { method: "GET", pattern: /^v1\/customers\/tags$/ },
   { method: "GET", pattern: /^v1\/wa\/user-phone-numbers$/ },
+  { method: "GET", pattern: /^v1\/wa\/messages$/ },
   { method: "DELETE", pattern: /^v1\/wa\/phone-numbers$/ },
   { method: "GET", pattern: /^v1\/wa\/templates$/ },
   { method: "GET", pattern: /^v1\/wa\/sample-templates$/ },
