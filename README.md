@@ -28,7 +28,7 @@ npm run dev
 
 ### Authentication header
 
-The API now authenticates requests with the `x-wawa-user-access-token` header instead of relying
+The API now authenticates requests with the `x-user-access-token` header instead of relying
 on the session cookie alone. The portal still stores the token in its own `wawa_session`
 cookie for same-origin routing, but every upstream request includes the active token in the
 new header, while keeping the older `x-user-access-token` name as a compatibility fallback.
@@ -36,11 +36,11 @@ new header, while keeping the older `x-user-access-token` name as a compatibilit
 ## Architecture
 
 - **BFF proxy** — the browser never talks to the API directly. Requests go to
-  `/api/bff/<upstream path>`, which forwards them server-side with the `x-wawa-user-access-token`
+  `/api/bff/<upstream path>`, which forwards them server-side with the `x-user-access-token`
   header (and compatibility fallback) and the portal cookie when present. Only paths on the
   allow-list in `src/lib/api/allowlist.ts` are forwarded, so the route cannot be used as an open
   proxy.
-- **Sessions** — the API issues an access token via `x-wawa-user-access-token`. Login is a Server
+- **Sessions** — the API issues an access token via `x-user-access-token`. Login is a Server
   Action that re-issues the token onto the portal's own origin via the `wawa_session` cookie.
   `src/proxy.ts` does a cheap cookie-presence redirect; `requireUser()` performs the real check
   against `/auth/v1/me`. A stale token is cleared by `/session/end`.

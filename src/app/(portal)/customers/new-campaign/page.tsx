@@ -45,12 +45,15 @@ export default async function NewCampaignPage({
 
   return (
     <>
-      <Button asChild variant="ghost" className="-mt-2 mb-2 -ml-2">
-        <Link href="/customers">
-          <ArrowLeft className="size-4" />
-          Back
-        </Link>
-      </Button>
+      <div className="fixed top-14 right-0 left-0 z-20 flex h-12 items-center bg-background px-2 pt-1 pb-1 lg:left-64 sm:px-4">
+        <Button asChild variant="ghost">
+          <Link href="/customers">
+            <ArrowLeft className="size-4" />
+            Back
+          </Link>
+        </Button>
+      </div>
+      <div className="mb-2 h-12" />
 
       <PageHeader
         title={campaignId ? "Edit campaign" : "New campaign"}

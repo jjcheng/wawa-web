@@ -45,7 +45,6 @@ async function proxyRequest(request: NextRequest, context: Context) {
   }
 
   const accessToken =
-    request.headers.get("x-wawa-user-access-token") ??
     request.headers.get("x-user-access-token") ??
     request.cookies.get(serverEnv.SESSION_COOKIE_NAME)?.value ??
     undefined;
@@ -62,16 +61,17 @@ async function proxyRequest(request: NextRequest, context: Context) {
     return envelope(502, "unable to reach the API");
   }
 
-  const payload = await upstream.text();
+  const payload = await upstream.arrayBuffer();
   const response = new NextResponse(payload, {
     status: upstream.status,
     headers: {
       "Content-Type": upstream.headers.get("Content-Type") ?? "application/json",
     },
   });
+  const contentDisposition = upstream.headers.get("Content-Disposition");
+  if (contentDisposition) response.headers.set("Content-Disposition", contentDisposition);
 
-  const upstreamAccessToken =
-    upstream.headers.get("x-user-access-token") ?? upstream.headers.get("x-user-access-token");
+  const upstreamAccessToken = upstream.headers.get("x-user-access-token");
 
   // Re-issue the API's session cookie on the portal's own origin.
   const session = readUpstreamSession(upstream.headers.getSetCookie());

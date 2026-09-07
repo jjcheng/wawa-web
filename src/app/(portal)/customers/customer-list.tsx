@@ -153,7 +153,13 @@ export function CustomerList({
                           onDeleted={() => handleDeleted(row)}
                         />
                         <Button size="sm" variant="outline" asChild>
-                          <Link href={`/customers/${row.id}/chat`}>Chat</Link>
+                          <Link
+                            href={`/customers/${encodeURIComponent(
+                              row.bsuid ?? `${row.country_code}${row.phone_number}`,
+                            )}/chat?identity=${row.bsuid ? "meta_user_id" : "wa_id"}`}
+                          >
+                            Chat
+                          </Link>
                         </Button>
                       </div>
                     </TableCell>

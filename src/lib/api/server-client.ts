@@ -30,7 +30,6 @@ export async function buildUpstreamHeaders(
   const headers = new Headers({ Accept: "application/json" });
   const token = sessionToken ?? (await cookies()).get(serverEnv.SESSION_COOKIE_NAME)?.value;
   if (token) {
-    headers.set("x-wawa-user-access-token", token);
     headers.set("x-user-access-token", token);
     // Keep the legacy cookie header for compatibility with older API builds.
     headers.set("Cookie", `${serverEnv.SESSION_COOKIE_NAME}=${token}`);

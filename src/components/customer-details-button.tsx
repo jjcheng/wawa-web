@@ -60,7 +60,7 @@ export function CustomerDetailsButton({
           <dd>{formatPhoneNumber(customer.phone_number, customer.country_code)}</dd>
           <dt className="text-muted-foreground">Tags</dt>
           <dd>{customer.tags?.join(", ") || "—"}</dd>
-          <dt className="text-muted-foreground">BSUID</dt>
+          <dt className="text-muted-foreground">Meta User ID</dt>
           <dd className="break-all">{customer.bsuid || "—"}</dd>
         </dl>
         <DialogFooter>
