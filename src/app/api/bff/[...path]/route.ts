@@ -25,16 +25,23 @@ async function proxyRequest(request: NextRequest, context: Context) {
   }
 
   let body: unknown;
+  let rawBody: ArrayBuffer | undefined;
+  let contentType: string | undefined;
   if (method !== "GET" && method !== "HEAD") {
-    const text = await request.text();
-    if (text) {
-      try {
-        body = JSON.parse(text);
-      } catch {
-        return envelope(400, "invalid JSON body");
-      }
+    contentType = request.headers.get("content-type") ?? undefined;
+    if (contentType?.split(";", 1)[0].trim() === "application/octet-stream") {
+      rawBody = await request.arrayBuffer();
     } else {
-      body = {};
+      const text = await request.text();
+      if (text) {
+        try {
+          body = JSON.parse(text);
+        } catch {
+          return envelope(400, "invalid JSON body");
+        }
+      } else {
+        body = {};
+      }
     }
   }
 
@@ -54,6 +61,8 @@ async function proxyRequest(request: NextRequest, context: Context) {
     upstream = await rawServerFetch(upstreamPath, {
       method: method as "GET" | "POST" | "PATCH" | "PUT" | "DELETE",
       body,
+      rawBody,
+      contentType,
       query,
       sessionToken: accessToken,
     });

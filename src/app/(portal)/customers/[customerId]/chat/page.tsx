@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
-import type { Customer, PhoneNumber } from "@/lib/api/types";
+import type { Customer, PhoneNumberListResponse } from "@/lib/api/types";
 import { formatPhoneNumber } from "@/lib/format";
 
 type MessageContext = {
@@ -129,7 +129,7 @@ type VideoMessagePayload = {
 
 type Message = {
   id: number;
-  meta_id: string;
+  wa_message_id: string;
   sending: boolean;
   timestamp: number;
   type:
@@ -141,6 +141,7 @@ type Message = {
     | "audio"
     | "video"
     | string;
+  attachment_url?: string;
   payload:
     | TextMessagePayload
     | DocumentMessagePayload
@@ -248,15 +249,17 @@ export default async function CustomerChatPage({
   let phoneNumberId = "";
   let loadError: string | null = null;
   try {
-    const phoneNumbers = await serverFetch<PhoneNumber[]>("/v1/wa/user-phone-numbers");
-    phoneNumberId = phoneNumbers[0]?.meta_phone_number_id ?? "";
+    const phoneNumbers = await serverFetch<PhoneNumberListResponse>("/v1/wa/user-phone-numbers", {
+      query: { page: "1", page_size: "10" },
+    });
+    phoneNumberId = phoneNumbers.items[0]?.meta_phone_number_id ?? "";
     if (!phoneNumberId) throw new Error("No WhatsApp phone number is available.");
     const response = await serverFetch<MessageListResponse>("/v1/wa/messages", {
       query: {
         phone_number_id: phoneNumberId,
         page: "1",
         page_size: "50",
-        customer_phone_number: customer.bsuid
+        customer_wa_id: customer.bsuid
           ? undefined
           : `${customer.country_code}${customer.phone_number}`,
         customer_meta_user_id: customer.bsuid,
@@ -360,6 +363,8 @@ export default async function CustomerChatPage({
                       <>
                         <ChatMediaViewer
                           mediaId={message.payload.document.id}
+                          waMessageId={message.wa_message_id}
+                          mediaUrl={message.attachment_url}
                           type="document"
                           mimeType={message.payload.document.mime_type}
                           filename={message.payload.document.filename}
@@ -375,6 +380,8 @@ export default async function CustomerChatPage({
                       <>
                         <ChatMediaViewer
                           mediaId={message.payload.image.id}
+                          waMessageId={message.wa_message_id}
+                          mediaUrl={message.attachment_url}
                           type="image"
                           mimeType={message.payload.image.mime_type}
                         />
@@ -442,6 +449,8 @@ export default async function CustomerChatPage({
                     {isAudioMessage(message) ? (
                       <ChatMediaViewer
                         mediaId={message.payload.audio.id}
+                        waMessageId={message.wa_message_id}
+                        mediaUrl={message.attachment_url}
                         type="audio"
                         mimeType={message.payload.audio.mime_type}
                       />
@@ -450,6 +459,8 @@ export default async function CustomerChatPage({
                       <>
                         <ChatMediaViewer
                           mediaId={message.payload.video.id}
+                          waMessageId={message.wa_message_id}
+                          mediaUrl={message.attachment_url}
                           type="video"
                           mimeType={message.payload.video.mime_type}
                         />
@@ -485,7 +496,7 @@ export default async function CustomerChatPage({
               initialMessages={messages}
               numberOfPages={numberOfMessagePages}
               phoneNumberId={phoneNumberId}
-              customerPhoneNumber={
+              customerWAId={
                 customer.bsuid ? undefined : `${customer.country_code}${customer.phone_number}`
               }
               customerMetaUserId={customer.bsuid}

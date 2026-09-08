@@ -3,24 +3,29 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 
 export type ReplyTarget = {
-  metaId: string;
+  waMessageId: string;
   preview: string;
 };
 
 export type ChatMessage = {
   id: number;
-  meta_id: string;
+  wa_message_id: string;
   sending: boolean;
   timestamp: number;
   type: string;
   payload: Record<string, unknown>;
+  attachment_url?: string;
+  status?: string;
 };
+
+export type ChatMessageStatus = { wa_message_id: string; status: string };
 
 type ChatComposeContextValue = {
   replyTarget: ReplyTarget | null;
   setReplyTarget: (target: ReplyTarget | null) => void;
   appendedMessages: ChatMessage[];
   appendMessage: (message: ChatMessage) => void;
+  updateMessageStatus: (status: ChatMessageStatus) => void;
 };
 
 const ChatComposeContext = createContext<ChatComposeContextValue | null>(null);
@@ -37,6 +42,14 @@ export function ChatComposeProvider({ children }: { children: ReactNode }) {
         appendMessage: (message) =>
           setAppendedMessages((current) =>
             current.some((item) => item.id === message.id) ? current : [...current, message],
+          ),
+        updateMessageStatus: (status) =>
+          setAppendedMessages((current) =>
+            current.map((message) =>
+              message.wa_message_id === status.wa_message_id
+                ? { ...message, status: status.status }
+                : message,
+            ),
           ),
       }}
     >

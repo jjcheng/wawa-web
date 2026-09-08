@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
-import type { PhoneNumber } from "@/lib/api/types";
+import type { PhoneNumber, PhoneNumberListResponse } from "@/lib/api/types";
 import { requireUser } from "@/lib/auth/session";
 import { formatDateTime, formatPhoneNumber } from "@/lib/format";
 
@@ -26,7 +26,9 @@ export default async function DashboardPage() {
   let phoneNumbers: PhoneNumber[] = [];
   let loadError: string | null = null;
   try {
-    phoneNumbers = (await serverFetch<PhoneNumber[]>("/v1/wa/user-phone-numbers")) ?? [];
+    phoneNumbers = (await serverFetch<PhoneNumberListResponse>("/v1/wa/user-phone-numbers", {
+      query: { page: "1", page_size: "10" },
+    })).items ?? [];
   } catch (error) {
     loadError =
       error instanceof ApiError ? error.message : "Could not load your WhatsApp numbers.";

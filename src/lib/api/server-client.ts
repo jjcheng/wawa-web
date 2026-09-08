@@ -9,6 +9,8 @@ import type { ApiEnvelope } from "./types";
 type RequestOptions = {
   method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
+  rawBody?: BodyInit;
+  contentType?: string;
   query?: Record<string, string | string[] | undefined>;
   /** Pass an explicit session token when it is not yet in the cookie store. */
   sessionToken?: string;
@@ -39,14 +41,15 @@ export async function buildUpstreamHeaders(
 
 export async function rawServerFetch(
   path: string,
-  { method = "GET", body, query, sessionToken }: RequestOptions = {},
+  { method = "GET", body, rawBody, contentType, query, sessionToken }: RequestOptions = {},
 ) {
   const headers = await buildUpstreamHeaders(sessionToken);
-  if (body !== undefined) headers.set("Content-Type", "application/json");
+  if (rawBody !== undefined) headers.set("Content-Type", contentType ?? "application/octet-stream");
+  else if (body !== undefined) headers.set("Content-Type", "application/json");
   return fetch(buildUrl(path, query), {
     method,
     headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: rawBody ?? (body === undefined ? undefined : JSON.stringify(body)),
     cache: "no-store",
     redirect: "manual",
   });

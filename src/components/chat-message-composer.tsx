@@ -19,7 +19,7 @@ import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { type ChatMessage, useChatCompose } from "@/components/chat-compose-context";
+import { useChatCompose } from "@/components/chat-compose-context";
 import {
   Dialog,
   DialogContent,
@@ -81,13 +81,14 @@ export function ChatMessageComposer({
   recipient,
   lastCustomerMessageTimestamp,
 }: ChatMessageComposerProps) {
-  const { appendMessage, replyTarget, setReplyTarget } = useChatCompose();
+  const { replyTarget, setReplyTarget } = useChatCompose();
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [attachmentOpen, setAttachmentOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [locationOpen, setLocationOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
+  const [isMultiline, setIsMultiline] = useState(false);
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [locationName, setLocationName] = useState("");
@@ -123,29 +124,60 @@ export function ChatMessageComposer({
   async function sendMessage() {
     const body = message.trim();
     if (!hasSendableContent || !serviceWindowOpen || sending) return;
-    if (attachment) {
-      toast.error("Media upload is not available yet.");
-      return;
-    }
-
-    const payload = attachedContact
-      ? { type: "contacts", contacts: [attachedContact] }
-      : attachedLocation
-        ? { type: "location", location: attachedLocation }
-        : { type: "text", text: { body } };
 
     setSending(true);
     try {
-      const sentMessage = await apiFetch<ChatMessage>("/v1/wa/messages", {
+      let payload: Record<string, unknown>;
+      let attachmentUrl: string | undefined;
+      if (attachment) {
+        const media = await apiFetch<{ url: string }>("/v1/wa/media", {
+          method: "POST",
+          query: {
+            filename: attachment.file.name,
+            content_type: attachment.file.type || "application/octet-stream",
+          },
+          rawBody: attachment.file,
+          contentType: "application/octet-stream",
+        });
+        if (!media.url) throw new Error("Media upload did not return a URL.");
+        attachmentUrl = media.url;
+
+        const type = attachment.file.type.startsWith("image/")
+          ? "image"
+          : attachment.file.type.startsWith("video/")
+            ? "video"
+            : attachment.file.type.startsWith("audio/")
+              ? "audio"
+              : "document";
+        const mediaObject = {
+          link: media.url,
+          ...(body ? { caption: body } : {}),
+          ...(type === "document" ? { filename: attachment.file.name } : {}),
+        };
+        payload = { type, [type]: mediaObject };
+      } else if (attachedContact) {
+        const contactPayload = {
+          name: attachedContact.name,
+          phones: attachedContact.phones,
+          ...(attachedContact.org ? { org: attachedContact.org } : {}),
+        };
+        payload = { type: "contacts", contacts: [contactPayload] };
+      } else if (attachedLocation) {
+        payload = { type: "location", location: attachedLocation };
+      } else {
+        payload = { type: "text", text: { body } };
+      }
+
+      await apiFetch("/v1/wa/messages", {
         method: "POST",
         body: {
           recipient_type: "individual",
           to: recipient,
           ...payload,
-          ...(replyTarget ? { context: { message_id: replyTarget.metaId } } : {}),
+          ...(attachmentUrl ? { attachment_url: attachmentUrl } : {}),
+          ...(replyTarget ? { context: { message_id: replyTarget.waMessageId } } : {}),
         },
       });
-      appendMessage(sentMessage);
       setMessage("");
       removeAttachment();
       setReplyTarget(null);
@@ -161,8 +193,13 @@ export function ChatMessageComposer({
     void sendMessage();
   }
 
+  function handleMessageChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
+    setMessage(event.target.value);
+    setIsMultiline(event.target.scrollHeight > 40);
+  }
+
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+    if (event.key === "Enter" && (event.shiftKey || event.metaKey || event.ctrlKey)) {
       event.preventDefault();
       void sendMessage();
     }
@@ -227,7 +264,7 @@ export function ChatMessageComposer({
 
   return (
     <form
-      className="bg-background fixed right-0 bottom-0 left-0 z-20 flex flex-col gap-2 px-3 py-2 lg:left-64"
+      className="bg-background/80 fixed right-0 bottom-0 left-0 z-20 flex flex-col gap-2 px-3 py-2 backdrop-blur lg:left-64"
       onSubmit={handleSubmit}
     >
       {replyTarget || attachment || attachedContact || attachedLocation ? (
@@ -240,7 +277,7 @@ export function ChatMessageComposer({
             </div>
           ) : null}
           {attachment || attachedContact || attachedLocation ? (
-            <div className="flex h-12 w-fit shrink-0 items-center gap-3 rounded-lg border border-[#edf0f1] bg-white p-1.5 dark:border-transparent dark:bg-[#202c33]">
+            <div className="bg-background/35 border-border flex h-12 w-fit shrink-0 items-center gap-3 rounded-lg border p-1.5 backdrop-blur">
               {attachment?.previewUrl ? (
                 <Image src={attachment.previewUrl} alt="Selected attachment" width={36} height={36} unoptimized className="size-9 rounded-md object-cover" />
               ) : (
@@ -257,10 +294,10 @@ export function ChatMessageComposer({
         </div>
       ) : null}
       <div className="flex w-full items-center gap-2">
-      <div className="flex min-h-12 flex-1 items-center rounded-full border border-[#edf0f1] bg-white pl-4 pr-1 dark:border-transparent dark:bg-[#202c33]">
+      <div className={cn("bg-background/35 border-border flex min-h-12 flex-1 items-center border pl-4 pr-1 backdrop-blur", isMultiline ? "rounded-2xl" : "rounded-full")}>
         <textarea
           value={message}
-          onChange={(event) => setMessage(event.target.value)}
+          onChange={handleMessageChange}
           onKeyDown={handleKeyDown}
           placeholder="Type a message"
           rows={1}

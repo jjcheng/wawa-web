@@ -46,6 +46,7 @@ export type BusinessAccount = DtoBase & {
 };
 
 export type PhoneNumber = DtoBase & {
+  wa_id?: string;
   meta_business_portfolio_id?: string;
   meta_waba_id?: string;
   meta_phone_number_id?: string;
@@ -53,6 +54,11 @@ export type PhoneNumber = DtoBase & {
   name?: string;
   business_portfolio?: BusinessPortfolio | null;
   business_account?: BusinessAccount | null;
+};
+export type PhoneNumberListResponse = {
+  items: PhoneNumber[];
+  number_of_pages?: number;
+  next_page_offset?: unknown;
 };
 
 export type EmbeddedSignupResult = {
@@ -149,6 +155,8 @@ export type MessageAnalytics = {
   phone_numbers?: string[];
   country_codes?: string[];
   granularity?: string;
+  total_sent?: number;
+  total_delivered?: number;
   data_points: MessageAnalyticsDataPoint[];
 };
 
@@ -156,7 +164,10 @@ export type PhoneNumberMessageAnalytics = {
   id: string;
   display_phone_number?: string;
   verified_name?: string;
-  analytics: MessageAnalytics;
+  total_sent?: number;
+  total_delivered?: number;
+  analytics?: MessageAnalytics;
+  data_points?: MessageAnalyticsDataPoint[];
 };
 
 export type ConversationAnalyticsDataPoint = {

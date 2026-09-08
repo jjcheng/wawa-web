@@ -15,7 +15,7 @@ function first(value: string | string[] | undefined) {
 /** Resolves the WABA/range/granularity filters shared by the analytics pages. */
 export async function resolveAnalyticsContext(params: SearchParams) {
   const rangeDays = resolveRangeDays(first(params.range));
-  const granularity = resolveGranularity(first(params.granularity));
+  const granularity = resolveGranularity(first(params.granularity), rangeDays);
 
   let wabas: WabaOption[] = [];
   let wabaError: string | null = null;

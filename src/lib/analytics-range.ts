@@ -5,10 +5,10 @@ export const ANALYTICS_RANGES = [
   { value: "7", label: "Last 7 days" },
   { value: "30", label: "Last 30 days" },
   { value: "90", label: "Last 90 days" },
-  { value: "365", label: "Last 12 months" },
+  { value: "365", label: "Last 365 days" },
 ] as const;
 
-const DEFAULT_RANGE_DAYS = 30;
+const DEFAULT_RANGE_DAYS = 7;
 const DEFAULT_GRANULARITY: AnalyticsGranularity = "DAY";
 const TEMPLATE_ANALYTICS_MAX_DAYS = 89;
 const ANALYTICS_TIME_ZONE = "Asia/Singapore";
@@ -27,17 +27,24 @@ export function resolveRangeDays(value?: string) {
     : DEFAULT_RANGE_DAYS;
 }
 
-export function resolveGranularity(value?: string): AnalyticsGranularity {
+export function resolveGranularity(value?: string, rangeDays = DEFAULT_RANGE_DAYS): AnalyticsGranularity {
   const upper = value?.toUpperCase();
-  return ANALYTICS_GRANULARITIES.includes(upper as AnalyticsGranularity)
-    ? (upper as AnalyticsGranularity)
-    : DEFAULT_GRANULARITY;
+  const isValid =
+    (rangeDays === 7 && (upper === "HALF_HOUR" || upper === "DAY")) ||
+    (rangeDays === 30 && (upper === "DAY" || upper === "MONTH")) ||
+    (rangeDays === 90 && (upper === "DAY" || upper === "MONTH")) ||
+    (rangeDays === 365 && upper === "MONTH");
+  if (isValid) {
+    return upper as AnalyticsGranularity;
+  }
+  return rangeDays >= 90 ? "MONTH" : DEFAULT_GRANULARITY;
 }
 
 /** The API takes Unix seconds and requires end > start. */
 export function toUnixRange(days: number, now = new Date()) {
   const end = Math.floor(now.getTime() / 1000);
-  return { start: end - days * 24 * 60 * 60, end };
+  const apiSafeDays = days === 365 ? 364 : days;
+  return { start: end - apiSafeDays * 24 * 60 * 60, end };
 }
 
 export function templateAnalyticsStart(start: number, end: number) {

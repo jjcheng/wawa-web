@@ -4,6 +4,8 @@ import type { ApiEnvelope } from "./types";
 type ClientOptions = {
   method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
+  rawBody?: BodyInit;
+  contentType?: string;
   query?: Record<string, string | string[] | undefined>;
   signal?: AbortSignal;
 };
@@ -11,7 +13,7 @@ type ClientOptions = {
 /** Calls the API through the same-origin BFF proxy at /api/bff/*. */
 export async function apiFetch<T>(
   path: string,
-  { method = "GET", body, query, signal }: ClientOptions = {},
+  { method = "GET", body, rawBody, contentType, query, signal }: ClientOptions = {},
 ): Promise<T> {
   const url = new URL(`/api/bff/${path.replace(/^\/+/, "")}`, window.location.origin);
   for (const [key, value] of Object.entries(query ?? {})) {
@@ -24,8 +26,13 @@ export async function apiFetch<T>(
   try {
     response = await fetch(url, {
       method,
-      headers: body === undefined ? undefined : { "Content-Type": "application/json" },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      headers:
+        rawBody !== undefined
+          ? { "Content-Type": contentType ?? "application/octet-stream" }
+          : body === undefined
+            ? undefined
+            : { "Content-Type": "application/json" },
+      body: rawBody ?? (body === undefined ? undefined : JSON.stringify(body)),
       credentials: "same-origin",
       signal,
     });

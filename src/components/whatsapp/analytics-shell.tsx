@@ -11,6 +11,7 @@ export function AnalyticsShell({
   wabaError,
   selected,
   rangeDays,
+  granularity,
   children,
 }: {
   title: string;
@@ -18,6 +19,7 @@ export function AnalyticsShell({
   wabaError: string | null;
   selected: string;
   rangeDays: number;
+  granularity: string;
   children: ReactNode;
 }) {
   if (!selected) {
@@ -47,7 +49,12 @@ export function AnalyticsShell({
       <PageHeader
         title={title}
         description={description}
-        action={<AnalyticsFilters range={String(rangeDays)} />}
+        action={
+          <AnalyticsFilters
+            range={String(rangeDays)}
+            granularity={granularity}
+          />
+        }
       />
       {children}
     </>

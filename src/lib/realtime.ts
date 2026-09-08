@@ -1,11 +1,13 @@
 export type ConversationStream = {
   phoneNumberId: string;
-  customerPhoneNumber: string;
+  customerWAId?: string;
+  customerMetaUserId?: string;
 };
 
 export type ConversationEvent<TMessage, TStatus = unknown> =
   | { type: "message"; message: TMessage }
-  | { type: "status"; status: TStatus };
+  | { type: "status"; status: TStatus }
+  | { type: "connection"; state: string };
 
 export type ConversationRealtimeProvider<TMessage, TStatus = unknown> = {
   subscribe(
