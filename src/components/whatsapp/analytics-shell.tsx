@@ -12,6 +12,7 @@ export function AnalyticsShell({
   selected,
   rangeDays,
   granularity,
+  maxRangeDays,
   children,
 }: {
   title: string;
@@ -20,6 +21,7 @@ export function AnalyticsShell({
   selected: string;
   rangeDays: number;
   granularity: string;
+  maxRangeDays?: number;
   children: ReactNode;
 }) {
   if (!selected) {
@@ -53,6 +55,7 @@ export function AnalyticsShell({
           <AnalyticsFilters
             range={String(rangeDays)}
             granularity={granularity}
+            maxRangeDays={maxRangeDays}
           />
         }
       />

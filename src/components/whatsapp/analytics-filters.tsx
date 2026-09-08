@@ -16,9 +16,11 @@ import { toast } from "sonner";
 export function AnalyticsFilters({
   range,
   granularity,
+  maxRangeDays,
 }: {
   range: string;
   granularity: string;
+  maxRangeDays?: number;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -37,6 +39,10 @@ export function AnalyticsFilters({
   }
 
   function setParam(key: string, value: string) {
+    if (key === "range" && maxRangeDays !== undefined && Number(value) > maxRangeDays) {
+      toast.info("You can select up to last 90 days");
+      return;
+    }
     const nextRange = key === "range" ? value : range;
     const nextGranularity = key === "granularity" ? value : granularity;
     if (key === "granularity" && !isValidGranularity(nextRange, nextGranularity)) {

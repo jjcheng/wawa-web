@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { AnalyticsShell } from "@/components/whatsapp/analytics-shell";
 import { AnalyticsViewTabs } from "@/components/whatsapp/analytics-view-tabs";
@@ -45,6 +46,15 @@ type PhoneNumberListResponse = {
 export default async function UsagePage({ searchParams }: PageProps<"/usage">) {
   const params = await searchParams;
   const view = resolveAnalyticsView(typeof params.view === "string" ? params.view : undefined);
+  if (view === "template" && params.range === "365") {
+    const normalizedParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      if (typeof value === "string") normalizedParams.set(key, value);
+    }
+    normalizedParams.set("range", "30");
+    normalizedParams.set("granularity", "DAY");
+    redirect(`/usage?${normalizedParams.toString()}`);
+  }
   const context = await resolveAnalyticsContext(params);
 
   const account = view === "overall" && context.selected
@@ -78,6 +88,7 @@ export default async function UsagePage({ searchParams }: PageProps<"/usage">) {
       selected={context.selected}
       rangeDays={context.rangeDays}
       granularity={context.granularity}
+      maxRangeDays={view === "template" ? 90 : undefined}
     >
       <AnalyticsViewTabs value={view} />
 
