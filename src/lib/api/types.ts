@@ -117,6 +117,26 @@ export type CustomerImportResult = {
   message: string;
 };
 
+export type Campaign = {
+  id: number;
+  entry_date?: string;
+  last_update?: string;
+  name: string;
+  send_date?: string | null;
+  wa_template_id: string;
+  customer_ids: number[];
+  status: string;
+  payload?: Record<string, unknown>;
+};
+
+export type CampaignListResponse = {
+  items: Campaign[];
+  number_of_pages?: number;
+  number_of_items?: number;
+  next_page_offset?: unknown;
+  additional_data?: Record<string, unknown>;
+};
+
 export type TemplateQualityScore = {
   score?: string;
   date?: number;
@@ -136,6 +156,7 @@ export type Template = {
   preview_html?: string;
   preview_dark_html?: string;
   components?: Record<string, unknown>[];
+  send_components?: Record<string, unknown>[];
   quality_score?: TemplateQualityScore;
   rejected_reason?: string;
   previous_category?: string;

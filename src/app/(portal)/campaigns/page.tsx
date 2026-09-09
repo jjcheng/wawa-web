@@ -4,6 +4,10 @@ import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { TableEmptyState } from "@/components/table-empty-state";
 import { Card, CardContent } from "@/components/ui/card";
+import { ApiError } from "@/lib/api/errors";
+import { serverFetch } from "@/lib/api/server-client";
+import type { Campaign, CampaignListResponse } from "@/lib/api/types";
+import { formatDateTime } from "@/lib/format";
 import {
   Table,
   TableBody,
@@ -18,10 +22,10 @@ export const metadata: Metadata = { title: "Campaigns" };
 
 const COLUMNS = ["Name", "Audience", "Status", "Sent", "Open rate"];
 
-function CampaignTable({ rows }: { rows: Record<string, string>[] }) {
+function CampaignTable({ rows }: { rows: Campaign[] }) {
   return (
-    <Card>
-      <CardContent className="overflow-x-auto">
+    <Card className="rounded-md py-0">
+      <CardContent className="overflow-x-auto p-0">
         <Table>
           <TableHeader>
             <TableRow>
@@ -34,11 +38,18 @@ function CampaignTable({ rows }: { rows: Record<string, string>[] }) {
             {rows.length === 0 ? (
               <TableEmptyState colSpan={COLUMNS.length}>No campaigns yet.</TableEmptyState>
             ) : (
-              rows.map((row, index) => (
-                <TableRow key={index}>
-                  {COLUMNS.map((column) => (
-                    <TableCell key={column}>{row[column]}</TableCell>
-                  ))}
+              rows.map((campaign) => (
+                <TableRow key={campaign.id}>
+                  <TableCell className="font-medium">
+                    <div>{campaign.name}</div>
+                    <div className="text-muted-foreground text-xs">
+                      {campaign.send_date ? `Scheduled ${formatDateTime(campaign.send_date)}` : "Send now"}
+                    </div>
+                  </TableCell>
+                  <TableCell>{campaign.customer_ids.length}</TableCell>
+                  <TableCell>{campaign.status}</TableCell>
+                  <TableCell>—</TableCell>
+                  <TableCell>—</TableCell>
                 </TableRow>
               ))
             )}
@@ -49,7 +60,19 @@ function CampaignTable({ rows }: { rows: Record<string, string>[] }) {
   );
 }
 
-export default function CampaignsPage() {
+export default async function CampaignsPage() {
+  let campaigns: Campaign[] = [];
+  try {
+    const response = await serverFetch<CampaignListResponse>("/v1/campaigns", {
+      query: { page: "1", page_size: "100" },
+    });
+    campaigns = response.items;
+  } catch (error) {
+    if (!(error instanceof ApiError)) throw error;
+  }
+  const adHocCampaigns = campaigns.filter((campaign) => !campaign.send_date);
+  const scheduledCampaigns = campaigns.filter((campaign) => Boolean(campaign.send_date));
+
   return (
     <>
       <PageHeader
@@ -76,10 +99,10 @@ export default function CampaignsPage() {
         </TabsList>
 
         <TabsContent value="ad-hoc">
-          <CampaignTable rows={[]} />
+          <CampaignTable rows={adHocCampaigns} />
         </TabsContent>
         <TabsContent value="scheduled">
-          <CampaignTable rows={[]} />
+          <CampaignTable rows={scheduledCampaigns} />
         </TabsContent>
       </Tabs>
     </>

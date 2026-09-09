@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
+import { apiFetch } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { GoogleLocationInput } from "@/components/google-location-input";
 import { MediaDropzone } from "@/components/media-dropzone";
@@ -110,6 +111,41 @@ function buttonInputs(component?: Record<string, unknown>): TemplateButtonInput[
     }
     return [];
   });
+}
+
+function buildSendComponents(
+  components: Record<string, unknown>[] | undefined,
+  variableValues: Record<string, string>,
+  variableSources: Record<string, CustomerParameterSource>,
+  previewCustomer: Customer | undefined,
+) {
+  const valuesByVariable = new Map<string, string>();
+  for (const [key, value] of Object.entries(variableValues)) {
+    const variable = key.startsWith("body:") ? key.slice(5) : key;
+    valuesByVariable.set(variable, value);
+  }
+  for (const [key, source] of Object.entries(variableSources)) {
+    const variable = key.startsWith("body:") ? key.slice(5) : key;
+    const value = customerParameterValue(previewCustomer, source);
+    if (value) valuesByVariable.set(variable, value);
+  }
+
+  function replace(value: unknown): unknown {
+    if (typeof value === "string") {
+      return value.replace(/{{\s*([^}]+?)\s*}}/g, (match, variable: string) =>
+        valuesByVariable.get(variable.trim()) || match,
+      );
+    }
+    if (Array.isArray(value)) return value.map(replace);
+    if (value && typeof value === "object") {
+      return Object.fromEntries(
+        Object.entries(value).map(([key, nestedValue]) => [key, replace(nestedValue)]),
+      );
+    }
+    return value;
+  }
+
+  return replace(components ?? []);
 }
 
 function customerParameterValue(
@@ -230,9 +266,23 @@ export function EditCampaignForm({
   );
 
   const mutation = useMutation({
-    mutationFn: async (values: EditCampaignInput) => {
-      throw new Error(`Campaigns aren't backed by the API yet (${values.name}).`);
-    },
+    mutationFn: async (values: EditCampaignInput) =>
+      apiFetch("v1/campaigns", {
+        method: "POST",
+        body: {
+          name: values.name.trim(),
+          send_date:
+            values.schedule === "Send later" ? new Date(values.send_date).toISOString() : null,
+          wa_template_id: values.template_id,
+          components: buildSendComponents(
+            selectedTemplate?.send_components,
+            variableValues,
+            variableSources,
+            previewCustomer,
+          ),
+          customer_ids: values.customer_ids,
+        },
+      }),
     onSuccess: () => {
       toast.success(campaignId ? "Campaign updated." : "Campaign created.");
       router.push("/campaigns");
@@ -266,7 +316,22 @@ export function EditCampaignForm({
     ) {
       invalid = true;
     }
-    if (!invalid) mutation.mutate(values);
+    if (!invalid) {
+      const payload = {
+        name: values.name.trim(),
+        send_date: values.schedule === "Send later" ? new Date(values.send_date).toISOString() : null,
+        wa_template_id: values.template_id,
+        components: buildSendComponents(
+          selectedTemplate?.send_components,
+          variableValues,
+          variableSources,
+          previewCustomer,
+        ),
+        customer_ids: values.customer_ids,
+      };
+      console.log("Campaign payload", payload);
+      mutation.mutate(values);
+    }
   }
 
   return (
