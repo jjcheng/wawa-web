@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { DeleteTemplateButton } from "@/components/whatsapp/delete-template-button";
+import { TemplatePreviewHtml } from "@/components/template-preview-html";
 import type { Template } from "@/lib/api/types";
 import { SMALL_BUTTON_HEIGHT } from "@/lib/utils";
 
@@ -88,10 +89,10 @@ export function ViewTemplateButton({
         ) : null}
 
         <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">Preview</p>
-        {template.preview_html ? (
-          <div
-            className="min-w-0 overflow-hidden [&>div:first-child]:!w-auto [&>div:first-child]:!max-w-none [&>div:first-child]:!bg-transparent [&>div:first-child]:!p-0 [&_*]:max-w-full"
-            dangerouslySetInnerHTML={{ __html: template.preview_html }}
+        {template.preview_html || template.preview_dark_html ? (
+          <TemplatePreviewHtml
+            lightHtml={template.preview_html}
+            darkHtml={template.preview_dark_html}
           />
         ) : components.length === 0 ? (
           <p className="text-muted-foreground text-sm">

@@ -132,7 +132,9 @@ export type Template = {
   language?: string;
   parameter_format?: string;
   raw_html?: string;
+  raw_dark_html?: string;
   preview_html?: string;
+  preview_dark_html?: string;
   components?: Record<string, unknown>[];
   quality_score?: TemplateQualityScore;
   rejected_reason?: string;
@@ -148,6 +150,7 @@ export type SampleTemplate = {
   parameter_format?: string;
   components?: Record<string, unknown>[];
   preview_html?: string;
+  preview_dark_html?: string;
 };
 
 export type TemplateListResponse = {

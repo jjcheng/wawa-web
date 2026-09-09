@@ -26,6 +26,7 @@ import type { SampleTemplate } from "@/lib/api/types";
 import type { Template } from "@/lib/api/types";
 import { whatsappLanguageLabel } from "@/lib/whatsapp-languages";
 import { TemplateSourceProvider } from "./template-source-context";
+import { TemplatePreviewHtml } from "@/components/template-preview-html";
 
 export function TemplateSourceTabs({
   newTemplate,
@@ -119,10 +120,10 @@ export function TemplateSourceTabs({
                   <p className="text-muted-foreground text-xs">
                     {whatsappLanguageLabel(template.language) || "—"}
                   </p>
-                  {template.preview_html ? (
-                    <div
-                      className="min-w-0 overflow-hidden [&_*]:max-w-full [&>div:first-child]:!w-auto [&>div:first-child]:!max-w-none [&>div:first-child]:!bg-transparent [&>div:first-child]:!p-0"
-                      dangerouslySetInnerHTML={{ __html: template.preview_html }}
+                  {template.preview_html || template.preview_dark_html ? (
+                    <TemplatePreviewHtml
+                      lightHtml={template.preview_html}
+                      darkHtml={template.preview_dark_html}
                     />
                   ) : null}
                   <Button

@@ -3,6 +3,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -29,13 +30,14 @@ import {
 import type { Customer, Template } from "@/lib/api/types";
 import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 
-const SCHEDULES = ["Send now", "Schedule for later"] as const;
+const SCHEDULES = ["Send now", "Send later"] as const;
 
 type EditCampaignInput = {
   name: string;
   customer_ids: number[];
   template_id: string;
   schedule: (typeof SCHEDULES)[number];
+  send_date: string;
 };
 
 function componentVariables(component?: Record<string, unknown>) {
@@ -128,6 +130,7 @@ export function EditCampaignForm({
   templates: Template[];
 }) {
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
   const {
     register,
     handleSubmit,
@@ -142,9 +145,11 @@ export function EditCampaignForm({
       customer_ids: customers.map((customer) => customer.id),
       template_id: "",
       schedule: SCHEDULES[0],
+      send_date: "",
     },
   });
   const schedule = useWatch({ control, name: "schedule" });
+  const sendDate = useWatch({ control, name: "send_date" });
   const selectedCustomerIds = useWatch({ control, name: "customer_ids" });
   const selectedTemplateId = useWatch({ control, name: "template_id" });
   const selectedTemplate = templates.find((template) => template.id === selectedTemplateId);
@@ -248,6 +253,12 @@ export function EditCampaignForm({
       setError("template_id", { message: "Select a template." });
       invalid = true;
     }
+    if (values.schedule === "Send later") {
+      if (!values.send_date) {
+        setError("send_date", { message: "Select a date and time." });
+        invalid = true;
+      }
+    }
     if (
       missingVariableKeys.size > 0 ||
       (mediaHeader && !headerFile) ||
@@ -305,9 +316,10 @@ export function EditCampaignForm({
           <Label htmlFor="schedule">Schedule</Label>
           <Select
             value={schedule}
-            onValueChange={(value) =>
-              setValue("schedule", value as EditCampaignInput["schedule"])
-            }
+            onValueChange={(value) => {
+              setValue("schedule", value as EditCampaignInput["schedule"]);
+              if (value === "Send now") clearErrors("send_date");
+            }}
           >
             <SelectTrigger id="schedule" className="w-full">
               <SelectValue />
@@ -320,6 +332,21 @@ export function EditCampaignForm({
               ))}
             </SelectContent>
           </Select>
+          {schedule === "Send later" ? (
+            <div className="space-y-2">
+              <Label htmlFor="send-date">Date and time</Label>
+              <Input
+                id="send-date"
+                type="datetime-local"
+                min={new Date().toISOString().slice(0, 16)}
+                value={sendDate}
+                {...register("send_date")}
+              />
+              {errors.send_date ? (
+                <p className="text-destructive text-sm">{errors.send_date.message}</p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         <div className="space-y-2">
@@ -550,13 +577,17 @@ export function EditCampaignForm({
           {campaignId ? "Save campaign" : "Start campaign"}
         </Button>
       </div>
-      {selectedTemplate?.raw_html ? (
+      {(resolvedTheme === "dark" ? selectedTemplate?.raw_dark_html : selectedTemplate?.raw_html) ? (
         <div className="min-w-0 self-start lg:col-start-2 lg:row-start-1">
           <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
             Preview
           </p>
           <TemplateRawPreview
-            html={selectedTemplate.raw_html}
+            html={
+              (resolvedTheme === "dark"
+                ? selectedTemplate?.raw_dark_html || selectedTemplate?.raw_html
+                : selectedTemplate?.raw_html || selectedTemplate?.raw_dark_html) ?? ""
+            }
             highlightedVariable={highlightedVariable}
             variableSubstitutions={previewVariableSubstitutions}
             highlightedButton={highlightedButton}
