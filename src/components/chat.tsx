@@ -29,6 +29,7 @@ const displayableMessageTypes = new Set([
   "text",
   "document",
   "image",
+  "sticker",
   "location",
   "contacts",
   "audio",
@@ -37,7 +38,7 @@ const displayableMessageTypes = new Set([
 ]);
 const bottomScrollThreshold = 120;
 
-type ChatMessageHistoryProps = {
+type ChatProps = {
   initialMessages: Message[];
   numberOfPages: number;
   phoneNumberId: string;
@@ -74,6 +75,35 @@ function messageBody(message: Message) {
   return message.type;
 }
 
+function isEmojiOnly(value: string) {
+  return value.trim().length > 0 && /^(?:[\p{Extended_Pictographic}\p{Emoji_Presentation}\uFE0F\u200D\s])+$/u.test(value);
+}
+
+function reactionEmoji(message: Message) {
+  const payload = message.payload as {
+    reaction?: { emoji?: unknown };
+    reactions?: { emoji?: unknown }[];
+  };
+  if (typeof payload.reaction?.emoji === "string") return payload.reaction.emoji;
+  return payload.reactions?.find((reaction) => typeof reaction.emoji === "string")?.emoji as string | undefined;
+}
+
+function reactionTargetId(message: Message) {
+  const reaction = (message.payload as { reaction?: { message_id?: unknown } }).reaction;
+  return typeof reaction?.message_id === "string" ? reaction.message_id : undefined;
+}
+
+function reactionUserId(message: Message) {
+  const payload = message.payload as { from?: unknown; from_user_id?: unknown };
+  return typeof payload.from_user_id === "string"
+    ? payload.from_user_id
+    : typeof payload.from === "string"
+      ? payload.from
+      : message.sending
+        ? "sender"
+        : "recipient";
+}
+
 function isDisplayableMessage(message: Message) {
   return displayableMessageTypes.has(message.type);
 }
@@ -90,6 +120,13 @@ function groupMessagesByDate(messages: Message[]) {
     }
   }
   return groups;
+}
+
+function mergeMessages(current: Message[], incoming: Message[]) {
+  const messagesByWhatsAppId = new Map(
+    [...current, ...incoming].map((message) => [message.wa_message_id, message]),
+  );
+  return [...messagesByWhatsAppId.values()].sort((first, second) => first.timestamp - second.timestamp);
 }
 
 function MessageStatusIcon({ status }: { status?: string }) {
@@ -124,15 +161,16 @@ function MessageContent({ message }: { message: Message }) {
           <p className="font-medium">{typeof errors?.title === "string" ? errors.title : "Unsupported message"}</p>
           {typeof errorData?.details === "string" ? <p className="text-sm opacity-70">{errorData.details}</p> : typeof errors?.message === "string" ? <p className="text-sm opacity-70">{errors.message}</p> : null}
         </div>
-      ) : (media?.id || attachmentUrl) && (message.type === "image" || message.type === "video" || message.type === "audio" || message.type === "document") ? (
+      ) : (media?.id || attachmentUrl) && (message.type === "image" || message.type === "sticker" || message.type === "video" || message.type === "audio" || message.type === "document") ? (
         <>
           <ChatMediaViewer
             mediaId={media?.id}
             waMessageId={message.wa_message_id}
             mediaUrl={attachmentUrl || undefined}
-            type={message.type as "image" | "video" | "audio" | "document"}
+            type={message.type as "image" | "sticker" | "video" | "audio" | "document"}
             mimeType={media?.mime_type ?? ""}
             filename={media?.filename}
+            autoLoad={message.auto_load_media}
           />
           {media?.caption ? <p className="mt-2 whitespace-pre-wrap">{media.caption}</p> : null}
         </>
@@ -143,21 +181,24 @@ function MessageContent({ message }: { message: Message }) {
         </a>
       ) : contacts?.length ? (
         <div className="space-y-2">{contacts.map((contact, index) => <div key={index} className="rounded-md bg-black/5 p-3 dark:bg-white/10"><div className="flex items-center gap-2"><ContactRound className="size-5" /><p className="text-sm font-medium">{contact.name?.formatted_name || "Contact"}</p></div>{contact.phones?.map((phone, phoneIndex) => <p key={phoneIndex} className="mt-2 flex items-center gap-2 text-sm"><Phone className="size-3.5" />{phone.phone}</p>)}</div>)}</div>
-      ) : <p className="whitespace-pre-wrap">{messageBody(message)}</p>}
+      ) : (() => {
+        const body = messageBody(message);
+        return <p className={`whitespace-pre-wrap ${isEmojiOnly(body) ? "text-4xl leading-tight" : ""}`}>{body}</p>;
+      })()}
     </>
   );
 }
 
-export function ChatMessageHistory({
+export function Chat({
   initialMessages,
   numberOfPages,
   phoneNumberId,
   customerWAId,
   customerMetaUserId,
   recipient,
-}: ChatMessageHistoryProps) {
+}: ChatProps) {
   const { appendMessage, appendedMessages, setReplyTarget, updateMessageStatus } = useChatCompose();
-  const [messages, setMessages] = useState(() => initialMessages.filter(isDisplayableMessage));
+  const [messages, setMessages] = useState(() => initialMessages);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [menu, setMenu] = useState<MessageMenu | null>(null);
@@ -172,7 +213,7 @@ export function ChatMessageHistory({
     const distanceFromBottom = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
     const isNearBottom = distanceFromBottom <= bottomScrollThreshold;
     isNearBottomRef.current = isNearBottom;
-    setShowScrollToLatest((current) => (isNearBottom ? false : current));
+    setShowScrollToLatest(!isNearBottom && document.documentElement.scrollHeight > window.innerHeight);
   }
 
   function scrollToLatest() {
@@ -204,8 +245,8 @@ export function ChatMessageHistory({
   }
 
   const handleRealtimeEvent = useEffectEvent((event: { type: "message"; message: Message } | { type: "status"; status: ChatMessageStatus } | { type: "connection"; state: string }) => {
-    if (event.type === "message" && isDisplayableMessage(event.message)) {
-      appendMessage(event.message);
+    if (event.type === "message" && event.message.type !== "unsupported" && isDisplayableMessage(event.message)) {
+      appendMessage({ ...event.message, auto_load_media: true });
     }
     if (event.type === "status") {
       setMessages((current) =>
@@ -270,10 +311,7 @@ export function ChatMessageHistory({
           page_size: "50",
         },
       });
-      setMessages((current) => [
-        ...response.items.filter(isDisplayableMessage).sort((a, b) => a.timestamp - b.timestamp),
-        ...current,
-      ]);
+      setMessages((current) => mergeMessages(current, response.items));
       setPage((current) => current + 1);
       requestAnimationFrame(() => {
         window.scrollBy(0, document.documentElement.scrollHeight - documentHeightRef.current);
@@ -327,7 +365,21 @@ export function ChatMessageHistory({
       (message, index, current) =>
         current.findIndex((candidate) => candidate.wa_message_id === message.wa_message_id) === index,
     );
-  const messageGroups = groupMessagesByDate(allMessages);
+  const reactionByMessageId = new Map<string, { emoji: string; userId: string }[]>();
+  for (const message of allMessages) {
+    const targetId = reactionTargetId(message);
+    const emoji = reactionEmoji(message);
+    if (message.type === "reaction" && targetId && emoji) {
+      const reactions = reactionByMessageId.get(targetId) ?? [];
+      const userId = reactionUserId(message);
+      const existingIndex = reactions.findIndex((reaction) => reaction.userId === userId);
+      if (existingIndex >= 0) reactions.splice(existingIndex, 1);
+      reactions.push({ emoji, userId });
+      reactionByMessageId.set(targetId, reactions.slice(-2));
+    }
+  }
+  const visibleMessages = allMessages.filter(isDisplayableMessage);
+  const messageGroups = groupMessagesByDate(visibleMessages);
 
   return (
     <div className="pb-20">
@@ -349,14 +401,27 @@ export function ChatMessageHistory({
         <section key={group.date}>
           <p className="sticky top-[68px] z-30 mx-auto mb-3 w-fit rounded-lg bg-[#e9edef] px-2 py-0.5 text-[0.6875rem] leading-5 text-[#54656f] shadow-sm dark:bg-[#182229] dark:text-[#8696a0]">{group.date}</p>
           {group.messages.map((message) => (
-            <div key={message.id}>
-              <div onContextMenu={(event) => { event.preventDefault(); setShowEmojis(false); setMenu({ message, x: event.clientX, y: event.clientY }); }} className={message.sending ? "relative mb-2 ml-auto w-fit max-w-[80%] rounded-[7.5px] rounded-tr-none border border-[#edf0f1] bg-[#d9fdd3] px-2 py-1.5 text-sm leading-[1.35] text-[#111b21] dark:border-[#087663] dark:bg-[#005c4b] dark:text-[#e9edef]" : "relative mb-2 w-fit max-w-[80%] rounded-[7.5px] rounded-tl-none border border-[#edf0f1] bg-white px-2 py-1.5 text-sm leading-[1.35] text-[#111b21] dark:border-[#314047] dark:bg-[#202c33] dark:text-[#e9edef]"}>
+            <div key={message.id} className={reactionByMessageId.has(message.wa_message_id) ? "mb-2 flex flex-col" : undefined}>
+              <div onContextMenu={(event) => { event.preventDefault(); setShowEmojis(false); setMenu({ message, x: event.clientX, y: event.clientY }); }} className={message.type === "sticker" ? `relative mb-2 w-fit max-w-[80%] text-base leading-[1.35] ${message.sending ? "ml-auto" : ""}` : message.sending ? "relative mb-2 ml-auto w-fit max-w-[80%] rounded-[7.5px] rounded-tr-none border border-[#edf0f1] bg-[#d9fdd3] px-2 py-1.5 text-base leading-[1.35] text-[#111b21] dark:border-[#087663] dark:bg-[#005c4b] dark:text-[#e9edef]" : "relative mb-2 w-fit max-w-[80%] rounded-[7.5px] rounded-tl-none border border-[#edf0f1] bg-white px-2 py-1.5 text-base leading-[1.35] text-[#111b21] dark:border-[#314047] dark:bg-[#202c33] dark:text-[#e9edef]"}>
                 <MessageContent message={message} />
                 <p className="mt-0.5 flex items-center justify-end gap-1 text-[0.6875rem] leading-none text-[#667781] dark:text-[#aebac1]">
                   {messageTime(message.timestamp)}
                   {message.sending ? <MessageStatusIcon status={message.status} /> : null}
                 </p>
               </div>
+              {reactionByMessageId.get(message.wa_message_id)?.length ? (
+                <div className={`mt-0.5 flex gap-0.5 ${message.sending ? "self-end" : "self-start"}`}>
+                  {reactionByMessageId.get(message.wa_message_id)?.map((reaction) => (
+                    <span
+                      key={`${reaction.userId}-${reaction.emoji}`}
+                      className="rounded-full bg-background px-1 text-xl leading-none shadow-sm"
+                      aria-label={`Reaction: ${reaction.emoji}`}
+                    >
+                      {reaction.emoji}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </div>
           ))}
         </section>
@@ -365,7 +430,7 @@ export function ChatMessageHistory({
         <div ref={menuRef} className="fixed z-50 w-52 max-w-[calc(100vw-1rem)] rounded-lg bg-popover p-1 shadow-md ring-1 ring-[#edf0f1] dark:ring-foreground/10" style={{ left: Math.max(8, Math.min(menu.x, window.innerWidth - 216)), top: Math.max(8, Math.min(menu.y, window.innerHeight - (showEmojis ? 224 : 80))) }}>
           <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => { setReplyTarget({ waMessageId: menu.message.wa_message_id, preview: messageBody(menu.message) }); setMenu(null); }}><Reply />Reply</Button>
           <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => setShowEmojis(true)}><SmilePlus />React</Button>
-          {showEmojis ? <div className="border-t p-1.5"><div className="grid max-h-20 grid-cols-6 gap-1 overflow-y-auto text-lg">{["👍", "❤️", "😂", "😮", "😢", "🙏", "👏", "🔥", "😍", "🎉", "✅", "💯", "🤔", "👀", "🙌", "😅", "💪", "🤝", "💚", "✨", "😁", "😎", "🤗", "🫡"].map((emoji) => <button key={emoji} type="button" className="rounded p-1 hover:bg-muted" onClick={() => void reactToMessage(emoji)}>{emoji}</button>)}</div><input aria-label="Paste an emoji and press Enter" placeholder="Paste an emoji and press Enter" className="mt-2 h-7 w-full rounded border bg-transparent px-2 text-xs" onPaste={(event) => { const emoji = event.clipboardData.getData("text").trim(); if (emoji) { event.preventDefault(); void reactToMessage(emoji); } }} onKeyDown={(event) => { if (event.key === "Enter" && event.currentTarget.value.trim()) { event.preventDefault(); void reactToMessage(event.currentTarget.value.trim()); } }} /></div> : null}
+          {showEmojis ? <div className="border-t p-1.5"><div className="grid max-h-28 grid-cols-6 gap-1 overflow-y-auto">{["👍", "❤️", "😂", "😮", "😢", "🙏", "👏", "🔥", "😍", "🎉", "✅", "💯", "🤔", "👀", "🙌", "😅", "💪", "🤝", "💚", "✨", "😁", "😎", "🤗", "🫡"].map((emoji) => <button key={emoji} type="button" className="flex size-10 items-center justify-center rounded p-0 text-[1.5rem] leading-none hover:bg-muted" onClick={() => void reactToMessage(emoji)}>{emoji}</button>)}</div><input aria-label="Paste an emoji and press Enter" placeholder="Paste an emoji and press Enter" className="mt-2 h-7 w-full rounded border bg-transparent px-2 text-xs" onPaste={(event) => { const emoji = event.clipboardData.getData("text").trim(); if (emoji) { event.preventDefault(); void reactToMessage(emoji); } }} onKeyDown={(event) => { if (event.key === "Enter" && event.currentTarget.value.trim()) { event.preventDefault(); void reactToMessage(event.currentTarget.value.trim()); } }} /></div> : null}
         </div>
       ) : null}
     </div>

@@ -4,6 +4,7 @@ import { ChevronDown } from "lucide-react";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
 
 type TableHeaderMultiSelectProps = {
   label: string;
@@ -11,6 +12,7 @@ type TableHeaderMultiSelectProps = {
   selectedValues: Set<string>;
   onSelectedValuesChange: (values: Set<string>) => void;
   emptyMessage?: string;
+  separatorAfter?: string;
 };
 
 export function TableHeaderMultiSelect({
@@ -19,6 +21,7 @@ export function TableHeaderMultiSelect({
   selectedValues,
   onSelectedValuesChange,
   emptyMessage = "No options available.",
+  separatorAfter,
 }: TableHeaderMultiSelectProps) {
   function toggleOption(option: string, checked: boolean) {
     const next = new Set(selectedValues);
@@ -43,16 +46,16 @@ export function TableHeaderMultiSelect({
         {options.length > 0 ? (
           <div>
             {options.map((option) => (
-              <label
-                key={option}
-                className="hover:bg-accent hover:text-accent-foreground flex cursor-pointer items-center gap-2 rounded-md py-1 pr-1.5 pl-1.5 text-sm"
-              >
-                <Checkbox
-                  checked={selectedValues.has(option)}
-                  onChange={(event) => toggleOption(option, event.target.checked)}
-                />
-                <span>{option}</span>
-              </label>
+              <div key={option}>
+                <label className="hover:bg-accent hover:text-accent-foreground flex cursor-pointer items-center gap-2 rounded-md py-1 pr-1.5 pl-1.5 text-sm">
+                  <Checkbox
+                    checked={selectedValues.has(option)}
+                    onChange={(event) => toggleOption(option, event.target.checked)}
+                  />
+                  <span>{option}</span>
+                </label>
+                {separatorAfter === option ? <Separator className="my-1" /> : null}
+              </div>
             ))}
           </div>
         ) : (

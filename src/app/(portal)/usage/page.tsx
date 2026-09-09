@@ -28,6 +28,7 @@ import {
 } from "@/lib/analytics";
 import { resolveAnalyticsContext } from "@/lib/analytics-context";
 import { resolveAnalyticsView } from "@/lib/analytics-view";
+import { templateAnalyticsStart } from "@/lib/analytics-range";
 import type {
   MessageAnalytics,
   PhoneNumber,
@@ -55,7 +56,7 @@ export default async function UsagePage({ searchParams }: PageProps<"/usage">) {
     normalizedParams.set("granularity", "DAY");
     redirect(`/usage?${normalizedParams.toString()}`);
   }
-  const context = await resolveAnalyticsContext(params);
+  const context = await resolveAnalyticsContext(params, view !== "template", view !== "template");
 
   const account = view === "overall" && context.selected
     ? await loadAnalytics<MessageAnalytics>("/v1/wa/business-accounts/usage", context.query)
@@ -75,6 +76,7 @@ export default async function UsagePage({ searchParams }: PageProps<"/usage">) {
     : { data: null, error: null };
 
   const accountPoints = flattenMessagePoints(account.data);
+  const templateStart = templateAnalyticsStart(context.start, context.end);
 
   const summary = [
     { label: "Messages sent", value: account.data?.total_sent ?? 0 },
@@ -89,6 +91,8 @@ export default async function UsagePage({ searchParams }: PageProps<"/usage">) {
       rangeDays={context.rangeDays}
       granularity={context.granularity}
       maxRangeDays={view === "template" ? 90 : undefined}
+      allowHalfHour={view !== "template"}
+      allowMonth={view !== "template"}
     >
       <AnalyticsViewTabs value={view} />
 
@@ -109,9 +113,9 @@ export default async function UsagePage({ searchParams }: PageProps<"/usage">) {
               </p>
             ) : (
               <TemplateUsageTable
-                key={`${context.start}-${context.end}-${context.granularity}`}
+                key={`${templateStart}-${context.end}-${context.granularity}`}
                 metaWabaId={context.selected}
-                start={context.start}
+                start={templateStart}
                 end={context.end}
                 granularity={context.granularity}
                 initialTemplates={templateList.data.items}

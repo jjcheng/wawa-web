@@ -3,8 +3,7 @@ import Link from "next/link";
 
 import { PageHeader } from "@/components/page-header";
 import { TableEmptyState } from "@/components/table-empty-state";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -14,7 +13,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Campaigns" };
 
@@ -56,13 +54,14 @@ export default function CampaignsPage() {
     <>
       <PageHeader
         title="Campaigns"
-        description="Broadcast template messages to segments of your contacts."
-        action={
-          <div className="flex flex-wrap items-center gap-2">
-            <Button asChild className={MEDIUM_BUTTON_HEIGHT}>
-              <Link href="/customers/new-campaign">New Campaign</Link>
-            </Button>
-          </div>
+        description={
+          <>
+            Broadcast template messages to your customers. Start new campaign in{" "}
+            <Link href="/customers" className="text-primary hover:underline">
+              Customers
+            </Link>{" "}
+            page.
+          </>
         }
       />
 

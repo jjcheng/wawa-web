@@ -4,6 +4,7 @@ import {
   FileText,
   Gauge,
   Inbox,
+  ListTodo,
   LayoutDashboard,
   Megaphone,
   Phone,
@@ -21,6 +22,7 @@ const SECTIONS = [
     label: "Overview",
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/todos", label: "TODOs", icon: ListTodo },
       { href: "/inbox", label: "Inbox", icon: Inbox },
     ],
   },

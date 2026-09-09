@@ -1,8 +1,10 @@
 "use client";
 
-import { Megaphone } from "lucide-react";
+import { Loader2, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 
 import { TableEmptyState } from "@/components/table-empty-state";
 import { TableHeaderMultiSelect } from "@/components/table-header-multi-select";
@@ -10,6 +12,15 @@ import { CustomerDetailsButton } from "@/components/customer-details-button";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -18,33 +29,60 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import type { Customer } from "@/lib/api/types";
 import { formatPhoneNumber } from "@/lib/format";
 
 const COLUMNS = ["Name", "Phone", "Tags", "Actions"];
+const NO_TAGS_OPTION = "No tags";
 
 export function CustomerList({
   rows,
   newTags = [],
   onDeleted,
+  onUpdated,
+  name,
+  phoneNumber,
+  initialTags,
+  status,
 }: {
   rows: Customer[];
   newTags?: string[];
   onDeleted?: (customerId: number) => void;
+  onUpdated?: (customer: Customer) => void;
+  name: string;
+  phoneNumber: string;
+  initialTags: string[];
+  status: "ACTIVE" | "INACTIVE";
 }) {
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
-  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(
+    new Set(initialTags.map((tag) => (tag === "" ? NO_TAGS_OPTION : tag))),
+  );
   const [tags, setTags] = useState<string[]>([]);
   const [tagError, setTagError] = useState<string | null>(null);
-  const tagOptions = [...new Set([...tags, ...newTags])].sort();
-  const filteredRows =
-    selectedTags.size === 0
-      ? rows
-      : rows.filter((row) => row.tags?.some((tag) => selectedTags.has(tag)));
+  const [nameInput, setNameInput] = useState(name);
+  const [phoneInput, setPhoneInput] = useState(phoneNumber);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [bulkActionPending, setBulkActionPending] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tagOptions = [
+    NO_TAGS_OPTION,
+    ...[...new Set([...tags, ...newTags])].filter((tag) => tag !== NO_TAGS_OPTION).sort(),
+  ];
+  const filteredRows = rows;
   const allFilteredRowsSelected =
     filteredRows.length > 0 && filteredRows.every((row) => selectedRows.has(row.id));
+
+  useEffect(() => {
+    queueMicrotask(
+      () => setSelectedTags(new Set(initialTags.map((tag) => (tag === "" ? NO_TAGS_OPTION : tag)))),
+    );
+  }, [initialTags]);
 
   useEffect(() => {
     apiFetch<string[]>("v1/customers/tags")
@@ -72,6 +110,36 @@ export function CustomerList({
     });
   }
 
+  function setStatus(value: string) {
+    const params = new URLSearchParams(searchParams);
+    params.set("status", value);
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
+  function setTagsFilter(nextTags: Set<string>) {
+    const params = new URLSearchParams(searchParams);
+    params.delete("tags");
+    if (nextTags.has(NO_TAGS_OPTION)) {
+      params.set("tags", "");
+    } else {
+      nextTags.forEach((tag) => params.append("tags", tag));
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
+  function submitSearch(field: "name" | "phone_number", value: string) {
+    const params = new URLSearchParams(searchParams);
+    if (value.trim()) params.set(field, value.trim());
+    else params.delete(field);
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
+  function clearSearch(field: "name" | "phone_number") {
+    if (field === "name") setNameInput("");
+    else setPhoneInput("");
+    submitSearch(field, "");
+  }
+
   function handleDeleted(customer: Customer) {
     const remainingRows = rows.filter((row) => row.id !== customer.id);
     setSelectedRows((current) => {
@@ -90,10 +158,86 @@ export function CustomerList({
     onDeleted?.(customer.id);
   }
 
+  async function updateSelectedStatus(nextStatus: "ACTIVE" | "INACTIVE") {
+    setBulkActionPending(true);
+    try {
+      const selectedCustomers = rows.filter((row) => selectedRows.has(row.id));
+      await apiFetch("v1/customers/status", {
+        method: "PATCH",
+        body: { ids: selectedCustomers.map((customer) => customer.id), status: nextStatus },
+      });
+      selectedCustomers.forEach((customer) => onUpdated?.({ ...customer, status: nextStatus }));
+      setSelectedRows(new Set());
+      router.refresh();
+    } catch (error) {
+      toast.error(toApiError(error).message);
+    } finally {
+      setBulkActionPending(false);
+    }
+  }
+
+  async function deleteSelectedCustomers() {
+    setBulkActionPending(true);
+    try {
+      const selectedCustomerIds = [...selectedRows];
+      await apiFetch("v1/customers", {
+        method: "DELETE",
+        body: { ids: selectedCustomerIds },
+      });
+      selectedCustomerIds.forEach((customerId) => onDeleted?.(customerId));
+      setSelectedRows(new Set());
+      setDeleteConfirmOpen(false);
+    } catch (error) {
+      toast.error(toApiError(error).message);
+    } finally {
+      setBulkActionPending(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
-      <Card>
-        <CardContent className="overflow-x-auto">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Tabs value={status} onValueChange={setStatus}>
+          <TabsList aria-label="Filter customers by status">
+            <TabsTrigger value="ACTIVE">Active</TabsTrigger>
+            <TabsTrigger value="INACTIVE">Inactive</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        {selectedRows.size > 0 ? (
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => updateSelectedStatus(status === "ACTIVE" ? "INACTIVE" : "ACTIVE")}
+              disabled={bulkActionPending}
+            >
+              {bulkActionPending ? <Loader2 className="size-4 animate-spin" /> : null}
+              {status === "ACTIVE" ? "Archive" : "Activate"}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => setDeleteConfirmOpen(true)}
+              disabled={bulkActionPending}
+            >
+              Delete
+            </Button>
+            {status === "ACTIVE" ? (
+              <Button
+                onClick={() => {
+                  sessionStorage.setItem(
+                    "new-campaign-customer-ids",
+                    JSON.stringify([...selectedRows]),
+                  );
+                  router.push("/customers/new-campaign");
+                }}
+              >
+                  New Campaign
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+      <Card className="rounded-md py-0">
+        <CardContent className="overflow-x-auto p-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -104,32 +248,81 @@ export function CustomerList({
                     aria-label="Select all customers"
                   />
                 </TableHead>
-                {COLUMNS.map((column) =>
-                  column === "Tags" ? (
-                    <TableHead key={column}>
-                      <TableHeaderMultiSelect
-                        label="Tags"
-                        options={tagOptions}
-                        selectedValues={selectedTags}
-                        onSelectedValuesChange={setSelectedTags}
-                        emptyMessage={tagError ?? "No tags available."}
-                      />
-                    </TableHead>
-                  ) : (
-                    <TableHead
-                      key={column}
-                      className={column === "Actions" ? "text-right" : undefined}
-                    >
-                      {column}
-                    </TableHead>
-                  ),
-                )}
+                <TableHead>
+                  <div className="relative">
+                    <Search className="text-muted-foreground pointer-events-none absolute inset-y-0 left-0 my-auto box-content size-3.5 pl-1" />
+                    <Input
+                      value={nameInput}
+                      onChange={(event) => setNameInput(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          submitSearch("name", nameInput);
+                        }
+                      }}
+                      placeholder="Name"
+                      aria-label="Search customers by name"
+                      className="h-7 border-none pr-6 pl-6 font-medium shadow-none focus-visible:ring-0"
+                    />
+                    {nameInput ? (
+                      <button
+                        type="button"
+                        onClick={() => clearSearch("name")}
+                        aria-label="Clear name search"
+                        className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 flex items-center pr-1"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    ) : null}
+                  </div>
+                </TableHead>
+                <TableHead>
+                  <div className="relative">
+                    <Search className="text-muted-foreground pointer-events-none absolute inset-y-0 left-0 my-auto box-content size-3.5 pl-1" />
+                    <Input
+                      value={phoneInput}
+                      onChange={(event) => setPhoneInput(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          submitSearch("phone_number", phoneInput);
+                        }
+                      }}
+                      placeholder="Phone"
+                      aria-label="Search customers by phone number"
+                      className="h-7 border-none pr-6 pl-6 font-medium shadow-none focus-visible:ring-0"
+                    />
+                    {phoneInput ? (
+                      <button
+                        type="button"
+                        onClick={() => clearSearch("phone_number")}
+                        aria-label="Clear phone search"
+                        className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 flex items-center pr-1"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    ) : null}
+                  </div>
+                </TableHead>
+                <TableHead>
+                  <TableHeaderMultiSelect
+                    label="Tags"
+                    options={tagOptions}
+                    selectedValues={selectedTags}
+                        onSelectedValuesChange={setTagsFilter}
+                    separatorAfter={NO_TAGS_OPTION}
+                    emptyMessage={tagError ?? "No tags available."}
+                  />
+                </TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredRows.length === 0 ? (
                 <TableEmptyState colSpan={COLUMNS.length + 1}>
-                  {rows.length === 0 ? "No customers yet." : "No customers match these tags."}
+                  {rows.length === 0 && selectedTags.size === 0
+                    ? "No customers yet."
+                    : "No customers match these filters."}
                 </TableEmptyState>
               ) : (
                 filteredRows.map((row) => (
@@ -151,12 +344,15 @@ export function CustomerList({
                         <CustomerDetailsButton
                           customer={row}
                           onDeleted={() => handleDeleted(row)}
+                          onUpdated={onUpdated}
                         />
                         <Button size="sm" variant="outline" asChild>
                           <Link
                             href={`/customers/${encodeURIComponent(
                               row.bsuid ?? `${row.country_code}${row.phone_number}`,
-                            )}/chat?identity=${row.bsuid ? "meta_user_id" : "wa_id"}`}
+                            )}/chat?identity=${row.bsuid ? "meta_user_id" : "wa_id"}&return_to=${encodeURIComponent(
+                              `${pathname}?${searchParams.toString()}`,
+                            )}`}
                           >
                             Chat
                           </Link>
@@ -170,16 +366,33 @@ export function CustomerList({
           </Table>
         </CardContent>
       </Card>
-      {selectedRows.size > 0 ? (
-        <div className="flex justify-end">
-          <Button asChild>
-            <Link href={`/customers/new-campaign?customer_ids=${[...selectedRows].join(",")}`}>
-              <Megaphone className="size-4" />
-              New Campaign
-            </Link>
-          </Button>
-        </div>
-      ) : null}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete selected customers?</DialogTitle>
+            <DialogDescription>
+              {selectedRows.size} customer{selectedRows.size === 1 ? "" : "s"} will be permanently removed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteConfirmOpen(false)}
+              disabled={bulkActionPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={deleteSelectedCustomers}
+              disabled={bulkActionPending}
+            >
+              {bulkActionPending ? <Loader2 className="size-4 animate-spin" /> : null}
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

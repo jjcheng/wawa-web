@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 
+import { BackBar } from "@/components/back-bar";
 import { PageHeader } from "@/components/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
@@ -36,15 +34,7 @@ export default async function CreateTemplatePage() {
 
   return (
     <>
-      <div className="fixed top-14 right-0 left-0 z-20 flex h-12 items-center bg-background px-2 pt-1 pb-1 lg:left-64 sm:px-4">
-        <Button asChild variant="ghost">
-          <Link href="/templates">
-            <ArrowLeft className="size-4" />
-            Back
-          </Link>
-        </Button>
-      </div>
-      <div className="mb-2 h-12" />
+      <BackBar href="/templates" />
 
       <PageHeader title="Create template" />
 

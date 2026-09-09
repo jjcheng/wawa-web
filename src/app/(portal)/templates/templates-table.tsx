@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Loader2, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useNavigationProgress } from "@/components/nav/navigation-progress";
+import { LoadMoreButton } from "@/components/load-more-button";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { TemplateStatusBadge } from "@/components/whatsapp/template-status-badge";
@@ -183,7 +183,7 @@ export function TemplatesTable({
 
   return (
     <div className="space-y-4">
-      <Card>
+      <Card className="rounded-md py-0">
         <CardContent className="overflow-x-auto p-0">
           <Table>
             <TableHeader>
@@ -357,10 +357,7 @@ export function TemplatesTable({
         </div>
 
         {afterCursor ? (
-          <Button variant="outline" onClick={loadMore} disabled={loading}>
-            Load more
-            {loading ? <Loader2 className="size-4 animate-spin" /> : <ChevronDown className="size-4" />}
-          </Button>
+          <LoadMoreButton loading={loading} onClick={loadMore} withTopMargin={false} />
         ) : null}
       </div>
     </div>

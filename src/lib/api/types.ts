@@ -32,6 +32,8 @@ export type User = DtoBase & {
   type?: UserType;
   access_token?: string;
   access_token_expiry?: string;
+  wa_activated?: boolean;
+  wa_activation_error?: string;
 };
 
 export type BusinessPortfolio = DtoBase & {
@@ -73,8 +75,46 @@ export type Customer = {
   display_name: string;
   country_code: string;
   phone_number: string;
+  meta_user_id?: string;
+  wa_id?: string;
+  status?: string;
+  remarks?: string;
   bsuid?: string;
   tags?: string[];
+  additional_data?: Record<string, unknown>;
+};
+
+export type CustomerListResponse = {
+  items: Customer[];
+  number_of_pages?: number;
+  number_of_items?: number;
+  next_page_offset?: unknown;
+  additional_data?: Record<string, unknown>;
+};
+
+export type CustomerImportContact = {
+  display_name: string;
+  phone_number: string;
+  email?: string;
+  address?: string;
+  organization?: string;
+  job_title?: string;
+  birthday?: string;
+  anniversary?: string;
+  gender?: string;
+  time_zone?: string;
+  categories?: string;
+  note?: string;
+  photo?: string;
+  url?: string;
+  skipped?: boolean;
+  skip_reason?: string;
+};
+
+export type CustomerImportResult = {
+  imported_count: number;
+  skipped: CustomerImportContact[];
+  message: string;
 };
 
 export type TemplateQualityScore = {

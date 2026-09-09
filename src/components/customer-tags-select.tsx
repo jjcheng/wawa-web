@@ -28,7 +28,9 @@ export function CustomerTagsSelect({
     let active = true;
     apiFetch<string[]>("v1/customers/tags")
       .then((tags) => {
-        if (active) setAvailableTags(Array.isArray(tags) ? tags : []);
+        if (active) {
+          setAvailableTags(Array.isArray(tags) ? tags : []);
+        }
       })
       .catch((requestError) => {
         if (active) setError(toApiError(requestError).message);
@@ -58,7 +60,7 @@ export function CustomerTagsSelect({
     setNewTag("");
   }
 
-  const matchingTags = availableTags.filter((tag) =>
+  const matchingTags = [...new Set([...availableTags, ...selectedTags])].filter((tag) =>
     tag.toLowerCase().startsWith(newTag.trim().toLowerCase()),
   );
 

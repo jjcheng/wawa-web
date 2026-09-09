@@ -1,20 +1,20 @@
 import { notFound } from "next/navigation";
-import { ArrowLeft, Cake, ContactRound, Info, MapPin, Phone } from "lucide-react";
-import Link from "next/link";
+import { Cake, ContactRound, Info, MapPin, Phone } from "lucide-react";
 
 import { ChatMediaViewer } from "@/components/chat-media-viewer";
 import { ChatComposeProvider } from "@/components/chat-compose-context";
 import { ChatMessageComposer } from "@/components/chat-message-composer";
-import { ChatMessageHistory } from "@/components/chat-message-history";
+import { Chat } from "@/components/chat";
+import { CustomerInfo } from "@/components/customer-info";
 import { PageHeader } from "@/components/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { BackBar } from "@/components/back-bar";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type { Customer, PhoneNumberListResponse } from "@/lib/api/types";
-import { formatPhoneNumber } from "@/lib/format";
 
 type MessageContext = {
   id: string;
@@ -230,10 +230,11 @@ export default async function CustomerChatPage({
   searchParams,
 }: {
   params: Promise<{ customerId: string }>;
-  searchParams: Promise<{ identity?: string }>;
+  searchParams: Promise<{ identity?: string; return_to?: string }>;
 }) {
   const { customerId } = await params;
-  const { identity } = await searchParams;
+  const { identity, return_to: returnTo } = await searchParams;
+  const backHref = returnTo?.startsWith("/customers") ? returnTo : "/customers";
   let customer: Customer;
   try {
     customer = await serverFetch<Customer>("/v1/customers/get", {
@@ -281,34 +282,21 @@ export default async function CustomerChatPage({
 
   return (
     <>
-      <div className="fixed top-14 right-0 left-0 z-20 flex h-12 items-center justify-between bg-background px-2 pt-1 pb-1 lg:left-64 sm:px-4">
-        <Button asChild variant="ghost">
-          <Link href="/customers">
-            <ArrowLeft className="size-4" />
-            Back
-          </Link>
-        </Button>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button size="icon-sm" variant="outline" aria-label="Customer details">
-              <Info className="size-4" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-72 p-3">
-            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-              <dt className="text-muted-foreground">Name</dt>
-              <dd>{customer.display_name}</dd>
-              <dt className="text-muted-foreground">Phone</dt>
-              <dd>{formatPhoneNumber(customer.phone_number, customer.country_code)}</dd>
-              <dt className="text-muted-foreground">Tags</dt>
-              <dd>{customer.tags?.join(", ") || "—"}</dd>
-              <dt className="text-muted-foreground">Meta User ID</dt>
-              <dd className="break-all">{customer.bsuid || "—"}</dd>
-            </dl>
-          </PopoverContent>
-        </Popover>
-      </div>
-      <div className="mb-2 h-7" />
+      <BackBar
+        href={backHref}
+        actions={
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button size="icon-sm" variant="outline" aria-label="Customer details">
+                <Info className="size-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-72 p-3">
+              <CustomerInfo customer={customer} />
+            </PopoverContent>
+          </Popover>
+        }
+      />
       <PageHeader
         title={customer.display_name}
         titleAction={
@@ -492,7 +480,7 @@ export default async function CustomerChatPage({
             )}
           </div>
           <ChatComposeProvider>
-            <ChatMessageHistory
+            <Chat
               initialMessages={messages}
               numberOfPages={numberOfMessagePages}
               phoneNumberId={phoneNumberId}

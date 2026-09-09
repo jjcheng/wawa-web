@@ -1,9 +1,10 @@
 "use client";
 
-import { ChevronDown, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { LoadMoreButton } from "@/components/load-more-button";
 import { TableEmptyState } from "@/components/table-empty-state";
 import {
   Dialog,
@@ -233,12 +234,7 @@ export function PhoneNumberListTable({
 
       {error ? <p className="text-destructive text-sm">{error}</p> : null}
       {hasMore ? (
-        <div className="flex justify-end">
-          <Button variant="outline" onClick={loadMore} disabled={loading}>
-            Load more
-            {loading ? <Loader2 className="size-4 animate-spin" /> : <ChevronDown className="size-4" />}
-          </Button>
-        </div>
+        <LoadMoreButton loading={loading} onClick={loadMore} withTopMargin={false} />
       ) : null}
       <Dialog open={selectedPhoneNumber !== null} onOpenChange={(open) => !open && setSelectedPhoneNumber(null)}>
         <DialogContent

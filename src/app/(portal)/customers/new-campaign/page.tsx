@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 
+import { BackBar } from "@/components/back-bar";
 import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
-import type { BusinessAccount, Customer, TemplateListResponse } from "@/lib/api/types";
-import { EditCampaignForm } from "../../campaigns/new/edit-campaign-form";
+import type { BusinessAccount, TemplateListResponse } from "@/lib/api/types";
+import { NewCampaignContent } from "./new-campaign-content";
 
 export const metadata: Metadata = { title: "New campaign" };
 
@@ -17,22 +15,9 @@ export default async function NewCampaignPage({
 }: PageProps<"/customers/new-campaign">) {
   const params = await searchParams;
   const campaignId = typeof params.id === "string" ? params.id : undefined;
-  const customerIds =
-    typeof params.customer_ids === "string"
-      ? params.customer_ids.split(",").filter(Boolean)
-      : [];
-  let customers: Customer[] = [];
   let templates: TemplateListResponse["items"] = [];
   try {
-    const [customerResponse, businessAccount] = await Promise.all([
-      serverFetch<{ items: Customer[] }>("/v1/customers", {
-        query: { page: "1", page_size: "100" },
-      }),
-      serverFetch<BusinessAccount>("/v1/wa/business-accounts"),
-    ]);
-    customers = customerResponse.items.filter((customer) =>
-      customerIds.includes(String(customer.id)),
-    );
+    const businessAccount = await serverFetch<BusinessAccount>("/v1/wa/business-accounts");
     if (businessAccount?.meta_waba_id) {
       const templateResponse = await serverFetch<TemplateListResponse>("/v1/wa/templates", {
         query: { meta_waba_id: businessAccount.meta_waba_id, limit: "100" },
@@ -45,15 +30,7 @@ export default async function NewCampaignPage({
 
   return (
     <>
-      <div className="fixed top-14 right-0 left-0 z-20 flex h-12 items-center bg-background px-2 pt-1 pb-1 lg:left-64 sm:px-4">
-        <Button asChild variant="ghost">
-          <Link href="/customers">
-            <ArrowLeft className="size-4" />
-            Back
-          </Link>
-        </Button>
-      </div>
-      <div className="mb-2 h-12" />
+      <BackBar href="/customers" />
 
       <PageHeader
         title={campaignId ? "Edit campaign" : "New campaign"}
@@ -62,11 +39,7 @@ export default async function NewCampaignPage({
 
       <Card>
         <CardContent>
-          <EditCampaignForm
-            campaignId={campaignId}
-            customers={customers}
-            templates={templates}
-          />
+          <NewCampaignContent campaignId={campaignId} templates={templates} />
         </CardContent>
       </Card>
     </>

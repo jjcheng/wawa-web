@@ -13,6 +13,8 @@ export function AnalyticsShell({
   rangeDays,
   granularity,
   maxRangeDays,
+  allowHalfHour = true,
+  allowMonth = true,
   children,
 }: {
   title: string;
@@ -22,6 +24,8 @@ export function AnalyticsShell({
   rangeDays: number;
   granularity: string;
   maxRangeDays?: number;
+  allowHalfHour?: boolean;
+  allowMonth?: boolean;
   children: ReactNode;
 }) {
   if (!selected) {
@@ -56,6 +60,8 @@ export function AnalyticsShell({
             range={String(rangeDays)}
             granularity={granularity}
             maxRangeDays={maxRangeDays}
+            allowHalfHour={allowHalfHour}
+            allowMonth={allowMonth}
           />
         }
       />

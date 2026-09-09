@@ -16,6 +16,7 @@ export type ChatMessage = {
   payload: Record<string, unknown>;
   attachment_url?: string;
   status?: string;
+  auto_load_media?: boolean;
 };
 
 export type ChatMessageStatus = { wa_message_id: string; status: string };

@@ -27,17 +27,22 @@ export function resolveRangeDays(value?: string) {
     : DEFAULT_RANGE_DAYS;
 }
 
-export function resolveGranularity(value?: string, rangeDays = DEFAULT_RANGE_DAYS): AnalyticsGranularity {
+export function resolveGranularity(
+  value?: string,
+  rangeDays = DEFAULT_RANGE_DAYS,
+  allowHalfHour = true,
+  allowMonth = true,
+): AnalyticsGranularity {
   const upper = value?.toUpperCase();
   const isValid =
-    (rangeDays === 7 && (upper === "HALF_HOUR" || upper === "DAY")) ||
+    (rangeDays === 7 && (allowHalfHour && upper === "HALF_HOUR" || upper === "DAY")) ||
     (rangeDays === 30 && (upper === "DAY" || upper === "MONTH")) ||
-    (rangeDays === 90 && (upper === "DAY" || upper === "MONTH")) ||
-    (rangeDays === 365 && upper === "MONTH");
+    (rangeDays === 90 && (upper === "DAY" || (allowMonth && upper === "MONTH"))) ||
+    (rangeDays === 365 && allowMonth && upper === "MONTH");
   if (isValid) {
     return upper as AnalyticsGranularity;
   }
-  return rangeDays >= 90 ? "MONTH" : DEFAULT_GRANULARITY;
+  return rangeDays >= 90 && allowMonth ? "MONTH" : DEFAULT_GRANULARITY;
 }
 
 /** The API takes Unix seconds and requires end > start. */

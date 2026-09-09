@@ -23,6 +23,8 @@ export type EmbeddedSignupState = {
   message?: string;
   inputErrors?: InputError[];
   status?: User["status"];
+  wa_activated?: boolean;
+  wa_activation_error?: string;
 };
 
 function safeNextPath(value: FormDataEntryValue | null) {
@@ -116,6 +118,14 @@ export async function completeEmbeddedSignup(input: unknown): Promise<EmbeddedSi
     };
   }
 
+  if (envelope.data?.wa_activated === false) {
+    return {
+      message: envelope.data.wa_activation_error || "Meta could not activate the WhatsApp account, please try again.",
+      wa_activated: false,
+      wa_activation_error: envelope.data.wa_activation_error,
+    };
+  }
+
   const accessToken = envelope.data?.access_token;
   if (!accessToken) {
     return { message: "WhatsApp onboarding succeeded but no access token was issued." };
@@ -123,7 +133,11 @@ export async function completeEmbeddedSignup(input: unknown): Promise<EmbeddedSi
 
   (await cookies()).set(serverEnv.SESSION_COOKIE_NAME, accessToken, sessionCookieOptions());
 
-  return { status: envelope.data?.status };
+  return {
+    status: envelope.data?.status,
+    wa_activated: envelope.data?.wa_activated,
+    wa_activation_error: envelope.data?.wa_activation_error,
+  };
 }
 
 export async function logoutAction() {

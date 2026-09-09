@@ -1,14 +1,13 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { Loader2, X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { GoogleLocationInput } from "@/components/google-location-input";
 import { MediaDropzone } from "@/components/media-dropzone";
 import { TemplateRawPreview } from "@/components/template-raw-preview";
@@ -27,7 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Customer, Template } from "@/lib/api/types";
 import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 
@@ -181,6 +179,9 @@ export function EditCampaignForm({
     index: number;
     label: string;
   } | null>(null);
+  const selectedCustomers = customers.filter((customer) =>
+    selectedCustomerIds.includes(customer.id),
+  );
   const previewCustomer = customers.find((customer) =>
     selectedCustomerIds.includes(customer.id),
   );
@@ -279,59 +280,22 @@ export function EditCampaignForm({
 
         <div className="space-y-2">
           <Label>Customers</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <div className="border-input hover:bg-muted/30 flex min-h-8 w-full cursor-pointer flex-wrap items-center gap-1 rounded-lg border px-2 py-1">
-                {customers
-                  .filter((customer) => selectedCustomerIds.includes(customer.id))
-                  .map((customer) => (
-                    <span
-                      key={customer.id}
-                      className="bg-muted inline-flex items-center gap-1 rounded px-2 py-1 text-xs"
-                    >
-                      {customer.display_name}
-                      <button
-                        type="button"
-                        aria-label={`Remove ${customer.display_name}`}
-                        className="hover:text-destructive"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setValue(
-                            "customer_ids",
-                            selectedCustomerIds.filter((id) => id !== customer.id),
-                          );
-                        }}
-                      >
-                        <X className="size-3" />
-                      </button>
-                    </span>
-                  ))}
-                {selectedCustomerIds.length === 0 ? (
-                  <span className="text-muted-foreground text-sm">Select customers</span>
-                ) : null}
-              </div>
-            </PopoverTrigger>
-            <PopoverContent className="w-(--radix-popover-trigger-width)">
-              {customers.map((customer) => (
-                <label
-                  key={customer.id}
-                  className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm"
-                >
-                  <Checkbox
-                    checked={selectedCustomerIds.includes(customer.id)}
-                    onChange={(event) => {
-                      const next = event.target.checked
-                        ? [...selectedCustomerIds, customer.id]
-                        : selectedCustomerIds.filter((id) => id !== customer.id);
-                      setValue("customer_ids", next);
-                      if (next.length > 0) clearErrors("customer_ids");
-                    }}
-                  />
-                  {customer.display_name}
-                </label>
-              ))}
-            </PopoverContent>
-          </Popover>
+          <div className="border-input flex min-h-8 w-full flex-wrap items-center gap-1 rounded-lg border px-2 py-1">
+            {selectedCustomers.length > 0 ? (
+              <span className="text-sm">
+                {selectedCustomers
+                  .slice(0, 5)
+                  .map((customer) => customer.display_name)
+                  .join(", ")}
+                {selectedCustomers.length > 5
+                  ? `, and ${selectedCustomers.length - 5} more...`
+                  : null}
+              </span>
+            ) : null}
+            {selectedCustomerIds.length === 0 ? (
+              <span className="text-muted-foreground text-sm">Select customers</span>
+            ) : null}
+          </div>
           {errors.customer_ids ? (
             <p className="text-destructive text-sm">{errors.customer_ids.message}</p>
           ) : null}

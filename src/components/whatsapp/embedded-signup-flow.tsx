@@ -69,6 +69,13 @@ export function EmbeddedSignupFlow({
       return completeEmbeddedSignup(parsed.data);
     },
     onSuccess: (result) => {
+      if (result.wa_activated === false) {
+        isSubmittingRef.current = false;
+        toast.error(
+          `${result.wa_activation_error || result.message || "Meta could not activate the WhatsApp account."} Please retry.`,
+        );
+        return;
+      }
       if (result.message) {
         isSubmittingRef.current = false;
         toast.error(result.message);

@@ -53,7 +53,7 @@ export default async function PhoneNumbersPage() {
       ) : null}
 
       {!loadError && phoneNumbers.length === 0 ? (
-        <Card>
+        <Card className="rounded-md py-0">
           <CardHeader>
             <CardTitle className="text-base">No numbers yet</CardTitle>
             <CardDescription>
@@ -64,14 +64,14 @@ export default async function PhoneNumbersPage() {
       ) : null}
 
       {phoneNumbers.length > 0 ? (
-        <Card>
+        <Card className="rounded-md py-0">
           <CardContent className="overflow-x-auto p-0">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Number</TableHead>
-                  <TableHead>Entry date</TableHead>
+                  <TableHead>Added</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>

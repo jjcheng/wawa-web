@@ -2,22 +2,42 @@ import type { Metadata } from "next";
 
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
-import type { Customer } from "@/lib/api/types";
+import type { CustomerListResponse } from "@/lib/api/types";
 import { CustomersShell } from "./customers-shell";
 
 export const metadata: Metadata = { title: "Customers" };
+const PAGE_SIZES = ["10", "25", "50", "100", "500"];
 
-export default async function CustomersPage() {
-  const customers = await serverFetch<{
-    items: Customer[];
-    next_page_offset?: unknown;
-  }>("/v1/customers", { query: { page: "1", page_size: "100" } }).catch((error) => {
-    if (error instanceof ApiError) return { items: [] as Customer[] };
+export default async function CustomersPage({ searchParams }: PageProps<"/customers">) {
+  const params = await searchParams;
+  const requestedStatus = typeof params.status === "string" ? params.status : "ACTIVE";
+  const status = requestedStatus === "INACTIVE" ? "INACTIVE" : "ACTIVE";
+  const requestedPageSize = typeof params.page_size === "string" ? params.page_size : "100";
+  const pageSize = PAGE_SIZES.includes(requestedPageSize) ? requestedPageSize : "100";
+  const name = typeof params.name === "string" ? params.name : "";
+  const phoneNumber = typeof params.phone_number === "string" ? params.phone_number : "";
+  const tags = Array.isArray(params.tags)
+    ? params.tags
+    : typeof params.tags === "string"
+      ? [params.tags]
+      : [];
+  const customers = await serverFetch<CustomerListResponse>("/v1/customers", {
+    query: { page: "1", page_size: pageSize, status, name, phone_number: phoneNumber, tags },
+  }).catch((error) => {
+    if (error instanceof ApiError) return { items: [], number_of_pages: 0 };
     throw error;
   });
   return (
     <>
-      <CustomersShell initialRows={customers.items} />
+      <CustomersShell
+        initialRows={customers.items}
+        initialNumberOfPages={customers.number_of_pages ?? 1}
+        name={name}
+        pageSize={pageSize}
+        phoneNumber={phoneNumber}
+        tags={tags}
+        status={status}
+      />
     </>
   );
 }

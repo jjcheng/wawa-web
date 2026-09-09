@@ -17,10 +17,14 @@ export function AnalyticsFilters({
   range,
   granularity,
   maxRangeDays,
+  allowHalfHour = true,
+  allowMonth = true,
 }: {
   range: string;
   granularity: string;
   maxRangeDays?: number;
+  allowHalfHour?: boolean;
+  allowMonth?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -28,14 +32,14 @@ export function AnalyticsFilters({
   const { startNavigationProgress } = useNavigationProgress();
 
   function isValidGranularity(nextRange: string, nextGranularity: string) {
-    if (nextRange === "7") return nextGranularity === "HALF_HOUR" || nextGranularity === "DAY";
+    if (nextRange === "7") return (allowHalfHour && nextGranularity === "HALF_HOUR") || nextGranularity === "DAY";
     if (nextRange === "30") return nextGranularity === "DAY";
-    if (nextRange === "90") return nextGranularity === "DAY" || nextGranularity === "MONTH";
-    return nextRange === "365" ? nextGranularity === "MONTH" : false;
+    if (nextRange === "90") return nextGranularity === "DAY" || (allowMonth && nextGranularity === "MONTH");
+    return nextRange === "365" ? allowMonth && nextGranularity === "MONTH" : false;
   }
 
   function defaultGranularity(nextRange: string) {
-    return nextRange === "90" || nextRange === "365" ? "MONTH" : "DAY";
+    return nextRange === "90" || nextRange === "365" ? (allowMonth ? "MONTH" : "DAY") : "DAY";
   }
 
   function setParam(key: string, value: string) {
@@ -78,7 +82,10 @@ export function AnalyticsFilters({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {ANALYTICS_GRANULARITIES.map((option) => (
+          {ANALYTICS_GRANULARITIES
+            .filter((option) => allowHalfHour || option !== "HALF_HOUR")
+            .filter((option) => allowMonth || option !== "MONTH")
+            .map((option) => (
             <SelectItem key={option} value={option}>
               {option === "HALF_HOUR" ? "By half-hour" : option === "DAY" ? "By day" : "By month"}
             </SelectItem>

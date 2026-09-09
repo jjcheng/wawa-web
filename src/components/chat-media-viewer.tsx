@@ -1,8 +1,8 @@
 "use client";
 
-import { Download, FileText, ImageIcon, LoaderCircle, Play } from "lucide-react";
+import { Download, FileText, ImageIcon, LoaderCircle, Play, Sticker } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 
@@ -13,9 +13,10 @@ type ChatMediaViewerProps = {
   mediaId?: string;
   waMessageId?: string;
   mediaUrl?: string;
-  type: "document" | "image" | "audio" | "video";
+  type: "document" | "image" | "sticker" | "audio" | "video";
   mimeType: string;
   filename?: string;
+  autoLoad?: boolean;
 };
 
 export function ChatMediaViewer({
@@ -25,12 +26,13 @@ export function ChatMediaViewer({
   type,
   mimeType,
   filename,
+  autoLoad = false,
 }: ChatMediaViewerProps) {
   const [loaded, setLoaded] = useState(Boolean(mediaUrl));
   const [loading, setLoading] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [resolvedMediaUrl, setResolvedMediaUrl] = useState(mediaUrl || "");
-  const label = type === "image" ? "View Image" : type === "video" ? "Play Video" : "Play Audio";
+  const label = type === "sticker" ? "View Sticker" : type === "image" ? "View Image" : type === "video" ? "Play Video" : "Play Audio";
 
   async function loadMedia() {
     if (mediaUrl) {
@@ -58,6 +60,14 @@ export function ChatMediaViewer({
       setLoading(false);
     }
   }
+
+  const loadStickerMedia = useEffectEvent(() => {
+    void loadMedia();
+  });
+
+  useEffect(() => {
+    if (autoLoad && !loaded) queueMicrotask(loadStickerMedia);
+  }, [autoLoad, loaded]);
 
   if (!mediaUrl && !resolvedMediaUrl && !mediaId) return null;
 
@@ -110,13 +120,13 @@ export function ChatMediaViewer({
   }
 
   if (loaded) {
-    if (type === "image") {
+    if (type === "image" || type === "sticker") {
       return (
         <>
           <button
             type="button"
-            className="relative block aspect-square w-72 max-w-full cursor-pointer overflow-hidden rounded-md"
-            aria-label="View image fullscreen"
+            className={`relative block aspect-square max-w-full cursor-pointer ${type === "sticker" ? "w-48" : "w-72 rounded-md overflow-hidden"}`}
+            aria-label={type === "sticker" ? "View sticker fullscreen" : "View image fullscreen"}
             onClick={(event) => {
               event.preventDefault();
               event.stopPropagation();
@@ -125,12 +135,12 @@ export function ChatMediaViewer({
           >
           <Image
             src={resolvedMediaUrl}
-            alt="Image attachment"
+            alt={type === "sticker" ? "Sticker attachment" : "Image attachment"}
             fill
             loading="lazy"
             unoptimized
             sizes="288px"
-            className="object-cover"
+            className={type === "sticker" ? "object-contain" : "object-cover"}
           />
           </button>
           <Lightbox open={galleryOpen} close={() => setGalleryOpen(false)} carousel={{ finite: true }} slides={[{ src: resolvedMediaUrl }]} />
@@ -163,7 +173,7 @@ export function ChatMediaViewer({
         }}
         disabled={loading}
       >
-        {loading ? <LoaderCircle className="size-5 animate-spin" /> : type === "image" ? <ImageIcon className="size-5" /> : <Play className="size-5" />}
+        {loading ? <LoaderCircle className="size-5 animate-spin" /> : type === "sticker" ? <Sticker className="size-5" /> : type === "image" ? <ImageIcon className="size-5" /> : <Play className="size-5" />}
         <span className="text-lg">{loading ? "Loading..." : label}</span>
       </Button>
   );
