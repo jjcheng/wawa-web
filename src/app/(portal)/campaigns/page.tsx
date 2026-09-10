@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { CampaignStatusFilter } from "./campaign-status-filter";
+import { CampaignNameFilter } from "./campaign-name-filter";
+import { CampaignCancelButton } from "./campaign-cancel-button";
+import { CampaignDeleteButton } from "./campaign-delete-button";
+import { CampaignViewButton } from "./campaign-view-button";
+import { CampaignTemplatePreviewButton } from "./campaign-template-preview-button";
 import { PageHeader } from "@/components/page-header";
 import { TableEmptyState } from "@/components/table-empty-state";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,40 +22,65 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const metadata: Metadata = { title: "Campaigns" };
 
-const COLUMNS = ["Name", "Audience", "Status", "Sent", "Open rate"];
+const COLUMN_COUNT = 8;
 
-function CampaignTable({ rows }: { rows: Campaign[] }) {
+function campaignMetric(campaign: Campaign, key: string) {
+  const value = campaign.payload?.[key];
+  return typeof value === "number" ? value : 0;
+}
+
+function displayStatus(status: string) {
+  return status.charAt(0) + status.slice(1).toLowerCase();
+}
+
+function CampaignTable({ rows, status, name }: { rows: Campaign[]; status: string; name: string }) {
   return (
     <Card className="rounded-md py-0">
       <CardContent className="overflow-x-auto p-0">
         <Table>
           <TableHeader>
             <TableRow>
-              {COLUMNS.map((column) => (
-                <TableHead key={column}>{column}</TableHead>
-              ))}
+              <TableHead><CampaignNameFilter value={name} /></TableHead>
+              <TableHead>Audience</TableHead>
+              <TableHead>Send date</TableHead>
+              <TableHead><CampaignStatusFilter value={status} /></TableHead>
+              <TableHead>Sent</TableHead>
+                  <TableHead>Accepted</TableHead>
+                  <TableHead>Failed</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.length === 0 ? (
-              <TableEmptyState colSpan={COLUMNS.length}>No campaigns yet.</TableEmptyState>
+              <TableEmptyState colSpan={COLUMN_COUNT}>No campaigns yet.</TableEmptyState>
             ) : (
               rows.map((campaign) => (
                 <TableRow key={campaign.id}>
                   <TableCell className="font-medium">
-                    <div>{campaign.name}</div>
-                    <div className="text-muted-foreground text-xs">
-                      {campaign.send_date ? `Scheduled ${formatDateTime(campaign.send_date)}` : "Send now"}
+                    <div className="flex items-center gap-1">
+                      <CampaignTemplatePreviewButton campaign={campaign} />
+                      <span>{campaign.name}</span>
                     </div>
                   </TableCell>
                   <TableCell>{campaign.customer_ids.length}</TableCell>
-                  <TableCell>{campaign.status}</TableCell>
-                  <TableCell>—</TableCell>
-                  <TableCell>—</TableCell>
+                  <TableCell>{formatDateTime(campaign.send_date)}</TableCell>
+                  <TableCell>{displayStatus(campaign.status)}</TableCell>
+                  <TableCell>{campaignMetric(campaign, "sent")}</TableCell>
+                  <TableCell>{campaignMetric(campaign, "accepted")}</TableCell>
+                  <TableCell>{campaignMetric(campaign, "failed")}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-2">
+                      <CampaignViewButton campaign={campaign} />
+                      {campaign.status === "PENDING" ? (
+                        <CampaignCancelButton campaignId={campaign.id} />
+                      ) : campaign.status === "CANCELLED" ? (
+                        <CampaignDeleteButton campaignId={campaign.id} />
+                      ) : null}
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -60,19 +91,22 @@ function CampaignTable({ rows }: { rows: Campaign[] }) {
   );
 }
 
-export default async function CampaignsPage() {
+export default async function CampaignsPage({ searchParams }: PageProps<"/campaigns">) {
+  const params = await searchParams;
+  const name = typeof params.name === "string" ? params.name : "";
+  const requestedStatus = typeof params.status === "string" ? params.status : "ALL";
+  const status = ["PENDING", "SENDING", "COMPLETED", "CANCELLED"].includes(requestedStatus)
+    ? requestedStatus
+    : "ALL";
   let campaigns: Campaign[] = [];
   try {
     const response = await serverFetch<CampaignListResponse>("/v1/campaigns", {
-      query: { page: "1", page_size: "100" },
+      query: { page: "1", page_size: "100", status: status === "ALL" ? undefined : status, name },
     });
     campaigns = response.items;
   } catch (error) {
     if (!(error instanceof ApiError)) throw error;
   }
-  const adHocCampaigns = campaigns.filter((campaign) => !campaign.send_date);
-  const scheduledCampaigns = campaigns.filter((campaign) => Boolean(campaign.send_date));
-
   return (
     <>
       <PageHeader
@@ -88,23 +122,7 @@ export default async function CampaignsPage() {
         }
       />
 
-      <Tabs defaultValue="ad-hoc">
-        <TabsList className="mb-4">
-          <TabsTrigger className="cursor-pointer" value="ad-hoc">
-            Ad-Hoc Campaigns
-          </TabsTrigger>
-          <TabsTrigger className="cursor-pointer" value="scheduled">
-            Scheduled Campaigns
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="ad-hoc">
-          <CampaignTable rows={adHocCampaigns} />
-        </TabsContent>
-        <TabsContent value="scheduled">
-          <CampaignTable rows={scheduledCampaigns} />
-        </TabsContent>
-      </Tabs>
+      <CampaignTable rows={campaigns} status={status} name={name} />
     </>
   );
 }

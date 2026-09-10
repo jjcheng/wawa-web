@@ -28,7 +28,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Customer, Template } from "@/lib/api/types";
+import type {
+  Customer,
+  SendTemplateParameter,
+  Template,
+} from "@/lib/api/types";
 import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 
 const SCHEDULES = ["Send now", "Send later"] as const;
@@ -113,39 +117,78 @@ function buttonInputs(component?: Record<string, unknown>): TemplateButtonInput[
   });
 }
 
+function sendInput(
+  template: Template | undefined,
+  type: string,
+  parameterIndex: number,
+  componentIndex?: string,
+): SendTemplateParameter | undefined {
+  return template?.send_components?.find(
+    (component) =>
+      component.type.toLowerCase() === type &&
+      (componentIndex === undefined || component.index === componentIndex),
+  )?.parameters?.[parameterIndex];
+}
+
 function buildSendComponents(
   components: Record<string, unknown>[] | undefined,
   variableValues: Record<string, string>,
   variableSources: Record<string, CustomerParameterSource>,
   previewCustomer: Customer | undefined,
+  headerVariables: string[],
+  bodyVariables: string[],
+  buttons: TemplateButtonInput[],
+  headerMediaUrl?: string,
 ) {
-  const valuesByVariable = new Map<string, string>();
-  for (const [key, value] of Object.entries(variableValues)) {
-    const variable = key.startsWith("body:") ? key.slice(5) : key;
-    valuesByVariable.set(variable, value);
-  }
-  for (const [key, source] of Object.entries(variableSources)) {
-    const variable = key.startsWith("body:") ? key.slice(5) : key;
-    const value = customerParameterValue(previewCustomer, source);
-    if (value) valuesByVariable.set(variable, value);
-  }
+  const getParameter = (variable: string | undefined) => {
+    if (!variable) return undefined;
+    const source = variableSources[variable] ?? "custom";
+    const customValue = variableValues[variable] ?? variableValues[`body:${variable}`] ?? "";
+    return source === "custom"
+      ? { text: customValue }
+      : { source };
+  };
 
-  function replace(value: unknown): unknown {
-    if (typeof value === "string") {
-      return value.replace(/{{\s*([^}]+?)\s*}}/g, (match, variable: string) =>
-        valuesByVariable.get(variable.trim()) || match,
-      );
-    }
-    if (Array.isArray(value)) return value.map(replace);
-    if (value && typeof value === "object") {
-      return Object.fromEntries(
-        Object.entries(value).map(([key, nestedValue]) => [key, replace(nestedValue)]),
-      );
-    }
-    return value;
-  }
-
-  return replace(components ?? []);
+  return (components ?? []).map((component) => {
+    const type = String(component.type ?? "").toLowerCase();
+    const index = String(component.index ?? "0");
+    const variables = type === "header"
+      ? headerVariables
+      : type === "body"
+        ? bodyVariables.map((variable) => `body:${variable}`)
+        : buttons
+            .filter((button) => String(button.buttonIndex) === index)
+            .map((button) => button.key);
+    let parameterIndex = 0;
+    const parameters = Array.isArray(component.parameters)
+      ? component.parameters.map((parameter) => {
+          const currentParameterIndex = parameterIndex++;
+          const variable = variables[currentParameterIndex];
+          const input = parameter && typeof parameter === "object"
+            ? parameter as SendTemplateParameter
+            : undefined;
+          if (
+            variable &&
+            !input?.input_required &&
+            (variableSources[variable] ?? "custom") === "custom" &&
+            !(variableValues[variable] ?? variableValues[`body:${variable}`] ?? "").trim()
+          ) {
+            return null;
+          }
+          if (type === "header" && headerMediaUrl && parameter && typeof parameter === "object") {
+            const mediaType = String(parameter.type ?? "").toLowerCase();
+            if (["image", "video", "document"].includes(mediaType)) {
+              return { ...parameter, [mediaType]: { link: headerMediaUrl } };
+            }
+          }
+          if (parameter && typeof parameter === "object" && variable) {
+            return { ...parameter, ...getParameter(variable) };
+          }
+          return parameter;
+        }).filter((parameter): parameter is Record<string, unknown> => parameter !== null)
+      : component.parameters;
+    return { ...component, parameters };
+  });
 }
 
 function customerParameterValue(
@@ -253,8 +296,22 @@ export function EditCampaignForm({
     ...bodyVariables.map((variable) => `body:${variable}`),
     ...buttons.map((button) => button.key),
   ];
+  const requiredVariableKeys = new Set([
+    ...headerVariables.filter(
+      (_, index) => sendInput(selectedTemplate, "header", index)?.input_required,
+    ),
+    ...bodyVariables
+      .filter((_, index) => sendInput(selectedTemplate, "body", index)?.input_required)
+      .map((variable) => `body:${variable}`),
+    ...buttons
+      .filter(
+        (button) =>
+          sendInput(selectedTemplate, "button", 0, String(button.buttonIndex))?.input_required,
+      )
+      .map((button) => button.key),
+  ]);
   const missingVariableKeys = new Set(
-    variableKeys.filter((key) => !resolvedVariableValue(key).trim()),
+    variableKeys.filter((key) => requiredVariableKeys.has(key) && !resolvedVariableValue(key).trim()),
   );
   const templatesByCategory = templates.reduce<Record<string, Template[]>>(
     (groups, template) => {
@@ -266,23 +323,45 @@ export function EditCampaignForm({
   );
 
   const mutation = useMutation({
-    mutationFn: async (values: EditCampaignInput) =>
-      apiFetch("v1/campaigns", {
+    mutationFn: async (values: EditCampaignInput) => {
+      let headerMediaUrl: string | undefined;
+      if (headerFile && mediaHeader) {
+        const media = await apiFetch<{ url?: string }>("v1/wa/media", {
+          method: "POST",
+          rawBody: headerFile,
+          contentType: headerFile.type,
+          query: {
+            to_meta: "false",
+            filename: headerFile.name,
+            content_type: headerFile.type,
+          },
+        });
+        headerMediaUrl = media.url;
+        if (!headerMediaUrl) throw new Error("Media upload did not return a URL.");
+      }
+      return apiFetch("v1/campaigns", {
         method: "POST",
         body: {
           name: values.name.trim(),
           send_date:
             values.schedule === "Send later" ? new Date(values.send_date).toISOString() : null,
           wa_template_id: values.template_id,
-          components: buildSendComponents(
-            selectedTemplate?.send_components,
-            variableValues,
-            variableSources,
-            previewCustomer,
-          ),
+          sent_template: {
+            components: buildSendComponents(
+              selectedTemplate?.send_components,
+              variableValues,
+              variableSources,
+              previewCustomer,
+              headerVariables,
+              bodyVariables,
+              buttons,
+              headerMediaUrl,
+            ),
+          },
           customer_ids: values.customer_ids,
         },
-      }),
+      });
+    },
     onSuccess: () => {
       toast.success(campaignId ? "Campaign updated." : "Campaign created.");
       router.push("/campaigns");
@@ -321,12 +400,17 @@ export function EditCampaignForm({
         name: values.name.trim(),
         send_date: values.schedule === "Send later" ? new Date(values.send_date).toISOString() : null,
         wa_template_id: values.template_id,
-        components: buildSendComponents(
-          selectedTemplate?.send_components,
-          variableValues,
-          variableSources,
-          previewCustomer,
-        ),
+        sent_template: {
+          components: buildSendComponents(
+            selectedTemplate?.send_components,
+            variableValues,
+            variableSources,
+            previewCustomer,
+            headerVariables,
+            bodyVariables,
+            buttons,
+          ),
+        },
         customer_ids: values.customer_ids,
       };
       console.log("Campaign payload", payload);
@@ -495,7 +579,11 @@ export function EditCampaignForm({
                       setHighlightedButton(null);
                     }}
                   >
-                    {`{{${variable}}}`}
+                    {sendInput(selectedTemplate, "header", headerVariables.indexOf(variable))?.input_title ||
+                      `{{${variable}}}`}
+                    {sendInput(selectedTemplate, "header", headerVariables.indexOf(variable))?.input_required ? (
+                      <span className="text-muted-foreground ml-1 font-normal">(required)</span>
+                    ) : null}
                   </button>
                   <TemplateVariableInput
                     id={`template-variable-${variable}`}
@@ -533,7 +621,7 @@ export function EditCampaignForm({
               <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 Body
               </p>
-              {bodyVariables.map((variable) => (
+              {bodyVariables.map((variable, index) => (
                 <div key={`body-${variable}`} className="space-y-2">
                   <button
                     type="button"
@@ -550,7 +638,10 @@ export function EditCampaignForm({
                       setHighlightedButton(null);
                     }}
                   >
-                    {`{{${variable}}}`}
+                    {sendInput(selectedTemplate, "body", index)?.input_title || `{{${variable}}}`}
+                    {sendInput(selectedTemplate, "body", index)?.input_required ? (
+                      <span className="text-muted-foreground ml-1 font-normal">(required)</span>
+                    ) : null}
                   </button>
                   <TemplateVariableInput
                     id={`template-body-variable-${variable}`}
@@ -602,7 +693,11 @@ export function EditCampaignForm({
                       });
                     }}
                   >
-                    {`{{${button.variable}}}`}
+                    {sendInput(selectedTemplate, "button", 0, String(button.buttonIndex))?.input_title ||
+                      `{{${button.variable}}}`}
+                    {sendInput(selectedTemplate, "button", 0, String(button.buttonIndex))?.input_required ? (
+                      <span className="text-muted-foreground ml-1 font-normal">(required)</span>
+                    ) : null}
                   </button>
                   <TemplateVariableInput
                     id={`template-${button.key}`}

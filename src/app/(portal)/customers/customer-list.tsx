@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Search, X } from "lucide-react";
+import { Info, Loader2, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Table,
   TableBody,
@@ -67,6 +68,7 @@ export function CustomerList({
   const [phoneInput, setPhoneInput] = useState(phoneNumber);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [bulkActionPending, setBulkActionPending] = useState(false);
+  const [invalidPhonePopoverId, setInvalidPhonePopoverId] = useState<number | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -223,6 +225,15 @@ export function CustomerList({
             {status === "ACTIVE" ? (
               <Button
                 onClick={() => {
+                  const invalidCustomers = rows.filter(
+                    (customer) => selectedRows.has(customer.id) && !customer.wa_id,
+                  );
+                  if (invalidCustomers.length > 0) {
+                    toast.error(
+                      "Some selected customers have an invalid phone number. Please use View -> Edit to correct them.",
+                    );
+                    return;
+                  }
                   sessionStorage.setItem(
                     "new-campaign-customer-ids",
                     JSON.stringify([...selectedRows]),
@@ -336,7 +347,36 @@ export function CustomerList({
                     </TableCell>
                     <TableCell>{row.display_name}</TableCell>
                     <TableCell>
-                      {formatPhoneNumber(row.phone_number, row.country_code)}
+                      <div className="flex items-center gap-1">
+                        <span>{formatPhoneNumber(row.phone_number, row.country_code)}</span>
+                        {!row.wa_id ? (
+                          <Popover
+                            open={invalidPhonePopoverId === row.id}
+                            onOpenChange={(open) => setInvalidPhonePopoverId(open ? row.id : null)}
+                          >
+                            <PopoverTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-xs"
+                                onMouseEnter={() => setInvalidPhonePopoverId(row.id)}
+                                onMouseLeave={() => setInvalidPhonePopoverId(null)}
+                                aria-label="Invalid phone number"
+                                title="Invalid phone number"
+                              >
+                                <Info className="text-muted-foreground" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              className="w-64 text-sm"
+                              onMouseEnter={() => setInvalidPhonePopoverId(row.id)}
+                              onMouseLeave={() => setInvalidPhonePopoverId(null)}
+                            >
+                              Invalid country code or phone number, please View -&gt; Edit
+                            </PopoverContent>
+                          </Popover>
+                        ) : null}
+                      </div>
                     </TableCell>
                     <TableCell>{row.tags?.join(", ")}</TableCell>
                     <TableCell className="text-right">

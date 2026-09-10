@@ -11,7 +11,7 @@ import {
 
 export const CUSTOMER_PARAMETER_OPTIONS = [
   { value: "custom", label: "Static value" },
-  { value: "display_name", label: "Customer name" },
+  { value: "customer.name", label: "Customer name" },
 ] as const;
 
 export type CustomerParameterSource = (typeof CUSTOMER_PARAMETER_OPTIONS)[number]["value"];
@@ -39,7 +39,7 @@ export function TemplateVariableInput({
         value={source}
         onValueChange={(nextSource) => onSourceChange(nextSource as CustomerParameterSource)}
       >
-        <SelectTrigger aria-label="Parameter source" className="w-full">
+        <SelectTrigger aria-label="Parameter source" className="w-full cursor-pointer">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

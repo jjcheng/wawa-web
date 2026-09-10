@@ -129,15 +129,38 @@ export type Campaign = {
   entry_date?: string;
   last_update?: string;
   name: string;
-  send_date?: string | null;
+  send_date: string;
   wa_template_id: string;
   customer_ids: number[];
   status: string;
   payload?: Record<string, unknown>;
+  send_template?: {
+    components?: Record<string, unknown>[];
+  };
 };
 
 export type CampaignListResponse = {
   items: Campaign[];
+  number_of_pages?: number;
+  number_of_items?: number;
+  next_page_offset?: unknown;
+  additional_data?: Record<string, unknown>;
+};
+
+export type CampaignRecipient = {
+  id: number;
+  customer_name: string;
+  customer_wa_id: string;
+  campaign_id: number;
+  customer_id: number;
+  status: string;
+  attempts: number;
+  next_attempt_at?: string | null | { Time?: string; Valid?: boolean };
+  last_error?: string;
+};
+
+export type CampaignRecipientListResponse = {
+  items: CampaignRecipient[];
   number_of_pages?: number;
   number_of_items?: number;
   next_page_offset?: unknown;
@@ -163,11 +186,29 @@ export type Template = {
   preview_html?: string;
   preview_dark_html?: string;
   components?: Record<string, unknown>[];
-  send_components?: Record<string, unknown>[];
+  send_components?: SendTemplateComponent[];
   quality_score?: TemplateQualityScore;
   rejected_reason?: string;
   previous_category?: string;
   meta_edit_template_url?: string;
+};
+
+export type SendTemplateParameter = {
+  type: string;
+  parameter_name?: string;
+  text?: string;
+  source?: string;
+  input_index?: number;
+  input_title?: string;
+  input_required?: boolean;
+  [key: string]: unknown;
+};
+
+export type SendTemplateComponent = {
+  type: string;
+  sub_type?: string;
+  index?: string;
+  parameters?: SendTemplateParameter[];
 };
 
 export type SampleTemplate = {

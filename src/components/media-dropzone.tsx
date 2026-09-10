@@ -1,6 +1,8 @@
 "use client";
 
 import { Upload, X } from "lucide-react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 import { useDropzone, type Accept } from "react-dropzone";
 
 import { Button } from "@/components/ui/button";
@@ -28,6 +30,7 @@ export function MediaDropzone({
   file: File | null;
   onChange: (file: File | null) => void;
 }) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { getRootProps, getInputProps, isDragActive, fileRejections } = useDropzone({
     accept: ACCEPT_BY_FORMAT[format],
     maxFiles: 1,
@@ -35,34 +38,64 @@ export function MediaDropzone({
     onDropAccepted: ([acceptedFile]) => onChange(acceptedFile ?? null),
   });
 
+  useEffect(() => {
+    if (!file || !file.type.startsWith("image/")) {
+      queueMicrotask(() => setPreviewUrl(null));
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    let active = true;
+    queueMicrotask(() => {
+      if (active) setPreviewUrl(url);
+    });
+    return () => {
+      active = false;
+      URL.revokeObjectURL(url);
+    };
+  }, [file]);
+
   return (
     <div className="space-y-2">
-      <div
-        {...getRootProps()}
-        className={cn(
-          "border-input hover:bg-muted/40 flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-5 text-center transition-colors",
-          isDragActive && "border-primary bg-muted/40",
-        )}
-      >
-        <input {...getInputProps()} />
-        <Upload className="text-muted-foreground size-5" />
-        <p className="text-sm font-medium">
-          {isDragActive ? "Drop the file here" : `Drag and drop ${format.toLowerCase()} here`}
-        </p>
-        <p className="text-muted-foreground text-xs">or click to browse</p>
-      </div>
+      {!file ? (
+        <div
+          {...getRootProps()}
+          className={cn(
+            "border-input hover:bg-muted/40 flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-5 text-center transition-colors",
+            isDragActive && "border-primary bg-muted/40",
+          )}
+        >
+          <input {...getInputProps()} />
+          <Upload className="text-muted-foreground size-5" />
+          <p className="text-sm font-medium">
+            {isDragActive ? "Drop the file here" : `Drag and drop ${format.toLowerCase()} here`}
+          </p>
+          <p className="text-muted-foreground text-xs">or click to browse</p>
+        </div>
+      ) : null}
       {file ? (
-        <div className="bg-muted flex items-center justify-between gap-2 rounded-md px-2 py-1 text-sm">
-          <span className="min-w-0 truncate">{file.name}</span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            aria-label={`Remove ${file.name}`}
-            onClick={() => onChange(null)}
-          >
-            <X />
-          </Button>
+        <div className="bg-muted flex flex-col gap-2 rounded-md p-2 text-sm">
+          {previewUrl ? (
+            <Image
+              src={previewUrl}
+              alt="Selected file preview"
+              width={640}
+              height={256}
+              unoptimized
+              className="h-auto max-h-64 w-full rounded object-contain"
+            />
+          ) : null}
+          <div className="flex items-center justify-between gap-2">
+            <span className="min-w-0 truncate">{file.name}</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              aria-label={`Remove ${file.name}`}
+              onClick={() => onChange(null)}
+            >
+              <X />
+            </Button>
+          </div>
         </div>
       ) : null}
       {fileRejections.length > 0 ? (

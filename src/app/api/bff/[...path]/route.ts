@@ -29,7 +29,7 @@ async function proxyRequest(request: NextRequest, context: Context) {
   let contentType: string | undefined;
   if (method !== "GET" && method !== "HEAD") {
     contentType = request.headers.get("content-type") ?? undefined;
-    if (contentType?.split(";", 1)[0].trim() === "application/octet-stream") {
+    if (contentType && contentType.split(";", 1)[0].trim() !== "application/json") {
       rawBody = await request.arrayBuffer();
     } else {
       const text = await request.text();
