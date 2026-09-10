@@ -6,6 +6,7 @@ const ALLOWED: { method: string; pattern: RegExp }[] = [
   { method: "POST", pattern: /^v1\/auth\/login$/ },
   { method: "POST", pattern: /^v1\/auth\/logout$/ },
   { method: "GET", pattern: /^v1\/auth\/me$/ },
+  { method: "GET", pattern: /^v1\/account\/users\/me\/dashboard$/ },
   { method: "PATCH", pattern: /^v1\/account\/users\/me\/profile$/ },
   { method: "PATCH", pattern: /^v1\/account\/users\/me\/password$/ },
   { method: "POST", pattern: /^v1\/account\/users\/me\/initial-password$/ },

@@ -11,7 +11,7 @@ export default async function PortalLayout({ children }: LayoutProps<"/">) {
       <div className="flex min-h-svh">
         <aside className="bg-sidebar hidden w-64 shrink-0 border-r lg:block">
           <div className="sticky top-0">
-            <SidebarNav />
+            <SidebarNav user={user} />
           </div>
         </aside>
         <div className="flex min-w-0 flex-1 flex-col">

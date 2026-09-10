@@ -1,10 +1,9 @@
-import { MessagesSquare, Phone, Send, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import type { Metadata } from "next";
 
+import { DashboardSection } from "./dashboard-section";
 import { PageHeader } from "@/components/page-header";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -12,9 +11,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
-import type { PhoneNumber, PhoneNumberListResponse } from "@/lib/api/types";
+import type {
+  Dashboard,
+  PhoneNumber,
+  PhoneNumberListResponse,
+} from "@/lib/api/types";
 import { requireUser } from "@/lib/auth/session";
 import { formatDateTime, formatPhoneNumber } from "@/lib/format";
 
@@ -24,22 +28,23 @@ export default async function DashboardPage() {
   const user = await requireUser();
 
   let phoneNumbers: PhoneNumber[] = [];
+  const emptyDashboard: Dashboard = {
+    active_phone_numbers: undefined,
+    active_customers: undefined,
+  };
+  const personalDashboard = emptyDashboard;
+  const businessDashboard = emptyDashboard;
   let loadError: string | null = null;
   try {
-    phoneNumbers = (await serverFetch<PhoneNumberListResponse>("/v1/wa/user-phone-numbers", {
-      query: { page: "1", page_size: "10" },
-    })).items ?? [];
+    const phoneNumberResponse = await serverFetch<PhoneNumberListResponse>(
+      "/v1/wa/user-phone-numbers",
+      { query: { page: "1", page_size: "10" } },
+    );
+    phoneNumbers = phoneNumberResponse.items ?? [];
   } catch (error) {
     loadError =
       error instanceof ApiError ? error.message : "Could not load your WhatsApp numbers.";
   }
-
-  const stats = [
-    { label: "Connected numbers", value: String(phoneNumbers.length), icon: Phone },
-    { label: "Customers", value: "1,284", icon: Users, preview: false },
-    { label: "Conversations", value: "37", icon: MessagesSquare, preview: false },
-    { label: "Messages sent (30d)", value: "8,912", icon: Send, preview: false },
-  ];
 
   return (
     <>
@@ -48,24 +53,22 @@ export default async function DashboardPage() {
         description="Your WhatsApp CRM at a glance."
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.label}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
-              <CardDescription>{stat.label}</CardDescription>
-              <stat.icon className="text-muted-foreground size-4" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-semibold">{stat.value}</p>
-              {stat.preview ? (
-                <Badge variant="secondary" className="mt-2">
-                  Preview
-                </Badge>
-              ) : null}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {user.type === "MASTER" ? (
+        <Tabs defaultValue="business-account" className="space-y-4">
+          <TabsList aria-label="Dashboard overview">
+            <TabsTrigger value="business-account">Entire Business Account</TabsTrigger>
+            <TabsTrigger value="my-number">My WhatsApp Number</TabsTrigger>
+          </TabsList>
+          <TabsContent value="business-account">
+            <DashboardSection dashboard={businessDashboard} businessAccount />
+          </TabsContent>
+          <TabsContent value="my-number">
+            <DashboardSection dashboard={personalDashboard} showPhoneNumbersLink={false} />
+          </TabsContent>
+        </Tabs>
+      ) : (
+        <DashboardSection dashboard={personalDashboard} />
+      )}
 
       <div className="mt-6 grid hidden gap-4 lg:grid-cols-2">
         <Card>

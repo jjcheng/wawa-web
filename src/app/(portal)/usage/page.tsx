@@ -34,6 +34,7 @@ import type {
   PhoneNumber,
   TemplateListResponse,
 } from "@/lib/api/types";
+import { requireUser } from "@/lib/auth/session";
 import { formatDate, formatDateTime } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Usage" };
@@ -45,6 +46,9 @@ type PhoneNumberListResponse = {
 };
 
 export default async function UsagePage({ searchParams }: PageProps<"/usage">) {
+  const user = await requireUser();
+  if (user.type !== "MASTER") redirect("/dashboard");
+
   const params = await searchParams;
   const view = resolveAnalyticsView(typeof params.view === "string" ? params.view : undefined);
   if (view === "template" && params.range === "365") {

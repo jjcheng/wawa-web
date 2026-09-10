@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { SidebarNav } from "@/components/nav/sidebar-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -124,7 +125,7 @@ export function Topbar({ user }: { user: User }) {
         </SheetTrigger>
         <SheetContent side="left" className="w-72 p-0">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
-          <SidebarNav onNavigate={() => setMobileOpen(false)} />
+          <SidebarNav user={user} onNavigate={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>
 
@@ -197,7 +198,14 @@ export function Topbar({ user }: { user: User }) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel className="font-normal">
-              <p className="text-sm font-medium">{user.name || "Account"}</p>
+              <div className="flex w-full items-center justify-between gap-2">
+                <p className="text-sm font-medium">{user.name || "Account"}</p>
+                {user.type === "MASTER" ? (
+                  <Badge className="h-4 px-1.5 text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                    MASTER
+                  </Badge>
+                ) : null}
+              </div>
               <p className="text-muted-foreground text-xs">
                 {user.email || formatPhoneNumber(user.phone_number, user.country_code)}
               </p>

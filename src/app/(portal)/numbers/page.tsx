@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { PageHeader } from "@/components/page-header";
 import { EmbeddedSignupButton } from "@/components/whatsapp/embedded-signup-button";
@@ -23,10 +24,14 @@ import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type { PhoneNumber, PhoneNumberListResponse } from "@/lib/api/types";
 import { formatDateTime, formatPhoneNumber } from "@/lib/format";
+import { requireUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Phone numbers" };
 
 export default async function PhoneNumbersPage() {
+  const user = await requireUser();
+  if (user.type !== "MASTER") redirect("/dashboard");
+
   let phoneNumbers: PhoneNumber[] = [];
   let loadError: string | null = null;
   try {

@@ -27,30 +27,6 @@ export const mockInboxMessages = [
   },
 ];
 
-export const mockWorkflows = [
-  {
-    Name: "Abandoned cart nudge",
-    Trigger: "Cart idle 2h",
-    Steps: "3",
-    Status: "Active",
-    "Last run": "12 minutes ago",
-  },
-  {
-    Name: "Post-purchase survey",
-    Trigger: "Order delivered",
-    Steps: "2",
-    Status: "Active",
-    "Last run": "Yesterday",
-  },
-  {
-    Name: "Win-back",
-    Trigger: "No order 90 days",
-    Steps: "4",
-    Status: "Paused",
-    "Last run": "3 weeks ago",
-  },
-];
-
 export const mockUsage = [
   {
     Month: "Aug 2026",

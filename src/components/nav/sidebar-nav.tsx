@@ -4,17 +4,16 @@ import {
   FileText,
   Gauge,
   Inbox,
-  ListTodo,
   LayoutDashboard,
   Megaphone,
   Phone,
   Users,
-  Workflow,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { Brand } from "@/components/brand";
+import type { User } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
 const SECTIONS = [
@@ -22,7 +21,6 @@ const SECTIONS = [
     label: "Overview",
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { href: "/todos", label: "TODOs", icon: ListTodo },
       { href: "/inbox", label: "Inbox", icon: Inbox },
     ],
   },
@@ -38,7 +36,6 @@ const SECTIONS = [
     items: [
       { href: "/numbers", label: "Phone Numbers", icon: Phone },
       { href: "/templates", label: "Templates", icon: FileText },
-      { href: "/workflows", label: "Workflows", icon: Workflow },
     ],
   },
   {
@@ -47,18 +44,18 @@ const SECTIONS = [
   },
 ];
 
-export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user: User }) {
   const pathname = usePathname();
 
   return (
     <nav className="flex h-full flex-col gap-6 p-4">
       <Brand className="px-2" />
-      {SECTIONS.map((section) => (
+      {SECTIONS.filter((section) => user.type === "MASTER" || section.label !== "Analytics").map((section) => (
         <div key={section.label} className="space-y-1">
           <p className="text-muted-foreground px-2 text-xs font-medium tracking-wide uppercase">
             {section.label}
           </p>
-          {section.items.map((item) => {
+          {section.items.filter((item) => user.type === "MASTER" || item.href !== "/numbers").map((item) => {
             const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <Link

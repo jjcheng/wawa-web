@@ -77,7 +77,7 @@ export function CustomersShell({
     <>
       <PageHeader
         title="Customers"
-        description="People you want to reach out to. Select at least one to start a campaign."
+        description="You can only see your own customers. Select at least one to start a campaign."
         action={
           <div className="mt-2">
             <AddCustomerMenu
