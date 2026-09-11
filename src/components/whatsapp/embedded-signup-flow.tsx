@@ -53,12 +53,15 @@ export function EmbeddedSignupFlow({
   configId: string;
   redirectTo: string | null;
   className?: string;
-}) {
+  }) {
   const router = useRouter();
   const [sdkReady, setSdkReady] = useState(false);
   const sessionRef = useRef<SignupSession>({});
   const authorizationCodeRef = useRef<string | null>(null);
   const isSubmittingRef = useRef(false);
+  const signupActiveRef = useRef(false);
+  const [signupAborted, setSignupAborted] = useState(false);
+  const [signupStarted, setSignupStarted] = useState(false);
 
   const mutation = useMutation({
     mutationFn: (payload: unknown) => {
@@ -70,14 +73,20 @@ export function EmbeddedSignupFlow({
     },
     onSuccess: (result) => {
       if (result.wa_activated === false) {
+        signupActiveRef.current = false;
         isSubmittingRef.current = false;
+        setSignupStarted(false);
+        setSignupAborted(true);
         toast.error(
           `${result.wa_activation_error || result.message || "Meta could not activate the WhatsApp account."} Please retry.`,
         );
         return;
       }
       if (result.message) {
+        signupActiveRef.current = false;
         isSubmittingRef.current = false;
+        setSignupStarted(false);
+        setSignupAborted(true);
         toast.error(result.message);
         return;
       }
@@ -91,7 +100,10 @@ export function EmbeddedSignupFlow({
       router.refresh();
     },
     onError: () => {
+      signupActiveRef.current = false;
       isSubmittingRef.current = false;
+      setSignupStarted(false);
+      setSignupAborted(true);
       toast.error("WhatsApp onboarding failed. Please try again.");
     },
   });
@@ -99,17 +111,13 @@ export function EmbeddedSignupFlow({
   const submitSignup = useCallback(() => {
     const authorizationCode = authorizationCodeRef.current;
     const session = sessionRef.current;
-    if (
-      isSubmittingRef.current ||
-      !authorizationCode ||
-      !session.phone_number_id ||
-      !session.waba_id ||
-      !session.business_id
-    ) {
+    if (isSubmittingRef.current) return;
+    if (!authorizationCode || !session.phone_number_id || !session.waba_id || !session.business_id) {
       return;
     }
 
     isSubmittingRef.current = true;
+    setSignupStarted(true);
     mutation.mutate({
       type: "WA_EMBEDDED_SIGNUP",
       event: "FINISH",
@@ -140,6 +148,11 @@ export function EmbeddedSignupFlow({
             sessionRef.current = signupMessage.data ?? signupMessage;
             submitSignup();
           } else if (signupMessage.event === "CANCEL") {
+            if (isSubmittingRef.current) return;
+            signupActiveRef.current = false;
+            isSubmittingRef.current = false;
+            setSignupStarted(false);
+            setSignupAborted(true);
             toast.info("WhatsApp onboarding was cancelled.");
           }
         }
@@ -175,7 +188,16 @@ export function EmbeddedSignupFlow({
   }, [initSdk]);
 
   function launchWhatsAppSignup() {
+    if (signupActiveRef.current || isSubmittingRef.current) return;
+    signupActiveRef.current = true;
+    sessionRef.current = {};
+    authorizationCodeRef.current = null;
+    setSignupStarted(true);
+    setSignupAborted(false);
     if (!window.FB) {
+      signupActiveRef.current = false;
+      isSubmittingRef.current = false;
+      setSignupStarted(false);
       toast.error("The Facebook SDK is not ready yet.");
       return;
     }
@@ -195,6 +217,11 @@ export function EmbeddedSignupFlow({
   function fbLoginCallback(response: { authResponse?: { code?: string } }) {
     const code = response.authResponse?.code;
     if (!code) {
+      if (isSubmittingRef.current) return;
+      signupActiveRef.current = false;
+      isSubmittingRef.current = false;
+      setSignupStarted(false);
+      setSignupAborted(true);
       toast.error("WhatsApp onboarding was cancelled.");
       return;
     }
@@ -212,17 +239,30 @@ export function EmbeddedSignupFlow({
     );
   }
 
+  if (signupAborted) {
+    return (
+      <div className={cn("grid gap-3 text-center", className)}>
+        <p className="text-destructive text-sm font-medium">
+          Signup aborted, refresh the page to try again
+        </p>
+        <Button type="button" onClick={() => window.location.reload()} className={MEDIUM_BUTTON_HEIGHT}>
+          Refresh page
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <Button
       onClick={launchWhatsAppSignup}
-      disabled={!sdkReady || mutation.isPending}
+      disabled={!sdkReady || signupStarted || mutation.isPending}
       className={cn(
         MEDIUM_BUTTON_HEIGHT,
         "bg-[#1877F2] text-white hover:bg-[#166FE5] focus-visible:ring-[#1877F2]/50",
         className,
       )}
     >
-      {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+      {signupStarted || mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
       Get Started with Facebook
     </Button>
   );

@@ -27,6 +27,9 @@ const realtimeProvider = createAblyConversationProvider<Message, ChatMessageStat
 
 const displayableMessageTypes = new Set([
   "text",
+  "template",
+  "interactive",
+  "button",
   "document",
   "image",
   "sticker",
@@ -72,7 +75,92 @@ function messageBody(message: Message) {
     const text = payload.text as { body?: unknown };
     if (typeof text.body === "string") return text.body;
   }
+  if (message.type === "template" && typeof payload.template === "object" && payload.template) {
+    const template = payload.template as { name?: unknown };
+    if (typeof template.name === "string") return template.name;
+  }
+  if (message.type === "interactive" && typeof payload.interactive === "object" && payload.interactive) {
+    const interactive = payload.interactive as {
+      body?: { text?: unknown };
+      button_reply?: { title?: unknown };
+      list_reply?: { title?: unknown };
+    };
+    if (typeof interactive.button_reply?.title === "string") return interactive.button_reply.title;
+    if (typeof interactive.list_reply?.title === "string") return interactive.list_reply.title;
+    if (typeof interactive.body?.text === "string") return interactive.body.text;
+  }
+  if (message.type === "button" && typeof payload.button === "object" && payload.button) {
+    const button = payload.button as { text?: unknown; payload?: unknown };
+    if (typeof button.text === "string") return button.text;
+    if (typeof button.payload === "string") return button.payload;
+  }
   return message.type;
+}
+
+function templateDetails(message: Message) {
+  if (message.type !== "template") return null;
+  const template = message.payload.template;
+  if (typeof template !== "object" || !template) return { name: "Template message", language: null, parameters: [] };
+
+  const data = template as {
+    name?: unknown;
+    language?: { code?: unknown };
+    components?: { parameters?: { text?: unknown }[] }[];
+  };
+  const parameters = data.components
+    ?.flatMap((component) => component.parameters ?? [])
+    .map((parameter) => parameter.text)
+    .filter((text): text is string => typeof text === "string" && text.trim().length > 0) ?? [];
+
+  return {
+    name: typeof data.name === "string" ? data.name : "Template message",
+    language: typeof data.language?.code === "string" ? data.language.code : null,
+    parameters,
+  };
+}
+
+function interactiveDetails(message: Message) {
+  if (message.type !== "interactive") return null;
+  const interactive = message.payload.interactive;
+  if (typeof interactive !== "object" || !interactive) {
+    return { label: "Interactive", title: "Interactive message", description: null };
+  }
+
+  const data = interactive as {
+    type?: unknown;
+    body?: { text?: unknown };
+    button_reply?: { title?: unknown; id?: unknown };
+    list_reply?: { title?: unknown; description?: unknown; id?: unknown };
+  };
+  const reply = data.button_reply ?? data.list_reply;
+  const title = typeof reply?.title === "string"
+    ? reply.title
+    : typeof data.body?.text === "string"
+      ? data.body.text
+      : "Interactive message";
+  const description = typeof data.list_reply?.description === "string"
+    ? data.list_reply.description
+    : typeof reply?.id === "string"
+      ? reply.id
+      : null;
+
+  return {
+    label: typeof data.type === "string" ? data.type.replaceAll("_", " ") : "Interactive",
+    title,
+    description,
+  };
+}
+
+function buttonDetails(message: Message) {
+  if (message.type !== "button") return null;
+  const button = message.payload.button;
+  if (typeof button !== "object" || !button) return { text: "Button response", payload: null };
+
+  const data = button as { text?: unknown; payload?: unknown };
+  return {
+    text: typeof data.text === "string" ? data.text : "Button response",
+    payload: typeof data.payload === "string" ? data.payload : null,
+  };
 }
 
 function isEmojiOnly(value: string) {
@@ -152,6 +240,9 @@ function MessageContent({ message }: { message: Message }) {
   const errors = payload.errors as { title?: unknown; message?: unknown } | undefined;
   const errorData = payload.error_data as { details?: unknown } | null | undefined;
   const hasReply = message.type === "text" && Boolean(payload.context);
+  const template = templateDetails(message);
+  const interactive = interactiveDetails(message);
+  const button = buttonDetails(message);
 
   return (
     <>
@@ -160,6 +251,31 @@ function MessageContent({ message }: { message: Message }) {
         <div className="space-y-1">
           <p className="font-medium">{typeof errors?.title === "string" ? errors.title : "Unsupported message"}</p>
           {typeof errorData?.details === "string" ? <p className="text-sm opacity-70">{errorData.details}</p> : typeof errors?.message === "string" ? <p className="text-sm opacity-70">{errors.message}</p> : null}
+        </div>
+      ) : template ? (
+        <div className="space-y-1 rounded-md bg-black/5 p-2 dark:bg-white/10">
+          <p className="text-xs font-medium uppercase tracking-wide opacity-70">Template</p>
+          <p className="font-medium">{template.name}</p>
+          {template.language ? <p className="text-xs opacity-70">{template.language}</p> : null}
+          {template.parameters.length > 0 ? (
+            <div className="mt-2 space-y-1 border-t border-black/10 pt-2 text-sm dark:border-white/10">
+              {template.parameters.map((parameter, index) => (
+                <p key={`${parameter}-${index}`} className="whitespace-pre-wrap">{parameter}</p>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : interactive ? (
+        <div className="space-y-1 rounded-md bg-black/5 p-2 dark:bg-white/10">
+          <p className="text-xs font-medium uppercase tracking-wide opacity-70">{interactive.label}</p>
+          <p className="font-medium whitespace-pre-wrap">{interactive.title}</p>
+          {interactive.description ? <p className="text-xs opacity-70">{interactive.description}</p> : null}
+        </div>
+      ) : button ? (
+        <div className="space-y-1 rounded-md bg-black/5 p-2 dark:bg-white/10">
+          <p className="text-xs font-medium uppercase tracking-wide opacity-70">Button response</p>
+          <p className="font-medium whitespace-pre-wrap">{button.text}</p>
+          {button.payload ? <p className="text-xs opacity-70">{button.payload}</p> : null}
         </div>
       ) : (media?.id || attachmentUrl) && (message.type === "image" || message.type === "sticker" || message.type === "video" || message.type === "audio" || message.type === "document") ? (
         <>
