@@ -61,6 +61,8 @@ export type PhoneNumber = DtoBase & {
   meta_phone_number_id?: string;
   phone_number?: string;
   name?: string;
+  user_name?: string;
+  status?: string;
   business_portfolio?: BusinessPortfolio | null;
   business_account?: BusinessAccount | null;
 };

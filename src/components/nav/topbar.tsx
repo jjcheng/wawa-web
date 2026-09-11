@@ -1,8 +1,9 @@
 "use client";
 
-import { ExternalLink, LogOut, Menu, Settings } from "lucide-react";
+import { ExternalLink, LogOut, Menu, RefreshCw, Settings } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import { SidebarNav } from "@/components/nav/sidebar-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { apiFetch } from "@/lib/api/client";
+import { toApiError } from "@/lib/api/errors";
 import { logoutAction } from "@/lib/auth/actions";
 import { formatPhoneNumber } from "@/lib/format";
 import { metaBusinessManagerUrl } from "@/lib/meta-links";
@@ -72,6 +74,7 @@ function hasBusinessContextNames(context: BusinessContext) {
 export function Topbar({ user }: { user: User }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [businessContext, setBusinessContext] = useState<BusinessContext | null>(null);
+  const [refreshingBusinessContext, setRefreshingBusinessContext] = useState(false);
   const logoutFormRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -110,6 +113,37 @@ export function Topbar({ user }: { user: User }) {
     };
   }, [user]);
 
+  async function refreshBusinessContext() {
+    if (
+      !businessContext ||
+      !businessContext.portfolioId ||
+      !businessContext.accountId ||
+      refreshingBusinessContext
+    ) return;
+    setRefreshingBusinessContext(true);
+    try {
+      const account = await apiFetch<BusinessAccount & {
+        meta_business_portfolio_name?: string;
+        meta_business_portfolio_id?: string;
+      }>(
+        `v1/wa/business-accounts/${encodeURIComponent(businessContext.accountId)}`,
+        { method: "PATCH" },
+      );
+      const nextContext = {
+        portfolioName: account.meta_business_portfolio_name ?? businessContext.portfolioName,
+        portfolioId: account.meta_business_portfolio_id ?? businessContext.portfolioId,
+        accountName: account.name ?? null,
+        accountId: account.meta_waba_id ?? businessContext.accountId,
+      };
+      setBusinessContext(nextContext);
+      localStorage.setItem(businessContextStorageKey(user), JSON.stringify(nextContext));
+    } catch (error) {
+      toast.error(toApiError(error).message);
+    } finally {
+      setRefreshingBusinessContext(false);
+    }
+  }
+
   return (
     <header className="bg-background/80 sticky top-0 z-30 flex h-14 items-center gap-2 border-b px-4 backdrop-blur">
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -147,9 +181,23 @@ export function Topbar({ user }: { user: User }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-80 p-2" align="start">
-            <div className="space-y-3 p-1 text-sm">
+            <div className="relative space-y-3 p-1 text-sm">
+              {user.type === "MASTER" ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="absolute top-0 right-0"
+                  onClick={() => void refreshBusinessContext()}
+                  disabled={refreshingBusinessContext}
+                  aria-label="Update business information"
+                  title="Update business information"
+                >
+                  <RefreshCw className={refreshingBusinessContext ? "animate-spin" : undefined} />
+                </Button>
+              ) : null}
               <div>
-                <p className="font-medium">Business Portfolio</p>
+                <p className="font-medium">Meta Business Portfolio</p>
                 <p className="text-muted-foreground truncate">
                   {businessContext.portfolioName}
                 </p>
@@ -158,7 +206,7 @@ export function Topbar({ user }: { user: User }) {
                 </p>
               </div>
               <div>
-                <p className="font-medium">Business Account</p>
+                <p className="font-medium">WhatsApp Business Account</p>
                 <p className="text-muted-foreground truncate">{businessContext.accountName}</p>
                 <p className="text-muted-foreground font-mono text-xs">
                   {businessContext.accountId}

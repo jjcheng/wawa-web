@@ -1,16 +1,14 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 
+import { PhoneNumberStatusFilter } from "./phone-number-status-filter";
+import { PhoneNumberViewButton } from "./phone-number-view-button";
 import { PageHeader } from "@/components/page-header";
+import { TableEmptyState } from "@/components/table-empty-state";
 import { EmbeddedSignupButton } from "@/components/whatsapp/embedded-signup-button";
-import { RemovePhoneNumberButton } from "@/components/whatsapp/remove-phone-number-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Table,
@@ -28,15 +26,19 @@ import { requireUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Phone numbers" };
 
-export default async function PhoneNumbersPage() {
+export default async function PhoneNumbersPage({ searchParams }: PageProps<"/numbers">) {
+  const params = await searchParams;
   const user = await requireUser();
-  if (user.type !== "MASTER") redirect("/dashboard");
 
   let phoneNumbers: PhoneNumber[] = [];
+  const requestedStatus = typeof params.status === "string" ? params.status : "ALL";
+  const status = requestedStatus === "CONNECTED" || requestedStatus === "DISCONNECTED"
+    ? requestedStatus
+    : "ALL";
   let loadError: string | null = null;
   try {
     phoneNumbers = (await serverFetch<PhoneNumberListResponse>("/v1/wa/user-phone-numbers", {
-      query: { page: "1", page_size: "10" },
+      query: { page: "1", page_size: "10", status: status === "ALL" ? undefined : status },
     })).items ?? [];
   } catch (error) {
     loadError =
@@ -47,8 +49,12 @@ export default async function PhoneNumbersPage() {
     <>
       <PageHeader
         title="Phone numbers"
-        description="Numbers from your WhatsApp Business accounts that are assigned to you."
-        action={<EmbeddedSignupButton />}
+        description={
+          user.type === "MASTER"
+            ? "All phone numbers under your WhatsApp Business account."
+            : "Your registered WhatsApp business number."
+        }
+        action={user.type === "MASTER" ? <EmbeddedSignupButton /> : undefined}
       />
 
       {loadError ? (
@@ -57,45 +63,45 @@ export default async function PhoneNumbersPage() {
         </Alert>
       ) : null}
 
-      {!loadError && phoneNumbers.length === 0 ? (
-        <Card className="rounded-md py-0">
-          <CardHeader>
-            <CardTitle className="text-base">No numbers yet</CardTitle>
-            <CardDescription>
-              Complete WhatsApp Embedded Signup to link a business number to your account.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      ) : null}
-
-      {phoneNumbers.length > 0 ? (
+      {!loadError ? (
         <Card className="rounded-md py-0">
           <CardContent className="overflow-x-auto p-0">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
+                  <TableHead>User Name</TableHead>
+                  <TableHead>WhatsApp Name</TableHead>
                   <TableHead>Number</TableHead>
+                  <TableHead><PhoneNumberStatusFilter value={status} /></TableHead>
                   <TableHead>Added</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {phoneNumbers.map((number) => (
+                {phoneNumbers.length === 0 ? (
+                  <TableEmptyState colSpan={6}>No phone numbers found.</TableEmptyState>
+                ) : phoneNumbers.map((number) => (
                   <TableRow key={number.id}>
+                    <TableCell className="font-medium">
+                      {number.user_name || "—"}
+                    </TableCell>
                     <TableCell className="font-medium">
                       {number.name || "Unnamed number"}
                     </TableCell>
                     <TableCell>{formatPhoneNumber(number.phone_number)}</TableCell>
+                    <TableCell>
+                      {number.status
+                        ? number.status.charAt(0) + number.status.slice(1).toLowerCase()
+                        : "—"}
+                    </TableCell>
                     <TableCell className="text-muted-foreground text-xs">
                       {formatDateTime(number.entry_date)}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <RemovePhoneNumberButton
+                        <PhoneNumberViewButton
                           id={number.id}
                           name={number.name || "This number"}
-                          phoneNumber={formatPhoneNumber(number.phone_number)}
                         />
                       </div>
                     </TableCell>

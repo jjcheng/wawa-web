@@ -205,8 +205,10 @@ export function CustomerList({
             <TabsTrigger value="INACTIVE">Inactive</TabsTrigger>
           </TabsList>
         </Tabs>
-        {selectedRows.size > 0 ? (
+        {status === "ACTIVE" ? (
           <div className="flex flex-wrap justify-end gap-2">
+            {selectedRows.size > 0 ? (
+              <>
             <Button
               variant="outline"
               onClick={() => updateSelectedStatus(status === "ACTIVE" ? "INACTIVE" : "ACTIVE")}
@@ -222,28 +224,32 @@ export function CustomerList({
             >
               Delete
             </Button>
-            {status === "ACTIVE" ? (
-              <Button
-                onClick={() => {
-                  const invalidCustomers = rows.filter(
-                    (customer) => selectedRows.has(customer.id) && !customer.wa_id,
-                  );
-                  if (invalidCustomers.length > 0) {
-                    toast.error(
-                      "Some selected customers have an invalid phone number. Please use View -> Edit to correct them.",
-                    );
-                    return;
-                  }
-                  sessionStorage.setItem(
-                    "new-campaign-customer-ids",
-                    JSON.stringify([...selectedRows]),
-                  );
-                  router.push("/customers/new-campaign");
-                }}
-              >
-                  New Campaign
-              </Button>
+              </>
             ) : null}
+            <Button
+              onClick={() => {
+                if (selectedRows.size === 0) {
+                  toast.info("Select at least one customer to start a campaign.");
+                  return;
+                }
+                const invalidCustomers = rows.filter(
+                  (customer) => selectedRows.has(customer.id) && !customer.wa_id,
+                );
+                if (invalidCustomers.length > 0) {
+                  toast.error(
+                    "Some selected customers have an invalid phone number. Please use View -> Edit to correct them.",
+                  );
+                  return;
+                }
+                sessionStorage.setItem(
+                  "new-campaign-customer-ids",
+                  JSON.stringify([...selectedRows]),
+                );
+                router.push("/customers/new-campaign");
+              }}
+            >
+              New Campaign
+            </Button>
           </div>
         ) : null}
       </div>

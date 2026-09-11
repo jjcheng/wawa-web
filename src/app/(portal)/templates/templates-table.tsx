@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useNavigationProgress } from "@/components/nav/navigation-progress";
 import { LoadMoreButton } from "@/components/load-more-button";
+import { TableEmptyState } from "@/components/table-empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -289,11 +290,7 @@ export function TemplatesTable({
             </TableHeader>
             <TableBody>
               {templates.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-muted-foreground pt-6 text-center">
-                    No templates match this filter.
-                  </TableCell>
-                </TableRow>
+                <TableEmptyState colSpan={6}>No templates match this filter.</TableEmptyState>
               ) : (
                 templates.map((template) => (
                   <TableRow key={template.id}>

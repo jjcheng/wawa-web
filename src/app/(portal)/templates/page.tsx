@@ -108,7 +108,7 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
     <>
       <PageHeader
         title="Templates"
-        description="WhatsApp message templates from your business account. Use WhatsApp Manager to create or modify templates."
+        description="WhatsApp message templates from your business account. Use WhatsApp Manager to create or edit."
         action={
           <div className="flex flex-wrap gap-2">
             {managerUrl ? (

@@ -55,7 +55,7 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
           <p className="text-muted-foreground px-2 text-xs font-medium tracking-wide uppercase">
             {section.label}
           </p>
-          {section.items.filter((item) => user.type === "MASTER" || item.href !== "/numbers").map((item) => {
+          {section.items.map((item) => {
             const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <Link
