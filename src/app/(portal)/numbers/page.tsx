@@ -99,8 +99,8 @@ export default async function PhoneNumbersPage({ searchParams }: PageProps<"/num
                     <TableCell>
                       {formatDateTime(number.entry_date)}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                    <TableCell className="text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-2">
                         <PhoneNumberViewButton
                           id={number.id}
                           name={number.name || "This number"}

@@ -223,18 +223,34 @@ function mergeMessages(current: Message[], incoming: Message[]) {
 }
 
 function MessageStatusIcon({ status }: { status?: string }) {
-  if (status === "delivered") return <CheckCheck className="size-3.5" aria-label="Delivered" />;
-  if (status === "read" || status === "played") {
+  const normalized = status?.toLowerCase();
+  if (normalized === "failed" || normalized === "error") return null;
+  if (normalized === "delivered") return <CheckCheck className="size-3.5" aria-label="Delivered" />;
+  if (normalized === "read" || normalized === "played") {
     return <CheckCheck className="size-3.5 text-[#00a884]" aria-label="Read" />;
   }
   return <Check className="size-3.5" aria-label="Sent" />;
 }
 
-function MessageInfoPopover({ messageId }: { messageId: number }) {
+function MessageInfoPopover({
+  messageId,
+  hasError,
+}: {
+  messageId: number;
+  hasError?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [details, setDetails] = useState<MessageDetail | null>(null);
+
+  const hasDetailError =
+    hasError ||
+    Boolean(
+      details?.statuses?.some(
+        (status) => status.error_message && status.error_message.trim() !== "",
+      ),
+    );
 
   async function handleOpenChange(nextOpen: boolean) {
     setOpen(nextOpen);
@@ -257,7 +273,11 @@ function MessageInfoPopover({ messageId }: { messageId: number }) {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="ml-0.5 inline-flex items-center text-[#667781] hover:text-foreground focus-visible:outline-none dark:text-[#aebac1]"
+          className={`ml-0.5 inline-flex items-center focus-visible:outline-none ${
+            hasDetailError
+              ? "text-destructive hover:text-destructive/80 dark:text-destructive"
+              : "text-[#667781] hover:text-foreground dark:text-[#aebac1]"
+          }`}
           title="Message details"
           aria-label="Message details"
         >
@@ -308,13 +328,18 @@ function MessageInfoPopover({ messageId }: { messageId: number }) {
 
             {details.statuses && details.statuses.length > 0 ? (
               <div className="mt-2 border-t pt-2 space-y-1">
-                <p className="font-semibold text-foreground text-xs">Status History</p>
+                <p className="mb-2 font-semibold text-foreground text-xs">Status History</p>
                 <dl className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-2.5 gap-y-1 text-[11px]">
                   {details.statuses.map((event) => (
                     <div key={event.id || `${event.status}-${event.timestamp}`} className="contents">
                       <dt className="capitalize text-foreground">{event.status}</dt>
                       <dd className="text-muted-foreground">
                         {formatDateTime(event.timestamp ? new Date(event.timestamp * 1000) : event.entry_date)}
+                        {event.error_message ? (
+                          <span className="block text-destructive break-words">
+                            {event.error_message}
+                          </span>
+                        ) : null}
                       </dd>
                     </div>
                   ))}
@@ -626,8 +651,17 @@ export function Chat({
                   {messageTime(message.timestamp)}
                   {message.sending ? (
                     <>
-                      <MessageStatusIcon status={message.status} />
-                      <MessageInfoPopover messageId={message.id} />
+                      {message.status?.toLowerCase() !== "failed" &&
+                      message.status?.toLowerCase() !== "error" ? (
+                        <MessageStatusIcon status={message.status} />
+                      ) : null}
+                      <MessageInfoPopover
+                        messageId={message.id}
+                        hasError={
+                          message.status?.toLowerCase() === "failed" ||
+                          message.status?.toLowerCase() === "error"
+                        }
+                      />
                     </>
                   ) : null}
                 </p>

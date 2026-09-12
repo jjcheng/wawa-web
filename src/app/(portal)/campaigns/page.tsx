@@ -50,7 +50,7 @@ function CampaignTable({ rows, status, name }: { rows: Campaign[]; status: strin
               <TableHead>Sent</TableHead>
                   <TableHead>Accepted</TableHead>
                   <TableHead>Failed</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -65,14 +65,14 @@ function CampaignTable({ rows, status, name }: { rows: Campaign[]; status: strin
                       <span>{campaign.name}</span>
                     </div>
                   </TableCell>
-                  <TableCell>{campaign.customer_ids?.length ?? 0}</TableCell>
+                  <TableCell>{campaign.recipient_count ?? campaign.customer_ids?.length ?? 0}</TableCell>
                   <TableCell>{formatDateTime(campaign.send_date)}</TableCell>
                   <TableCell>{displayStatus(campaign.status)}</TableCell>
                   <TableCell>{campaignMetric(campaign, "sent")}</TableCell>
                   <TableCell>{campaignMetric(campaign, "accepted")}</TableCell>
                   <TableCell>{campaignMetric(campaign, "failed")}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-2">
+                  <TableCell className="text-right whitespace-nowrap">
+                    <div className="flex items-center justify-end gap-2">
                       <CampaignViewButton campaign={campaign} />
                       {campaign.status === "PENDING" ? (
                         <CampaignCancelButton campaignId={campaign.id} />

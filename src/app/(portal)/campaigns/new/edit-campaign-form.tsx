@@ -10,7 +10,10 @@ import { toast } from "sonner";
 
 import { apiFetch } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
-import { GoogleLocationInput } from "@/components/google-location-input";
+import {
+  GoogleLocationInput,
+  type GoogleLocationSelection,
+} from "@/components/google-location-input";
 import { MediaDropzone } from "@/components/media-dropzone";
 import { TemplateRawPreview } from "@/components/template-raw-preview";
 import {
@@ -139,6 +142,7 @@ function buildSendComponents(
   bodyVariables: string[],
   buttons: TemplateButtonInput[],
   headerMediaUrl?: string,
+  headerLocation?: GoogleLocationSelection | null,
 ) {
   const getParameter = (variable: string | undefined) => {
     if (!variable) return undefined;
@@ -180,6 +184,23 @@ function buildSendComponents(
             if (["image", "video", "document"].includes(mediaType)) {
               return { ...parameter, [mediaType]: { link: headerMediaUrl } };
             }
+          }
+          if (
+            type === "header" &&
+            headerLocation &&
+            parameter &&
+            typeof parameter === "object" &&
+            String(parameter.type ?? "").toLowerCase() === "location"
+          ) {
+            return {
+              ...parameter,
+              location: {
+                latitude: headerLocation.latitude,
+                longitude: headerLocation.longitude,
+                name: headerLocation.name.trim(),
+                address: headerLocation.address.trim(),
+              },
+            };
           }
           if (parameter && typeof parameter === "object" && variable) {
             return { ...parameter, ...getParameter(variable) };
@@ -243,6 +264,8 @@ export function EditCampaignForm({
     (component) => String(component.type ?? "").toUpperCase() === "BUTTONS",
   );
   const headerFormat = String(headerComponent?.format ?? "TEXT").toUpperCase();
+  const headerExampleHandle = (headerComponent?.example as { header_handle?: string[] } | undefined)
+    ?.header_handle?.[0];
   const headerVariables = componentVariables(headerComponent);
   const bodyVariables = componentVariables(bodyComponent);
   const buttons = buttonInputs(buttonsComponent);
@@ -255,6 +278,8 @@ export function EditCampaignForm({
   >({});
   const [headerFile, setHeaderFile] = useState<File | null>(null);
   const [headerLocation, setHeaderLocation] = useState("");
+  const [headerLocationDetails, setHeaderLocationDetails] =
+    useState<GoogleLocationSelection | null>(null);
   const [validationAttempted, setValidationAttempted] = useState(false);
   const [highlightedVariable, setHighlightedVariable] = useState<{
     name: string;
@@ -326,19 +351,23 @@ export function EditCampaignForm({
   const mutation = useMutation({
     mutationFn: async (values: EditCampaignInput) => {
       let headerMediaUrl: string | undefined;
-      if (headerFile && mediaHeader) {
-        const media = await apiFetch<{ url?: string }>("v1/wa/media", {
-          method: "POST",
-          rawBody: headerFile,
-          contentType: headerFile.type,
-          query: {
-            to_meta: "false",
-            filename: headerFile.name,
-            content_type: headerFile.type,
-          },
-        });
-        headerMediaUrl = media.url;
-        if (!headerMediaUrl) throw new Error("Media upload did not return a URL.");
+      if (mediaHeader) {
+        if (headerFile) {
+          const media = await apiFetch<{ url?: string }>("v1/wa/media", {
+            method: "POST",
+            rawBody: headerFile,
+            contentType: headerFile.type,
+            query: {
+              to_meta: "false",
+              filename: headerFile.name,
+              content_type: headerFile.type,
+            },
+          });
+          headerMediaUrl = media.url;
+          if (!headerMediaUrl) throw new Error("Media upload did not return a URL.");
+        } else if (headerExampleHandle) {
+          headerMediaUrl = headerExampleHandle;
+        }
       }
       return apiFetch("v1/campaigns", {
         method: "POST",
@@ -357,6 +386,7 @@ export function EditCampaignForm({
               bodyVariables,
               buttons,
               headerMediaUrl,
+              headerLocationDetails,
             ),
           },
           customer_ids: values.customer_ids,
@@ -391,8 +421,13 @@ export function EditCampaignForm({
     }
     if (
       missingVariableKeys.size > 0 ||
-      (mediaHeader && !headerFile) ||
-      (locationHeader && !headerLocation.trim())
+      (mediaHeader && !headerFile && !headerExampleHandle) ||
+      (locationHeader &&
+        (!headerLocationDetails ||
+          !headerLocationDetails.name.trim() ||
+          !headerLocationDetails.address.trim() ||
+          !Number.isFinite(headerLocationDetails.latitude) ||
+          !Number.isFinite(headerLocationDetails.longitude)))
     ) {
       invalid = true;
     }
@@ -410,6 +445,8 @@ export function EditCampaignForm({
             headerVariables,
             bodyVariables,
             buttons,
+            undefined,
+            headerLocationDetails,
           ),
         },
         customer_ids: values.customer_ids,
@@ -510,6 +547,7 @@ export function EditCampaignForm({
               setVariableSources({});
               setHeaderFile(null);
               setHeaderLocation("");
+              setHeaderLocationDetails(null);
               setHighlightedVariable(null);
               setHighlightedButton(null);
               setValidationAttempted(false);
@@ -541,13 +579,39 @@ export function EditCampaignForm({
               </p>
               {mediaHeader ? (
                 <div className="space-y-2">
-                  <Label>{headerFormat}</Label>
+                  <div className="flex items-center justify-between gap-2">
+                    <Label>{headerFormat}</Label>
+                    {headerExampleHandle ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="xs"
+                        onClick={async () => {
+                          try {
+                            const response = await fetch(headerExampleHandle);
+                            const blob = await response.blob();
+                            const filename =
+                              headerExampleHandle.split("/").pop()?.split("?")[0] ||
+                              `example.${headerFormat === "IMAGE" ? "png" : headerFormat === "VIDEO" ? "mp4" : "pdf"}`;
+                            const file = new File([blob], filename, {
+                              type: blob.type || (headerFormat === "IMAGE" ? "image/png" : headerFormat === "VIDEO" ? "video/mp4" : "application/pdf"),
+                            });
+                            setHeaderFile(file);
+                          } catch {
+                            toast.error("Could not load example file.");
+                          }
+                        }}
+                      >
+                        Use example file
+                      </Button>
+                    ) : null}
+                  </div>
                   <MediaDropzone
                     format={headerFormat}
                     file={headerFile}
                     onChange={setHeaderFile}
                   />
-                  {validationAttempted && !headerFile ? (
+                  {validationAttempted && !headerFile && !headerExampleHandle ? (
                     <p className="text-destructive text-sm">
                       Upload a {headerFormat.toLowerCase()} file.
                     </p>
@@ -556,10 +620,57 @@ export function EditCampaignForm({
               ) : null}
               {locationHeader ? (
                 <div className="space-y-2">
-                  <Label>Location</Label>
-                  <GoogleLocationInput value={headerLocation} onChange={setHeaderLocation} />
-                  {validationAttempted && !headerLocation.trim() ? (
-                    <p className="text-destructive text-sm">Select a location.</p>
+                  <Label>Search Location</Label>
+                  <GoogleLocationInput
+                    value={headerLocation}
+                    onChange={setHeaderLocation}
+                    onPlaceSelect={setHeaderLocationDetails}
+                  />
+                  {headerLocationDetails ? (
+                    <div className="space-y-3 pt-1">
+                      <div className="space-y-2">
+                        <Label htmlFor="header-location-name">Location name</Label>
+                        <Input
+                          id="header-location-name"
+                          value={headerLocationDetails.name}
+                          onChange={(event) =>
+                            setHeaderLocationDetails((currentLocation) =>
+                              currentLocation
+                                ? { ...currentLocation, name: event.target.value }
+                                : currentLocation,
+                            )
+                          }
+                        />
+                        {validationAttempted && !headerLocationDetails.name.trim() ? (
+                          <p className="text-destructive text-sm">Enter a location name.</p>
+                        ) : null}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="header-location-address">Location address</Label>
+                        <Input
+                          id="header-location-address"
+                          value={headerLocationDetails.address}
+                          onChange={(event) =>
+                            setHeaderLocationDetails((currentLocation) =>
+                              currentLocation
+                                ? { ...currentLocation, address: event.target.value }
+                                : currentLocation,
+                            )
+                          }
+                        />
+                        {validationAttempted && !headerLocationDetails.address.trim() ? (
+                          <p className="text-destructive text-sm">Enter a location address.</p>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
+                  {validationAttempted &&
+                  (!headerLocationDetails ||
+                    !Number.isFinite(headerLocationDetails.latitude) ||
+                    !Number.isFinite(headerLocationDetails.longitude)) ? (
+                    <p className="text-destructive text-sm">
+                      Select a location from the search results.
+                    </p>
                   ) : null}
                 </div>
               ) : null}
@@ -752,6 +863,7 @@ export function EditCampaignForm({
             highlightedVariable={highlightedVariable}
             variableSubstitutions={previewVariableSubstitutions}
             highlightedButton={highlightedButton}
+            location={headerLocationDetails}
           />
         </div>
       ) : null}

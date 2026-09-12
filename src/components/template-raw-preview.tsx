@@ -7,6 +7,7 @@ export function TemplateRawPreview({
   highlightedVariable,
   variableSubstitutions,
   highlightedButton,
+  location,
 }: {
   html: string;
   highlightedVariable: { name: string; occurrenceIndexes: number[] } | null;
@@ -16,8 +17,15 @@ export function TemplateRawPreview({
     value: string;
   }[];
   highlightedButton: { index: number; label: string } | null;
+  location?: {
+    name: string;
+    address: string;
+    latitude?: number;
+    longitude?: number;
+  } | null;
 }) {
   const previewRef = useRef<HTMLDivElement>(null);
+  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   useEffect(() => {
     const preview = previewRef.current;
@@ -65,6 +73,29 @@ export function TemplateRawPreview({
       textNode.replaceWith(fragment);
     }
 
+    if (location) {
+      const locationMap = preview.querySelector<HTMLImageElement>('img[alt="Location map"]');
+      const locationFields = locationMap?.nextElementSibling?.querySelectorAll(":scope > div");
+      if (
+        locationMap &&
+        googleMapsApiKey &&
+        Number.isFinite(location.latitude) &&
+        Number.isFinite(location.longitude)
+      ) {
+        const coordinates = `${location.latitude},${location.longitude}`;
+        const mapUrl = new URL("https://maps.googleapis.com/maps/api/staticmap");
+        mapUrl.searchParams.set("center", coordinates);
+        mapUrl.searchParams.set("zoom", "15");
+        mapUrl.searchParams.set("size", "500x500");
+        mapUrl.searchParams.set("maptype", "roadmap");
+        mapUrl.searchParams.set("markers", `color:red|${coordinates}`);
+        mapUrl.searchParams.set("key", googleMapsApiKey);
+        locationMap.src = mapUrl.toString();
+      }
+      if (locationFields?.[0]) locationFields[0].textContent = location.name;
+      if (locationFields?.[1]) locationFields[1].textContent = location.address;
+    }
+
     if (highlightedButton) {
       const controls = [...preview.querySelectorAll<HTMLElement>("a, button")];
       const label = highlightedButton.label.trim().toLowerCase();
@@ -78,7 +109,14 @@ export function TemplateRawPreview({
         button.style.backgroundColor = "rgb(254 249 195)";
       }
     }
-  }, [highlightedButton, highlightedVariable, html, variableSubstitutions]);
+  }, [
+    googleMapsApiKey,
+    highlightedButton,
+    highlightedVariable,
+    html,
+    location,
+    variableSubstitutions,
+  ]);
 
   return (
     <div

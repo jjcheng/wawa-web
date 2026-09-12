@@ -138,6 +138,7 @@ export type Campaign = {
   send_date: string;
   wa_template_id: string;
   customer_ids?: number[];
+  recipient_count?: number;
   status: string;
   payload?: Record<string, unknown>;
   send_template_payload?: {
@@ -157,6 +158,8 @@ export type CampaignRecipient = {
   id: number;
   customer_name: string;
   customer_wa_id: string;
+  customer_country_code?: string;
+  customer_phone_number?: string;
   campaign_id: number;
   customer_id: number;
   status: string;
@@ -292,6 +295,7 @@ export type MessageStatusEventDetail = DtoBase & {
   wa_message_id?: string;
   status: string;
   timestamp: number;
+  error_message?: string;
 };
 
 export type MessageDetail = DtoBase & {

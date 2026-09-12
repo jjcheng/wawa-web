@@ -17,7 +17,7 @@ import {
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type { CampaignRecipient, CampaignRecipientListResponse } from "@/lib/api/types";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, formatPhoneNumber } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Campaign recipients" };
 
@@ -71,7 +71,12 @@ export default async function CampaignRecipientsPage({
                 recipients.map((recipient) => (
                   <TableRow key={recipient.id}>
                     <TableCell className="font-medium">{recipient.customer_name || "—"}</TableCell>
-                    <TableCell>{recipient.customer_wa_id || "—"}</TableCell>
+                    <TableCell>
+                      {formatPhoneNumber(
+                        recipient.customer_phone_number || recipient.customer_wa_id,
+                        recipient.customer_country_code,
+                      ) || "—"}
+                    </TableCell>
                     <TableCell>{recipient.status || "—"}</TableCell>
                     <TableCell>{recipient.attempts}</TableCell>
                     <TableCell>

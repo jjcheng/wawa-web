@@ -34,7 +34,7 @@ import { apiFetch } from "@/lib/api/client";
 
 type ChatMessageComposerProps = {
   customerId: string;
-  lastCustomerMessageTimestamp: number | null;
+  lastCustomerMessageTimestamp?: number | null;
 };
 
 type WhatsAppContact = {
@@ -79,7 +79,6 @@ function parseVCard(value: string): WhatsAppContact | null {
 
 export function ChatMessageComposer({
   customerId,
-  lastCustomerMessageTimestamp,
 }: ChatMessageComposerProps) {
   const { replyTarget, setReplyTarget } = useChatCompose();
   const [message, setMessage] = useState("");
@@ -97,25 +96,14 @@ export function ChatMessageComposer({
   const [attachedContact, setAttachedContact] = useState<WhatsAppContact | null>(null);
   const [attachedLocation, setAttachedLocation] = useState<AttachedLocation | null>(null);
   const [attachment, setAttachment] = useState<SelectedAttachment | null>(null);
-  const [currentTime, setCurrentTime] = useState(() => Date.now());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const vCardInputRef = useRef<HTMLInputElement>(null);
   const previewUrlRef = useRef<string | null>(null);
-  const serviceWindowOpen =
-    lastCustomerMessageTimestamp !== null &&
-    currentTime - lastCustomerMessageTimestamp * 1000 <= 24 * 60 * 60 * 1000;
   const hasSendableContent = Boolean(message.trim() || attachedContact || attachedLocation || attachment);
-  const canSend = hasSendableContent && serviceWindowOpen && !sending;
-  const disabledReason = !serviceWindowOpen
-    ? "The 24-hour customer service window has closed"
-    : !hasSendableContent
-      ? "Enter a message or add an attachment"
-      : null;
-
-  useEffect(() => {
-    const interval = window.setInterval(() => setCurrentTime(Date.now()), 60_000);
-    return () => window.clearInterval(interval);
-  }, []);
+  const canSend = hasSendableContent && !sending;
+  const disabledReason = !hasSendableContent
+    ? "Enter a message or add an attachment"
+    : null;
 
   useEffect(() => () => {
     if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
@@ -123,7 +111,7 @@ export function ChatMessageComposer({
 
   async function sendMessage() {
     const body = message.trim();
-    if (!hasSendableContent || !serviceWindowOpen || sending) return;
+    if (!hasSendableContent || sending) return;
 
     setSending(true);
     try {

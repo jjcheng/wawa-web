@@ -268,13 +268,6 @@ export default async function CustomerChatPage({
     loadError = error instanceof ApiError || error instanceof Error ? error.message : "Could not load messages.";
   }
   const messageGroups = groupMessagesByDate(messages);
-  const lastCustomerMessageTimestamp = messages.reduce<number | null>(
-    (latestTimestamp, message) =>
-      !message.sending && (latestTimestamp === null || message.timestamp > latestTimestamp)
-        ? message.timestamp
-        : latestTimestamp,
-    null,
-  );
 
   return (
     <>
@@ -489,7 +482,6 @@ export default async function CustomerChatPage({
             />
             <ChatMessageComposer
               customerId={customerId}
-              lastCustomerMessageTimestamp={lastCustomerMessageTimestamp}
             />
           </ChatComposeProvider>
         </>

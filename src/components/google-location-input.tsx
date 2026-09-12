@@ -1,23 +1,71 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useTheme } from "next-themes";
 
 import { Input } from "@/components/ui/input";
 
-type GoogleAutocomplete = {
+type GoogleLegacyAutocomplete = {
   addListener: (event: string, handler: () => void) => void;
-  getPlace: () => { formatted_address?: string; name?: string };
+  getPlace: () => {
+    formatted_address?: string;
+    name?: string;
+    geometry?: { location?: GoogleLatLng };
+  };
+};
+
+type GoogleLatLng = {
+  lat: () => number;
+  lng: () => number;
+};
+
+type GooglePlace = {
+  fetchFields: (options: { fields: string[] }) => Promise<void>;
+  formattedAddress?: string;
+  displayName?: string;
+  location?: GoogleLatLng;
+};
+
+type GooglePlacePrediction = {
+  toPlace: () => GooglePlace;
+};
+
+type GooglePlacePredictionSelectEvent = Event & {
+  placePrediction?: GooglePlacePrediction;
+};
+
+export type GoogleLocationSelection = {
+  name: string;
+  address: string;
+  latitude?: number;
+  longitude?: number;
+};
+
+type GooglePlaceAutocompleteElement = HTMLElement & {
+  addEventListener: (
+    type: string,
+    listener: (event: Event) => void,
+  ) => void;
+  placeholder?: string;
+  value?: string;
 };
 
 declare global {
   interface Window {
+    __googleMapsPlacesLoaded?: () => void;
+    __googleMapsPlacesPromise?: Promise<void>;
     google?: {
       maps: {
-        places: {
-          Autocomplete: new (
+        importLibrary?: (libraryName: string) => Promise<unknown>;
+        places?: {
+          PlaceAutocompleteElement?: new (options?: {
+            requestedLanguage?: string;
+            requestedRegion?: string;
+          }) => GooglePlaceAutocompleteElement;
+          Autocomplete?: new (
             input: HTMLInputElement,
             options: { fields: string[]; types: string[] },
-          ) => GoogleAutocomplete;
+          ) => GoogleLegacyAutocomplete;
         };
       };
     };
@@ -26,54 +74,181 @@ declare global {
 
 const SCRIPT_ID = "google-maps-places";
 
-export function GoogleLocationInput({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+function loadGoogleMaps(apiKey: string) {
+  if (window.google?.maps?.importLibrary) return Promise.resolve();
+  if (window.__googleMapsPlacesPromise) return window.__googleMapsPlacesPromise;
 
-  useEffect(() => {
-    if (!apiKey || !inputRef.current) return;
-
-    function initialize() {
-      if (!window.google?.maps.places || !inputRef.current) return;
-      const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
-        fields: ["formatted_address", "name"],
-        types: ["establishment", "geocode"],
-      });
-      autocomplete.addListener("place_changed", () => {
-        const place = autocomplete.getPlace();
-        onChange(place.formatted_address ?? place.name ?? inputRef.current?.value ?? "");
-      });
-    }
-
-    const existingScript = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
-    if (existingScript) {
-      if (window.google?.maps.places) initialize();
-      else existingScript.addEventListener("load", initialize, { once: true });
-      return () => existingScript.removeEventListener("load", initialize);
-    }
+  window.__googleMapsPlacesPromise = new Promise<void>((resolve, reject) => {
+    window.__googleMapsPlacesLoaded = () => {
+      delete window.__googleMapsPlacesLoaded;
+      resolve();
+    };
 
     const script = document.createElement("script");
     script.id = SCRIPT_ID;
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places`;
+    script.src =
+      `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}` +
+      `&v=weekly&loading=async&callback=__googleMapsPlacesLoaded`;
     script.async = true;
-    script.addEventListener("load", initialize, { once: true });
+    script.addEventListener(
+      "error",
+      () => {
+        delete window.__googleMapsPlacesLoaded;
+        delete window.__googleMapsPlacesPromise;
+        reject(new Error("Google Maps JavaScript API failed to load."));
+      },
+      { once: true },
+    );
     document.head.appendChild(script);
-    return () => script.removeEventListener("load", initialize);
-  }, [apiKey, onChange]);
+  });
+
+  return window.__googleMapsPlacesPromise;
+}
+
+export function GoogleLocationInput({
+  value,
+  onChange,
+  onPlaceSelect,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onPlaceSelect?: (location: GoogleLocationSelection | null) => void;
+}) {
+  const { resolvedTheme } = useTheme();
+  const placeContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [usingPlaceElement, setUsingPlaceElement] = useState(false);
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  useEffect(() => {
+    if (!apiKey) return;
+    const container = placeContainerRef.current;
+    let cancelled = false;
+
+    async function initialize() {
+      try {
+        await loadGoogleMaps(apiKey as string);
+      } catch {
+        return;
+      }
+      if (cancelled || !window.google?.maps) return;
+
+      let places = window.google.maps.places;
+      if (typeof window.google.maps.importLibrary === "function") {
+        try {
+          places = (await window.google.maps.importLibrary("places")) as typeof places;
+        } catch {
+          return;
+        }
+      }
+      if (cancelled || !places) return;
+
+      if (places.PlaceAutocompleteElement && container) {
+        const placeAutocomplete = new places.PlaceAutocompleteElement();
+        placeAutocomplete.placeholder = "Search on Google Map";
+        Object.assign(placeAutocomplete.style, {
+          background: "transparent",
+          border: "0",
+          borderRadius: "inherit",
+          color: "inherit",
+          colorScheme: resolvedTheme === "dark" ? "dark" : "light",
+          display: "block",
+          font: "inherit",
+          height: "100%",
+          outline: "none",
+          width: "100%",
+        });
+
+        placeAutocomplete.addEventListener("gmp-select", (event: Event) => {
+          const prediction = (event as GooglePlacePredictionSelectEvent).placePrediction;
+          if (!prediction) return;
+
+          const place = prediction.toPlace();
+          void place
+            .fetchFields({ fields: ["formattedAddress", "displayName", "location"] })
+            .then(() => {
+              const name = place.displayName || place.formattedAddress || "";
+              const address = place.formattedAddress || place.displayName || "";
+              if (address) onChange(address);
+              if (name && address) {
+                onPlaceSelect?.({
+                  name,
+                  address,
+                  latitude: place.location?.lat(),
+                  longitude: place.location?.lng(),
+                });
+              }
+            })
+            .catch(() => {
+              const name = place.displayName || place.formattedAddress || "";
+              const address = place.formattedAddress || place.displayName || "";
+              if (address) onChange(address);
+              if (name && address) onPlaceSelect?.({ name, address });
+            });
+        });
+
+        placeAutocomplete.addEventListener("input", (event: Event) => {
+          const target = event.target as HTMLInputElement;
+          if (target && typeof target.value === "string") {
+            onChange(target.value);
+            onPlaceSelect?.(null);
+          }
+        });
+
+        container.replaceChildren(placeAutocomplete);
+        setUsingPlaceElement(true);
+      } else if (places.Autocomplete && inputRef.current) {
+        const autocomplete = new places.Autocomplete(inputRef.current, {
+          fields: ["formatted_address", "name", "geometry"],
+          types: ["establishment", "geocode"],
+        });
+        autocomplete.addListener("place_changed", () => {
+          const place = autocomplete.getPlace();
+          const name = place.name ?? place.formatted_address ?? "";
+          const address = place.formatted_address ?? place.name ?? inputRef.current?.value ?? "";
+          onChange(address);
+          if (name && address) {
+            onPlaceSelect?.({
+              name,
+              address,
+              latitude: place.geometry?.location?.lat(),
+              longitude: place.geometry?.location?.lng(),
+            });
+          }
+        });
+      }
+    }
+
+    void initialize();
+
+    return () => {
+      cancelled = true;
+      if (container) container.replaceChildren();
+    };
+  }, [apiKey, onChange, onPlaceSelect, resolvedTheme]);
 
   return (
-    <Input
-      ref={inputRef}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      placeholder="Search for a location"
-      autoComplete="off"
-    />
+    <div className="w-full">
+      <div
+        ref={placeContainerRef}
+        className={
+          usingPlaceElement
+            ? "border-input focus-within:border-ring focus-within:ring-ring/50 dark:bg-input/30 h-8 w-full rounded-lg border bg-transparent text-sm text-foreground transition-colors outline-none focus-within:ring-3"
+            : "hidden"
+        }
+      />
+      {!usingPlaceElement ? (
+        <Input
+          ref={inputRef}
+          value={value}
+          onChange={(event) => {
+            onChange(event.target.value);
+            onPlaceSelect?.(null);
+          }}
+          placeholder="Search for a location"
+          autoComplete="off"
+        />
+      ) : null}
+    </div>
   );
 }
