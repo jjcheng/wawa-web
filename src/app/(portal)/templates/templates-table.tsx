@@ -48,7 +48,7 @@ const QUALITY_SCORE_OPTIONS = ["ALL", "GREEN", "YELLOW", "RED", "UNKNOWN"];
 const LANGUAGE_OPTIONS = [{ code: "ALL", label: "Language" }, ...WHATSAPP_LANGUAGES];
 
 export function TemplatesTable({
-  metaWabaId,
+  wabaId,
   limit,
   category,
   nameOrContent,
@@ -58,7 +58,7 @@ export function TemplatesTable({
   initialTemplates,
   initialAfterCursor,
 }: {
-  metaWabaId: string;
+  wabaId: string;
   limit: string;
   category: string;
   nameOrContent: string;
@@ -147,7 +147,7 @@ export function TemplatesTable({
     try {
       const response = await apiFetch<TemplateListResponse>("v1/wa/templates", {
         query: {
-          meta_waba_id: metaWabaId,
+          waba_id: wabaId,
           limit,
           category: category === "ALL" ? undefined : category,
           name_or_content: nameOrContent || undefined,

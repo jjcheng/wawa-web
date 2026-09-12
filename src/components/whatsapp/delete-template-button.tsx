@@ -21,13 +21,13 @@ import { SMALL_BUTTON_HEIGHT } from "@/lib/utils";
 
 export function DeleteTemplateButton({
   id,
-  metaWabaId,
+  wabaId,
   name,
   triggerVariant = "outline",
   onDeleted,
 }: {
   id: string;
-  metaWabaId: string;
+  wabaId: string;
   name: string;
   triggerVariant?: "outline" | "destructive";
   onDeleted?: () => void;
@@ -38,7 +38,7 @@ export function DeleteTemplateButton({
     mutationFn: () =>
       apiFetch("v1/wa/templates", {
         method: "DELETE",
-        body: { meta_waba_id: metaWabaId, name, id },
+        body: { waba_id: wabaId, name, id },
       }),
     onSuccess: () => {
       toast.success("Template deleted.");

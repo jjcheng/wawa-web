@@ -83,7 +83,7 @@ function parseClicks(value: unknown): number {
 }
 
 export function TemplateUsageTable({
-  metaWabaId,
+  wabaId,
   start,
   end,
   granularity,
@@ -91,7 +91,7 @@ export function TemplateUsageTable({
   initialAfterCursor,
   initialHasMore,
 }: {
-  metaWabaId: string;
+  wabaId: string;
   start: number;
   end: number;
   granularity: string;
@@ -124,7 +124,7 @@ export function TemplateUsageTable({
     try {
       const response = await apiFetch<TemplateUsageResponse | TemplateUsageResponse[]>("/v1/wa/templates/usage", {
         query: {
-          meta_waba_id: metaWabaId,
+          waba_id: wabaId,
           start: usageStart,
           end: usageEnd,
           granularity,
@@ -155,7 +155,7 @@ export function TemplateUsageTable({
     try {
       const response = await apiFetch<TemplateUsageResponse | TemplateUsageResponse[]>("/v1/wa/templates/usage", {
         query: {
-          meta_waba_id: metaWabaId,
+          waba_id: wabaId,
           start: usageStart,
           end: usageEnd,
           granularity,
@@ -187,7 +187,7 @@ export function TemplateUsageTable({
     try {
       const response = await apiFetch<TemplateListResponse>("/v1/wa/templates", {
         query: {
-          meta_waba_id: metaWabaId,
+          waba_id: wabaId,
           limit: "10",
           after: afterCursor,
         },

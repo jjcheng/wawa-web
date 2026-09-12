@@ -34,7 +34,7 @@ import type { WabaOption } from "@/lib/waba-options";
 import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 
 const FORM_FIELDS: (keyof CreateTemplateInput)[] = [
-  "meta_waba_id",
+  "waba_id",
   "name",
   "language",
   "category",
@@ -53,7 +53,7 @@ export function CreateTemplateForm({ waba }: { waba: WabaOption }) {
   } = useForm<CreateTemplateInput>({
     resolver: zodResolver(createTemplateSchema),
     defaultValues: {
-      meta_waba_id: waba.metaWabaId,
+      waba_id: waba.wabaId,
       name: "",
       language: "en_US",
       category: "UTILITY",
@@ -76,7 +76,7 @@ export function CreateTemplateForm({ waba }: { waba: WabaOption }) {
       TEMPLATE_CATEGORIES.find((option) => option === selectedSample.category) ?? "UTILITY";
 
     reset({
-      meta_waba_id: waba.metaWabaId,
+      waba_id: waba.wabaId,
       name: selectedSample.name ?? "",
       language: selectedSample.language ?? "en_US",
       category,
@@ -84,14 +84,14 @@ export function CreateTemplateForm({ waba }: { waba: WabaOption }) {
       body_text: componentText("BODY"),
       footer_text: componentText("FOOTER"),
     });
-  }, [reset, selectedSample, waba.metaWabaId]);
+  }, [reset, selectedSample, waba.wabaId]);
 
   const mutation = useMutation({
     mutationFn: (values: CreateTemplateInput) =>
       apiFetch<Template>("v1/wa/templates", {
         method: "POST",
         body: {
-          meta_waba_id: values.meta_waba_id,
+          waba_id: values.waba_id,
           name: values.name,
           language: values.language,
           category: values.category,

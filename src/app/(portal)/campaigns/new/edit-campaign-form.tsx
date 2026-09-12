@@ -196,6 +196,7 @@ function customerParameterValue(
   source: CustomerParameterSource,
 ) {
   if (!customer || source === "custom") return "";
+  if (source === "customer.token") return `${customer.token || customer.bsuid || "token"} (example)`;
   return `${customer.display_name} (example)`;
 }
 

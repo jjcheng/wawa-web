@@ -75,7 +75,7 @@ export { WHATSAPP_LANGUAGES as TEMPLATE_LANGUAGES } from "@/lib/whatsapp-languag
 const TEMPLATE_LANGUAGE_CODES = WHATSAPP_LANGUAGE_CODES;
 
 export const createTemplateSchema = z.object({
-  meta_waba_id: z.string().min(1, "Select a WhatsApp Business Account"),
+  waba_id: z.string().min(1, "Select a WhatsApp Business Account"),
   // Meta only accepts lowercase letters, digits and underscores.
   name: z
     .string()

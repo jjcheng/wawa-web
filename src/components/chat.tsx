@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, Check, CheckCheck, ContactRound, MapPin, Phone, Reply, SmilePlus } from "lucide-react";
+import { ArrowDown, Check, CheckCheck, ContactRound, Info, Loader2, MapPin, Phone, Reply, SmilePlus } from "lucide-react";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -11,8 +11,12 @@ import {
 } from "@/components/chat-compose-context";
 import { createAblyConversationProvider } from "@/lib/ably-realtime";
 import { apiFetch } from "@/lib/api/client";
+import { toApiError } from "@/lib/api/errors";
+import type { MessageDetail } from "@/lib/api/types";
+import { formatDateTime } from "@/lib/format";
 import { ChatMediaViewer } from "@/components/chat-media-viewer";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 type Message = ChatMessage;
 
@@ -226,6 +230,104 @@ function MessageStatusIcon({ status }: { status?: string }) {
   return <Check className="size-3.5" aria-label="Sent" />;
 }
 
+function MessageInfoPopover({ messageId }: { messageId: number }) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [details, setDetails] = useState<MessageDetail | null>(null);
+
+  async function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen);
+    if (nextOpen && !details && !loading) {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await apiFetch<MessageDetail>(`v1/wa/messages/${messageId}`);
+        setDetails(data);
+      } catch (err) {
+        setError(toApiError(err).message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
+
+  return (
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="ml-0.5 inline-flex items-center text-[#667781] hover:text-foreground focus-visible:outline-none dark:text-[#aebac1]"
+          title="Message details"
+          aria-label="Message details"
+        >
+          <Info className="size-3" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-72 p-3 text-xs">
+        <p className="mb-2 font-semibold text-foreground text-sm">Message Details</p>
+        {loading ? (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="size-4 animate-spin text-muted-foreground" aria-label="Loading message details" />
+          </div>
+        ) : error ? (
+          <p className="text-destructive text-xs">{error}</p>
+        ) : details ? (
+          <div className="space-y-2">
+            <dl className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-2.5 gap-y-1 text-xs">
+              <dt className="text-muted-foreground">Type</dt>
+              <dd className="capitalize">{details.type || "—"}</dd>
+
+              <dt className="text-muted-foreground">Status</dt>
+              <dd className="capitalize">{details.status || "—"}</dd>
+
+              {details.category ? (
+                <>
+                  <dt className="text-muted-foreground">Category</dt>
+                  <dd>{details.category}</dd>
+                </>
+              ) : null}
+
+              {details.billing_type ? (
+                <>
+                  <dt className="text-muted-foreground">Billing</dt>
+                  <dd>
+                    {details.billing_type}
+                    {details.billable !== undefined ? ` (${details.billable ? "Billable" : "Free"})` : ""}
+                  </dd>
+                </>
+              ) : null}
+
+              {details.campaign_id ? (
+                <>
+                  <dt className="text-muted-foreground">Campaign ID</dt>
+                  <dd>{details.campaign_id}</dd>
+                </>
+              ) : null}
+            </dl>
+
+            {details.statuses && details.statuses.length > 0 ? (
+              <div className="mt-2 border-t pt-2 space-y-1">
+                <p className="font-semibold text-foreground text-xs">Status History</p>
+                <dl className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-2.5 gap-y-1 text-[11px]">
+                  {details.statuses.map((event) => (
+                    <div key={event.id || `${event.status}-${event.timestamp}`} className="contents">
+                      <dt className="capitalize text-foreground">{event.status}</dt>
+                      <dd className="text-muted-foreground">
+                        {formatDateTime(event.timestamp ? new Date(event.timestamp * 1000) : event.entry_date)}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function MessageContent({ message }: { message: Message }) {
   const payload = message.payload;
   const media = payload[message.type] as
@@ -313,7 +415,6 @@ export function Chat({
   customerId,
   customerWAId,
   customerMetaUserId,
-  recipient,
 }: ChatProps) {
   const { appendMessage, appendedMessages, setReplyTarget, updateMessageStatus } = useChatCompose();
   const [messages, setMessages] = useState(() => initialMessages);
@@ -331,7 +432,9 @@ export function Chat({
     const distanceFromBottom = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
     const isNearBottom = distanceFromBottom <= bottomScrollThreshold;
     isNearBottomRef.current = isNearBottom;
-    setShowScrollToLatest(!isNearBottom && document.documentElement.scrollHeight > window.innerHeight);
+    if (isNearBottom) {
+      setShowScrollToLatest(false);
+    }
   }
 
   function scrollToLatest() {
@@ -406,12 +509,14 @@ export function Chat({
 
   useEffect(() => {
     if (appendedMessages.length === 0) return;
-    if (isNearBottomRef.current) {
+    const latestMessage = appendedMessages[appendedMessages.length - 1];
+    if (isNearBottomRef.current || latestMessage?.sending) {
       window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
+      setShowScrollToLatest(false);
     } else {
       setShowScrollToLatest(true);
     }
-  }, [appendedMessages.length]);
+  }, [appendedMessages]);
 
   const loadOlderMessages = useEffectEvent(async () => {
     if (loading || page >= numberOfPages) return;
@@ -501,7 +606,7 @@ export function Chat({
           type="button"
           size="icon-lg"
           variant="outline"
-          className="fixed right-4 bottom-20 z-10 size-11 animate-bounce rounded-full border-0 bg-[#00a884] text-white shadow-md hover:bg-[#008f72]"
+          className="fixed right-4 bottom-20 z-10 size-11 animate-bounce rounded-full border-0 bg-[#00a884] text-white shadow-md hover:bg-[#008f72] dark:bg-[#00a884] dark:text-white dark:hover:bg-[#008f72]"
           aria-label="Scroll to latest message"
           onClick={scrollToLatest}
         >
@@ -519,7 +624,12 @@ export function Chat({
                 <MessageContent message={message} />
                 <p className="mt-0.5 flex items-center justify-end gap-1 text-[0.6875rem] leading-none text-[#667781] dark:text-[#aebac1]">
                   {messageTime(message.timestamp)}
-                  {message.sending ? <MessageStatusIcon status={message.status} /> : null}
+                  {message.sending ? (
+                    <>
+                      <MessageStatusIcon status={message.status} />
+                      <MessageInfoPopover messageId={message.id} />
+                    </>
+                  ) : null}
                 </p>
               </div>
               {reactionByMessageId.get(message.wa_message_id)?.length ? (

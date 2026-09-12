@@ -126,7 +126,7 @@ export function ViewTemplateButton({
         <DialogFooter>
           <DeleteTemplateButton
             id={template.id}
-            metaWabaId={template.meta_waba_id ?? ""}
+            wabaId={template.waba_id ?? ""}
             name={template.name ?? ""}
             triggerVariant="destructive"
             onDeleted={() => {

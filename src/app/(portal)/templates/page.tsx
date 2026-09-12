@@ -41,18 +41,18 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
     wabas = toWabaOptions(businessAccount ? [businessAccount] : []);
     managerUrl = metaManageTemplatesUrl({
       portfolioId: businessAccount?.meta_business_portfolio_id,
-      accountId: businessAccount?.waba_id ?? businessAccount?.meta_waba_id,
+      accountId: businessAccount?.waba_id,
     });
   } catch (error) {
     wabaError = error instanceof ApiError ? error.message : "Could not load your business accounts.";
   }
 
   const params = await searchParams;
-  const requested = typeof params.meta_waba_id === "string" ? params.meta_waba_id : undefined;
+  const requested = typeof params.waba_id === "string" ? params.waba_id : undefined;
   const selected =
-    (requested && wabas.some((waba) => waba.metaWabaId === requested)
+    (requested && wabas.some((waba) => waba.wabaId === requested)
       ? requested
-      : wabas[0]?.metaWabaId) ?? "";
+      : wabas[0]?.wabaId) ?? "";
   const limit = typeof params.limit === "string" ? params.limit : "10";
   const requestedCategory = typeof params.category === "string" ? params.category : undefined;
   const category =
@@ -80,7 +80,7 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
     if (selected) {
       const response = await serverFetch<TemplateListResponse>("/v1/wa/templates", {
         query: {
-          meta_waba_id: selected,
+          waba_id: selected,
           limit,
           category: category === "ALL" ? undefined : category,
           name_or_content: nameOrContent || undefined,
@@ -138,7 +138,7 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
       {!loadError && selected ? (
         <TemplatesTable
           key={`${limit}-${category}-${nameOrContent}-${status}-${qualityScore}-${language}`}
-          metaWabaId={selected}
+          wabaId={selected}
           limit={limit}
           category={category}
           nameOrContent={nameOrContent}

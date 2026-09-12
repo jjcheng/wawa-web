@@ -51,7 +51,6 @@ export type BusinessPortfolio = DtoBase & {
 
 export type BusinessAccount = DtoBase & {
   waba_id?: string;
-  meta_waba_id?: string;
   name?: string;
   meta_business_portfolio_id?: string;
   meta_business_portfolio_name?: string;
@@ -61,7 +60,7 @@ export type PhoneNumber = DtoBase & {
   wa_id?: string;
   display_phone_number?: string;
   meta_business_portfolio_id?: string;
-  meta_waba_id?: string;
+  waba_id?: string;
   meta_phone_number_id?: string;
   phone_number?: string;
   name?: string;
@@ -93,6 +92,7 @@ export type Customer = {
   status?: string;
   remarks?: string;
   bsuid?: string;
+  token?: string;
   tags?: string[];
   additional_data?: Record<string, unknown>;
 };
@@ -181,7 +181,7 @@ export type TemplateQualityScore = {
 
 export type Template = {
   id: string;
-  meta_waba_id?: string;
+  waba_id?: string;
   name?: string;
   status?: string;
   category?: string;
@@ -286,6 +286,31 @@ export type PhoneNumberMessageAnalytics = {
   total_delivered?: number;
   analytics?: MessageAnalytics;
   data_points?: MessageAnalyticsDataPoint[];
+};
+
+export type MessageStatusEventDetail = DtoBase & {
+  wa_message_id?: string;
+  status: string;
+  timestamp: number;
+};
+
+export type MessageDetail = DtoBase & {
+  sending: boolean;
+  phone_number_id: number;
+  customer_id: number;
+  wa_message_id: string;
+  timestamp: number;
+  type: string;
+  status: string;
+  payload?: Record<string, unknown>;
+  campaign_id?: number | null;
+  attachment_url?: string;
+  billable?: boolean;
+  category?: string;
+  billing_type?: string;
+  statuses?: MessageStatusEventDetail[];
+  preview_html?: string;
+  preview_dark_html?: string;
 };
 
 export type ConversationAnalyticsDataPoint = {

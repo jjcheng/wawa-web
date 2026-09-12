@@ -12,6 +12,7 @@ import {
 export const CUSTOMER_PARAMETER_OPTIONS = [
   { value: "custom", label: "Static value" },
   { value: "customer.name", label: "Customer name" },
+  { value: "customer.token", label: "Customer token" },
 ] as const;
 
 export type CustomerParameterSource = (typeof CUSTOMER_PARAMETER_OPTIONS)[number]["value"];

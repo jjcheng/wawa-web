@@ -72,7 +72,7 @@ export default async function UsagePage({ searchParams }: PageProps<"/usage">) {
 
   const templateList = view === "template" && context.selected
     ? await loadAnalytics<TemplateListResponse>("/v1/wa/templates", {
-        meta_waba_id: context.selected,
+        waba_id: context.selected,
         limit: "10",
       })
     : { data: null, error: null };
@@ -113,7 +113,7 @@ export default async function UsagePage({ searchParams }: PageProps<"/usage">) {
           ) : (
             <TemplateUsageTable
               key={`${templateStart}-${context.end}-${context.granularity}`}
-              metaWabaId={context.selected}
+              wabaId={context.selected}
               start={templateStart}
               end={context.end}
               granularity={context.granularity}

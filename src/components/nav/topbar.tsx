@@ -95,7 +95,7 @@ export function Topbar({ user }: { user: User }) {
         portfolioName: account.meta_business_portfolio_name ?? null,
         portfolioId: account.meta_business_portfolio_id ?? null,
         accountName: account.name ?? null,
-        accountId: account.waba_id ?? account.meta_waba_id ?? null,
+        accountId: account.waba_id ?? null,
       }));
 
     businessContextRequests.set(storageKey, request);
@@ -127,7 +127,7 @@ export function Topbar({ user }: { user: User }) {
         portfolioName: account.meta_business_portfolio_name ?? businessContext.portfolioName,
         portfolioId: account.meta_business_portfolio_id ?? businessContext.portfolioId,
         accountName: account.name ?? null,
-        accountId: account.waba_id ?? account.meta_waba_id ?? businessContext.accountId,
+        accountId: account.waba_id ?? businessContext.accountId,
       };
       setBusinessContext(nextContext);
       localStorage.setItem(businessContextStorageKey(user), JSON.stringify(nextContext));

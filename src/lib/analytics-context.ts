@@ -36,11 +36,11 @@ export async function resolveAnalyticsContext(
       error instanceof ApiError ? error.message : "Could not load your business accounts.";
   }
 
-  const requested = first(params.meta_waba_id);
+  const requested = first(params.waba_id);
   const selected =
-    (requested && wabas.some((waba) => waba.metaWabaId === requested)
+    (requested && wabas.some((waba) => waba.wabaId === requested)
       ? requested
-      : wabas[0]?.metaWabaId) ?? "";
+      : wabas[0]?.wabaId) ?? "";
 
   const { start, end } = toUnixRange(rangeDays);
 
@@ -53,7 +53,7 @@ export async function resolveAnalyticsContext(
     start,
     end,
     query: {
-      meta_waba_id: selected,
+      waba_id: selected,
       start: String(start),
       end: String(end),
       granularity,

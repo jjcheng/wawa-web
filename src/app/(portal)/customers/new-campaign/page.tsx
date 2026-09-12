@@ -18,10 +18,10 @@ export default async function NewCampaignPage({
   let templates: TemplateListResponse["items"] = [];
   try {
     const businessAccount = await serverFetch<BusinessAccount>("/v1/wa/business-accounts");
-    const wabaId = businessAccount?.waba_id ?? businessAccount?.meta_waba_id;
+    const wabaId = businessAccount?.waba_id;
     if (wabaId) {
       const templateResponse = await serverFetch<TemplateListResponse>("/v1/wa/templates", {
-        query: { meta_waba_id: wabaId, limit: "100" },
+        query: { waba_id: wabaId, limit: "100" },
       });
       templates = templateResponse.items;
     }

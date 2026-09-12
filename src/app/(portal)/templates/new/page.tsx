@@ -22,7 +22,7 @@ export default async function CreateTemplatePage() {
     waba = toWabaOptions(businessAccount ? [businessAccount] : [])[0] ?? null;
     managerUrl = metaManageTemplatesUrl({
       portfolioId: businessAccount?.meta_business_portfolio_id,
-      accountId: businessAccount?.waba_id ?? businessAccount?.meta_waba_id,
+      accountId: businessAccount?.waba_id,
     });
   } catch (error) {
     loadError =
