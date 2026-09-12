@@ -10,8 +10,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Table,
@@ -35,7 +33,7 @@ import type {
   TemplateListResponse,
 } from "@/lib/api/types";
 import { requireUser } from "@/lib/auth/session";
-import { formatDate, formatDateTime } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Usage" };
 
@@ -101,38 +99,37 @@ export default async function UsagePage({ searchParams }: PageProps<"/usage">) {
       <AnalyticsViewTabs value={view} />
 
       {view === "template" ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Usage by template</CardTitle>
-            <CardDescription>Message delivery totals for each template.</CardDescription>
-          </CardHeader>
-          <CardContent className="overflow-x-auto">
-            {templateList.error ? (
-              <p className="text-destructive text-sm">
-                {templateList.error}
-              </p>
-            ) : !templateList.data || templateList.data.items.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                Meta reported no template usage in the selected period.
-              </p>
-            ) : (
-              <TemplateUsageTable
-                key={`${templateStart}-${context.end}-${context.granularity}`}
-                metaWabaId={context.selected}
-                start={templateStart}
-                end={context.end}
-                granularity={context.granularity}
-                initialTemplates={templateList.data.items}
-                initialAfterCursor={(templateList.data?.additional_data as { after?: string; next?: string } | undefined)?.next
+        <div>
+          {templateList.error ? (
+            <p className="text-destructive text-sm">{templateList.error}</p>
+          ) : !templateList.data || templateList.data.items.length === 0 ? (
+            <Card className="rounded-md py-0">
+              <CardContent className="p-6">
+                <p className="text-muted-foreground text-sm">
+                  Meta reported no template usage in the selected period.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <TemplateUsageTable
+              key={`${templateStart}-${context.end}-${context.granularity}`}
+              metaWabaId={context.selected}
+              start={templateStart}
+              end={context.end}
+              granularity={context.granularity}
+              initialTemplates={templateList.data.items}
+              initialAfterCursor={
+                (templateList.data?.additional_data as { after?: string; next?: string } | undefined)
+                  ?.next
                   ? (templateList.data?.additional_data as { after?: string }).after
-                  : undefined}
-                initialHasMore={
-                  Boolean((templateList.data?.additional_data as { next?: string } | undefined)?.next)
-                }
-              />
-            )}
-          </CardContent>
-        </Card>
+                  : undefined
+              }
+              initialHasMore={Boolean(
+                (templateList.data?.additional_data as { next?: string } | undefined)?.next,
+              )}
+            />
+          )}
+        </div>
       ) : null}
 
       {view === "overall" && account.error ? (
@@ -141,28 +138,19 @@ export default async function UsagePage({ searchParams }: PageProps<"/usage">) {
         </Alert>
       ) : null}
 
-      {view === "overall" ? <div className="grid gap-4 sm:grid-cols-2">
-        {summary.map((item) => (
-          <Card key={item.label}>
-            <CardHeader>
+      {view === "overall" ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {summary.map((item) => (
+            <Card key={item.label} className="px-4 py-3">
               <CardDescription>{item.label}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-semibold">{formatCount(item.value)}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div> : null}
+              <p className="mt-1 text-xl font-semibold">{formatCount(item.value)}</p>
+            </Card>
+          ))}
+        </div>
+      ) : null}
 
-      {view === "overall" ? <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-base">By period</CardTitle>
-          <CardDescription>
-            {formatDate(new Date(context.start * 1000))} –{" "}
-            {formatDate(new Date(context.end * 1000))}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
+      {view === "overall" ? <Card className="mt-6 rounded-md py-0">
+        <CardContent className="overflow-x-auto p-0">
           {accountPoints.length === 0 ? (
             <p className="text-muted-foreground text-sm">
               Meta reported no message usage for this account in the selected period.
@@ -200,35 +188,36 @@ export default async function UsagePage({ searchParams }: PageProps<"/usage">) {
         </CardContent>
       </Card> : null}
 
-      {view === "phone" ? <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-base">By phone number</CardTitle>
-          <CardDescription>Totals for each number in this business account.</CardDescription>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
+      {view === "phone" ? (
+        <div className="mt-6">
           {phoneNumbers.error ? (
             <p className="text-destructive text-sm">{phoneNumbers.error}</p>
           ) : !phoneNumbers.data || phoneNumbers.data.items.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              No WhatsApp phone numbers are available.
-            </p>
+            <Card className="rounded-md py-0">
+              <CardContent className="p-6">
+                <p className="text-muted-foreground text-sm">
+                  No WhatsApp phone numbers are available.
+                </p>
+              </CardContent>
+            </Card>
           ) : (
             <PhoneNumberListTable
               key={`${context.start}-${context.end}-${context.granularity}`}
-              initialPhoneNumbers={phoneNumbers.data.items}
               start={context.start}
               end={context.end}
               granularity={context.granularity}
+              initialPhoneNumbers={phoneNumbers.data.items}
               initialHasMore={
                 phoneNumbers.data.number_of_pages !== undefined
                   ? phoneNumbers.data.number_of_pages > 1
-                  : phoneNumbers.data.next_page_offset !== undefined && phoneNumbers.data.next_page_offset !== null ||
+                  : (phoneNumbers.data.next_page_offset !== undefined &&
+                      phoneNumbers.data.next_page_offset !== null) ||
                     phoneNumbers.data.items.length === 10
               }
             />
           )}
-        </CardContent>
-      </Card> : null}
+        </div>
+      ) : null}
     </AnalyticsShell>
   );
 }

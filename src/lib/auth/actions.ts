@@ -5,9 +5,11 @@ import { cookies } from "next/headers";
 
 import { ApiError } from "@/lib/api/errors";
 import { embeddedSignupSchema, loginSchema } from "@/lib/api/schemas";
-import { rawServerFetch } from "@/lib/api/server-client";
+import { rawServerFetch, serverFetch } from "@/lib/api/server-client";
 import type { ApiEnvelope, InputError, User } from "@/lib/api/types";
 import {
+  MASTER_SESSION_RETURN_COOKIE,
+  MASTER_SESSION_RETURN_MAX_AGE_SECONDS,
   readUpstreamAccessToken,
   readUpstreamSession,
   sessionCookieOptions,
@@ -80,7 +82,9 @@ export async function loginAction(
     return { message: "Sign in succeeded but no access token was issued." };
   }
 
-  (await cookies()).set(
+  const cookieStore = await cookies();
+  cookieStore.delete(MASTER_SESSION_RETURN_COOKIE);
+  cookieStore.set(
     serverEnv.SESSION_COOKIE_NAME,
     tokenValue,
     sessionCookieOptions(session?.maxAge ?? 7 * 24 * 60 * 60),
@@ -98,6 +102,20 @@ export async function completeEmbeddedSignup(input: unknown): Promise<EmbeddedSi
         message: issue.message,
       })),
     };
+  }
+
+  const cookieStore = await cookies();
+  const currentToken = cookieStore.get(serverEnv.SESSION_COOKIE_NAME)?.value;
+  let masterSessionToken: string | null = null;
+  if (currentToken) {
+    try {
+      const currentUser = await serverFetch<User>("/v1/account/me", {
+        sessionToken: currentToken,
+      });
+      if (currentUser.type === "MASTER") masterSessionToken = currentToken;
+    } catch {
+      // An invalid existing session should not prevent a new embedded signup.
+    }
   }
 
   let upstream: Response;
@@ -126,18 +144,45 @@ export async function completeEmbeddedSignup(input: unknown): Promise<EmbeddedSi
     };
   }
 
+  const needsPassword = envelope.data?.status === "PENDING_PASSWORD";
+  const shouldUseNewSession = !masterSessionToken || needsPassword;
   const accessToken = envelope.data?.access_token;
-  if (!accessToken) {
+  if (shouldUseNewSession && !accessToken) {
     return { message: "WhatsApp onboarding succeeded but no access token was issued." };
   }
 
-  (await cookies()).set(serverEnv.SESSION_COOKIE_NAME, accessToken, sessionCookieOptions());
+  if (masterSessionToken && needsPassword) {
+    cookieStore.set(
+      MASTER_SESSION_RETURN_COOKIE,
+      masterSessionToken,
+      sessionCookieOptions(MASTER_SESSION_RETURN_MAX_AGE_SECONDS),
+    );
+  } else {
+    cookieStore.delete(MASTER_SESSION_RETURN_COOKIE);
+  }
+  if (shouldUseNewSession && accessToken) {
+    cookieStore.set(serverEnv.SESSION_COOKIE_NAME, accessToken, sessionCookieOptions());
+  }
 
   return {
     status: envelope.data?.status,
     wa_activated: envelope.data?.wa_activated,
     wa_activation_error: envelope.data?.wa_activation_error,
   };
+}
+
+export async function restoreMasterSession(): Promise<boolean> {
+  const cookieStore = await cookies();
+  const masterSessionToken = cookieStore.get(MASTER_SESSION_RETURN_COOKIE)?.value;
+  if (!masterSessionToken) return false;
+
+  cookieStore.set(
+    serverEnv.SESSION_COOKIE_NAME,
+    masterSessionToken,
+    sessionCookieOptions(),
+  );
+  cookieStore.delete(MASTER_SESSION_RETURN_COOKIE);
+  return true;
 }
 
 export async function logoutAction() {
@@ -148,5 +193,6 @@ export async function logoutAction() {
     // Clearing the local cookie is enough to end the browser session.
   }
   cookieStore.delete(serverEnv.SESSION_COOKIE_NAME);
+  cookieStore.delete(MASTER_SESSION_RETURN_COOKIE);
   redirect("/login");
 }

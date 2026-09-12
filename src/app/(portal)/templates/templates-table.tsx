@@ -7,10 +7,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useNavigationProgress } from "@/components/nav/navigation-progress";
 import { LoadMoreButton } from "@/components/load-more-button";
 import { TableEmptyState } from "@/components/table-empty-state";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { TemplateStatusBadge } from "@/components/whatsapp/template-status-badge";
 import { TemplatePreviewButton } from "@/components/whatsapp/template-preview-button";
 import { ViewTemplateButton } from "@/components/whatsapp/view-template-button";
 import {
@@ -48,17 +46,6 @@ const STATUS_OPTIONS = [
 ];
 const QUALITY_SCORE_OPTIONS = ["ALL", "GREEN", "YELLOW", "RED", "UNKNOWN"];
 const LANGUAGE_OPTIONS = [{ code: "ALL", label: "Language" }, ...WHATSAPP_LANGUAGES];
-
-function qualityVariant(score?: string) {
-  switch (score?.toUpperCase()) {
-    case "GREEN":
-      return "default" as const;
-    case "RED":
-      return "destructive" as const;
-    default:
-      return "secondary" as const;
-  }
-}
 
 export function TemplatesTable({
   metaWabaId,
@@ -304,18 +291,8 @@ export function TemplatesTable({
                     </TableCell>
                     <TableCell>{template.category || "—"}</TableCell>
                     <TableCell>{template.language || "—"}</TableCell>
-                    <TableCell>
-                      <TemplateStatusBadge status={template.status} reason={template.rejected_reason} />
-                    </TableCell>
-                    <TableCell>
-                      {template.quality_score?.score ? (
-                        <Badge variant={qualityVariant(template.quality_score.score)}>
-                          {template.quality_score.score}
-                        </Badge>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
+                    <TableCell>{template.status || "—"}</TableCell>
+                    <TableCell>{template.quality_score?.score || "—"}</TableCell>
                     <TableCell className="text-right">
                       <ViewTemplateButton
                         template={template}

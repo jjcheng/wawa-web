@@ -24,7 +24,7 @@ import { toApiError } from "@/lib/api/errors";
 import { logoutAction } from "@/lib/auth/actions";
 import { formatPhoneNumber } from "@/lib/format";
 import { metaBusinessManagerUrl } from "@/lib/meta-links";
-import type { BusinessAccount, BusinessPortfolio, User } from "@/lib/api/types";
+import type { BusinessAccount, User } from "@/lib/api/types";
 
 function initials(user: User) {
   const source =
@@ -45,6 +45,14 @@ function businessContextStorageKey(user: User) {
   return `wawa.business-context.v3.${user.id}`;
 }
 
+function clearBusinessContextCache() {
+  for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+    const key = localStorage.key(index);
+    if (key?.startsWith("wawa.business-context.")) localStorage.removeItem(key);
+  }
+  businessContextRequests.clear();
+}
+
 function readBusinessContext(user: User): BusinessContext | null {
   try {
     const value = localStorage.getItem(businessContextStorageKey(user));
@@ -62,13 +70,8 @@ function readBusinessContext(user: User): BusinessContext | null {
   }
 }
 
-function hasBusinessContextNames(context: BusinessContext) {
-  return Boolean(
-    context.portfolioName?.trim() &&
-    context.portfolioId?.trim() &&
-    context.accountName?.trim() &&
-    context.accountId?.trim(),
-  );
+function hasBusinessContextIds(context: BusinessContext) {
+  return Boolean(context.portfolioId?.trim() && context.accountId?.trim());
 }
 
 export function Topbar({ user }: { user: User }) {
@@ -79,7 +82,7 @@ export function Topbar({ user }: { user: User }) {
 
   useEffect(() => {
     const cached = readBusinessContext(user);
-    if (cached && hasBusinessContextNames(cached)) {
+    if (cached && hasBusinessContextIds(cached)) {
       const frame = requestAnimationFrame(() => setBusinessContext(cached));
       return () => cancelAnimationFrame(frame);
     }
@@ -88,14 +91,11 @@ export function Topbar({ user }: { user: User }) {
     const storageKey = businessContextStorageKey(user);
     const request =
       businessContextRequests.get(storageKey) ??
-      Promise.all([
-        apiFetch<BusinessPortfolio>("/v1/wa/business-portfolios"),
-        apiFetch<BusinessAccount>("/v1/wa/business-accounts"),
-      ]).then(([portfolio, account]) => ({
-        portfolioName: portfolio.name ?? null,
-        portfolioId: portfolio.meta_business_portfolio_id ?? null,
+      apiFetch<BusinessAccount>("/v1/wa/business-accounts").then((account) => ({
+        portfolioName: account.meta_business_portfolio_name ?? null,
+        portfolioId: account.meta_business_portfolio_id ?? null,
         accountName: account.name ?? null,
-        accountId: account.meta_waba_id ?? null,
+        accountId: account.waba_id ?? account.meta_waba_id ?? null,
       }));
 
     businessContextRequests.set(storageKey, request);
@@ -122,18 +122,12 @@ export function Topbar({ user }: { user: User }) {
     ) return;
     setRefreshingBusinessContext(true);
     try {
-      const account = await apiFetch<BusinessAccount & {
-        meta_business_portfolio_name?: string;
-        meta_business_portfolio_id?: string;
-      }>(
-        `v1/wa/business-accounts/${encodeURIComponent(businessContext.accountId)}`,
-        { method: "PATCH" },
-      );
+      const account = await apiFetch<BusinessAccount>("v1/wa/business-accounts", { method: "PATCH" });
       const nextContext = {
         portfolioName: account.meta_business_portfolio_name ?? businessContext.portfolioName,
         portfolioId: account.meta_business_portfolio_id ?? businessContext.portfolioId,
         accountName: account.name ?? null,
-        accountId: account.meta_waba_id ?? businessContext.accountId,
+        accountId: account.waba_id ?? account.meta_waba_id ?? businessContext.accountId,
       };
       setBusinessContext(nextContext);
       localStorage.setItem(businessContextStorageKey(user), JSON.stringify(nextContext));
@@ -163,7 +157,7 @@ export function Topbar({ user }: { user: User }) {
         </SheetContent>
       </Sheet>
 
-      {businessContext && hasBusinessContextNames(businessContext) ? (
+      {businessContext && hasBusinessContextIds(businessContext) ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -172,10 +166,10 @@ export function Topbar({ user }: { user: User }) {
             >
               <span className="min-w-0">
                 <span className="block truncate text-sm font-medium">
-                  {businessContext.portfolioName}
+                  {businessContext.portfolioName || businessContext.portfolioId}
                 </span>
                 <span className="text-muted-foreground block truncate text-xs">
-                  {businessContext.accountName}
+                  {businessContext.accountName || businessContext.accountId}
                 </span>
               </span>
             </Button>
@@ -255,7 +249,7 @@ export function Topbar({ user }: { user: User }) {
                 ) : null}
               </div>
               <p className="text-muted-foreground text-xs">
-                {user.email || formatPhoneNumber(user.phone_number, user.country_code)}
+                {formatPhoneNumber(user.phone_number, user.country_code)}
               </p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -268,9 +262,7 @@ export function Topbar({ user }: { user: User }) {
             <DropdownMenuItem
               onSelect={(event) => {
                 event.preventDefault();
-                const storageKey = businessContextStorageKey(user);
-                localStorage.removeItem(storageKey);
-                businessContextRequests.delete(storageKey);
+                clearBusinessContextCache();
                 logoutFormRef.current?.requestSubmit();
               }}
             >

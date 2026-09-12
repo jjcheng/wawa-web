@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { RemovePhoneNumberButton } from "@/components/whatsapp/remove-phone-number-button";
+import { ReconnectPhoneNumberButton } from "@/components/whatsapp/reconnect-phone-number-button";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 
@@ -37,18 +37,21 @@ function displayValue(value: unknown) {
 export function PhoneNumberViewButton({
   id,
   name,
+  isMaster = false,
 }: {
   id: number;
   name: string;
+  status?: string;
+  isMaster?: boolean;
 }) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [details, setDetails] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [reconnectConfirmOpen, setReconnectConfirmOpen] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
+
+  const currentStatus = details && !loading ? String(details.status ?? "").toUpperCase() : "";
+  const isConnected = currentStatus === "CONNECTED";
+  const isDisconnected = currentStatus === "DISCONNECTED";
 
   async function loadDetails() {
     setOpen(true);
@@ -62,36 +65,6 @@ export function PhoneNumberViewButton({
       setError(toApiError(requestError).message);
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function disconnect() {
-    setActionLoading(true);
-    try {
-      await apiFetch(`v1/wa/phone-numbers/${id}/disconnect`, { method: "POST" });
-      toast.success("Phone number disconnected.");
-      setConfirmOpen(false);
-      setOpen(false);
-      router.refresh();
-    } catch (requestError) {
-      toast.error(toApiError(requestError).message);
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  async function reconnect() {
-    setActionLoading(true);
-    try {
-      await apiFetch(`v1/wa/phone-numbers/${id}/reconnect`, { method: "POST" });
-      toast.success("Phone number reconnected.");
-      setReconnectConfirmOpen(false);
-      setOpen(false);
-      router.refresh();
-    } catch (requestError) {
-      toast.error(toApiError(requestError).message);
-    } finally {
-      setActionLoading(false);
     }
   }
 
@@ -123,55 +96,25 @@ export function PhoneNumberViewButton({
               </dl>
             ) : null}
           </div>
-          <DialogFooter>
-            {details?.status?.toString().toUpperCase() === "CONNECTED" ? (
-              <Button variant="destructive" onClick={() => setConfirmOpen(true)} disabled={actionLoading}>
-                Disconnect
-              </Button>
-            ) : details?.status?.toString().toUpperCase() === "DISCONNECTED" ? (
-              <Button variant="default" onClick={() => setReconnectConfirmOpen(true)} disabled={actionLoading}>
-                Reconnect
-              </Button>
-            ) : null}
+          <DialogFooter className="flex items-center justify-between sm:justify-between">
+            {isMaster && isConnected ? (
+              <RemovePhoneNumberButton
+                id={id}
+                name={name}
+                phoneNumber={String(details?.display_phone_number || details?.phone_number || "")}
+                triggerVariant="destructive"
+                label="Disconnect"
+                onDeleted={() => setOpen(false)}
+              />
+            ) : isMaster && isDisconnected ? (
+              <ReconnectPhoneNumberButton
+                id={id}
+                name={name}
+                phoneNumber={String(details?.display_phone_number || details?.phone_number || "")}
+                onReconnected={() => setOpen(false)}
+              />
+            ) : <div />}
             <Button variant="outline" onClick={() => setOpen(false)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Disconnect this phone number?</DialogTitle>
-            <DialogDescription>
-              {name} will be disconnected from WhatsApp and marked inactive.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={actionLoading}>
-              Keep number
-            </Button>
-            <Button variant="destructive" onClick={disconnect} disabled={actionLoading}>
-              {actionLoading ? <Loader2 className="size-4 animate-spin" /> : null}
-              Confirm disconnect
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={reconnectConfirmOpen} onOpenChange={setReconnectConfirmOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reconnect this phone number?</DialogTitle>
-            <DialogDescription>
-              {name} will be reconnected to WhatsApp.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setReconnectConfirmOpen(false)} disabled={actionLoading}>
-              Keep disconnected
-            </Button>
-            <Button onClick={reconnect} disabled={actionLoading}>
-              {actionLoading ? <Loader2 className="size-4 animate-spin" /> : null}
-              Confirm reconnect
-            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

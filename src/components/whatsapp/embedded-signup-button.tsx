@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { WhatsappIcon } from "@/components/icons/whatsapp-icon";
 import { Button } from "@/components/ui/button";
@@ -17,8 +18,10 @@ export function EmbeddedSignupButton({
   className?: string;
   redirectTo?: string | null;
 }) {
+  const pathname = usePathname();
   const params = new URLSearchParams();
   if (redirectTo) params.set("next", redirectTo);
+  params.set("from", pathname);
   const href = `/embedded-signup${params.size ? `?${params}` : ""}`;
 
   return (

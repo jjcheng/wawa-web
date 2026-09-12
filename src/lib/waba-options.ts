@@ -4,7 +4,7 @@ export type WabaOption = { metaWabaId: string; name: string };
 
 export function toWabaOptions(businessAccounts: BusinessAccount[]): WabaOption[] {
   return businessAccounts.flatMap((businessAccount) => {
-    const metaWabaId = businessAccount.meta_waba_id;
+    const metaWabaId = businessAccount.waba_id ?? businessAccount.meta_waba_id;
     return metaWabaId
       ? [{ metaWabaId, name: businessAccount.name || metaWabaId }]
       : [];

@@ -4,7 +4,9 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { LoadMoreButton } from "@/components/load-more-button";
+import { TableEmptyState } from "@/components/table-empty-state";
 import {
   Dialog,
   DialogContent,
@@ -33,20 +35,26 @@ type TemplateListResponse = {
 };
 
 type TemplateUsage = { sent: number; delivered: number; read: number; clicks: number };
+type TemplateClickDetail = {
+  button_content?: string;
+  count?: number;
+  type?: string;
+  [key: string]: unknown;
+};
 type TemplateUsageResponse = {
   total_sent?: number;
   total_delivered?: number;
   total_read?: number;
-  total_clicked?: number;
-  total_clicks?: number;
+  total_clicked?: number | TemplateClickDetail[];
+  total_clicks?: number | TemplateClickDetail[];
   data_points?: {
     start: number;
     end: number;
     sent?: number;
     delivered?: number;
     read?: number;
-    clicked?: number;
-    clicks?: number;
+    clicked?: number | TemplateClickDetail[];
+    clicks?: number | TemplateClickDetail[];
   }[];
   data?: TemplateUsageResponse | TemplateUsageResponse[];
   items?: TemplateUsageResponse[];
@@ -57,6 +65,21 @@ function firstUsageResult(response: TemplateUsageResponse | TemplateUsageRespons
   if (response.data) return firstUsageResult(response.data);
   if (response.items?.length) return response.items[0];
   return response;
+}
+
+function parseClicks(value: unknown): number {
+  if (typeof value === "number") return value;
+  if (Array.isArray(value)) {
+    return value.reduce((sum, item) => {
+      if (typeof item === "number") return sum + item;
+      if (typeof item === "object" && item !== null && "count" in item) {
+        const countVal = (item as TemplateClickDetail).count;
+        return sum + (typeof countVal === "number" ? countVal : 0);
+      }
+      return sum;
+    }, 0);
+  }
+  return 0;
 }
 
 export function TemplateUsageTable({
@@ -114,7 +137,7 @@ export function TemplateUsageTable({
         sent: result?.total_sent ?? 0,
         delivered: result?.total_delivered ?? 0,
         read: result?.total_read ?? 0,
-        clicks: result?.total_clicked ?? result?.total_clicks ?? 0,
+        clicks: parseClicks(result?.total_clicked ?? result?.total_clicks),
       }));
     } catch (usageError) {
       usageRequestsRef.current.delete(requestKey);
@@ -186,46 +209,50 @@ export function TemplateUsageTable({
 
   return (
     <div className="space-y-4">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Template</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">
-              <span className="inline-flex items-center gap-1">Sent {usageLoading ? <Loader2 className="size-3.5 animate-spin" /> : null}</span>
-            </TableHead>
-            <TableHead className="text-right">
-              <span className="inline-flex items-center gap-1">Delivered {usageLoading ? <Loader2 className="size-3.5 animate-spin" /> : null}</span>
-            </TableHead>
-            <TableHead className="text-right">
-              <span className="inline-flex items-center gap-1">Read {usageLoading ? <Loader2 className="size-3.5 animate-spin" /> : null}</span>
-            </TableHead>
-            <TableHead className="text-right">
-              <span className="inline-flex items-center gap-1">Clicks {usageLoading ? <Loader2 className="size-3.5 animate-spin" /> : null}</span>
-            </TableHead>
-            <TableHead className="text-right">Action</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {templates.map((template) => (
-            <TableRow key={template.id}>
-              <TableCell className="font-medium">{template.name || template.id}</TableCell>
-              <TableCell>{template.category || "-"}</TableCell>
-              <TableCell>{template.status || "-"}</TableCell>
-              <TableCell className="text-right">{usage.get(template.id)?.sent.toLocaleString("en-US") ?? "-"}</TableCell>
-              <TableCell className="text-right">{usage.get(template.id)?.delivered.toLocaleString("en-US") ?? "-"}</TableCell>
-              <TableCell className="text-right">{usage.get(template.id)?.read.toLocaleString("en-US") ?? "-"}</TableCell>
-              <TableCell className="text-right">{usage.get(template.id)?.clicks.toLocaleString("en-US") ?? "-"}</TableCell>
-              <TableCell className="text-right">
-                <Button type="button" variant="outline" size="sm" onClick={() => void viewUsage(template)}>
-                  View
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <Card className="rounded-md py-0">
+        <CardContent className="overflow-x-auto p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Template</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">
+                  <span className="inline-flex items-center gap-1">Sent {usageLoading ? <Loader2 className="size-3.5 animate-spin" /> : null}</span>
+                </TableHead>
+                <TableHead className="text-right">
+                  <span className="inline-flex items-center gap-1">Delivered {usageLoading ? <Loader2 className="size-3.5 animate-spin" /> : null}</span>
+                </TableHead>
+                <TableHead className="text-right">
+                  <span className="inline-flex items-center gap-1">Read {usageLoading ? <Loader2 className="size-3.5 animate-spin" /> : null}</span>
+                </TableHead>
+                <TableHead className="text-right">
+                  <span className="inline-flex items-center gap-1">Clicks {usageLoading ? <Loader2 className="size-3.5 animate-spin" /> : null}</span>
+                </TableHead>
+                <TableHead className="text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {templates.map((template) => (
+                <TableRow key={template.id}>
+                  <TableCell className="font-medium">{template.name || template.id}</TableCell>
+                  <TableCell>{template.category || "-"}</TableCell>
+                  <TableCell>{template.status || "-"}</TableCell>
+                  <TableCell className="text-right">{usage.get(template.id)?.sent.toLocaleString("en-US") ?? "-"}</TableCell>
+                  <TableCell className="text-right">{usage.get(template.id)?.delivered.toLocaleString("en-US") ?? "-"}</TableCell>
+                  <TableCell className="text-right">{usage.get(template.id)?.read.toLocaleString("en-US") ?? "-"}</TableCell>
+                  <TableCell className="text-right">{usage.get(template.id)?.clicks.toLocaleString("en-US") ?? "-"}</TableCell>
+                  <TableCell className="text-right">
+                    <Button type="button" variant="outline" size="sm" onClick={() => void viewUsage(template)}>
+                      View
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
       {error ? <p className="text-destructive text-sm">{error}</p> : null}
       {hasMore ? (
         <LoadMoreButton loading={loading} onClick={loadMore} withTopMargin={false} />
@@ -257,16 +284,49 @@ export function TemplateUsageTable({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {detailPoints.map((point) => (
-                    <TableRow key={`${point.start}-${point.end}`}>
-                      <TableCell className="text-xs">{formatDateTime(new Date(point.start * 1000))}</TableCell>
-                      <TableCell className="text-xs">{formatDateTime(new Date(point.end * 1000))}</TableCell>
-                      <TableCell className="text-right">{(point.sent ?? 0).toLocaleString("en-US")}</TableCell>
-                      <TableCell className="text-right">{(point.delivered ?? 0).toLocaleString("en-US")}</TableCell>
-                      <TableCell className="text-right">{(point.read ?? 0).toLocaleString("en-US")}</TableCell>
-                      <TableCell className="text-right">{(point.clicked ?? point.clicks ?? 0).toLocaleString("en-US")}</TableCell>
-                    </TableRow>
-                  ))}
+                  {detailPoints.length === 0 ? (
+                    <TableEmptyState colSpan={6}>No record found.</TableEmptyState>
+                  ) : (
+                    detailPoints.map((point) => {
+                      const clickValue = point.clicked ?? point.clicks;
+                      const clickArray = Array.isArray(clickValue) ? clickValue : null;
+                      const totalClicks = parseClicks(clickValue);
+
+                      return (
+                        <TableRow key={`${point.start}-${point.end}`}>
+                          <TableCell className="text-xs">{formatDateTime(new Date(point.start * 1000))}</TableCell>
+                          <TableCell className="text-xs">{formatDateTime(new Date(point.end * 1000))}</TableCell>
+                          <TableCell className="text-right">{(point.sent ?? 0).toLocaleString("en-US")}</TableCell>
+                          <TableCell className="text-right">{(point.delivered ?? 0).toLocaleString("en-US")}</TableCell>
+                          <TableCell className="text-right">{(point.read ?? 0).toLocaleString("en-US")}</TableCell>
+                          <TableCell className="text-right">
+                            {clickArray && clickArray.length > 0 ? (
+                              <div className="flex flex-col items-end gap-1">
+                                {clickArray.map((detail, index) => {
+                                  if (typeof detail === "object" && detail !== null) {
+                                    const label = detail.button_content || detail.type || `Button ${index + 1}`;
+                                    const count = typeof detail.count === "number" ? detail.count : 0;
+                                    return (
+                                      <span key={index} className="text-sm">
+                                        {label}: {count.toLocaleString("en-US")}
+                                      </span>
+                                    );
+                                  }
+                                  return (
+                                    <span key={index} className="text-sm">
+                                      Item {index + 1}: {String(detail)}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <span className="text-sm">{totalClicks.toLocaleString("en-US")}</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
                 </TableBody>
               </Table>
             </div>

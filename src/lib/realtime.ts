@@ -1,5 +1,6 @@
 export type ConversationStream = {
   phoneNumberId: string;
+  customerId: string;
   customerWAId?: string;
   customerMetaUserId?: string;
 };

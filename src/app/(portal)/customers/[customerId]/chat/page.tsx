@@ -233,12 +233,12 @@ export default async function CustomerChatPage({
   searchParams: Promise<{ identity?: string; return_to?: string }>;
 }) {
   const { customerId } = await params;
-  const { identity, return_to: returnTo } = await searchParams;
+  const { return_to: returnTo } = await searchParams;
   const backHref = returnTo?.startsWith("/customers") ? returnTo : "/customers";
   let customer: Customer;
   try {
-    customer = await serverFetch<Customer>("/v1/customers/get", {
-      query: { [identity === "meta_user_id" ? "meta_user_id" : "wa_id"]: customerId },
+    customer = await serverFetch<Customer>(`/v1/customers/${encodeURIComponent(customerId)}`, {
+      query: { id: customerId },
     });
   } catch (error) {
     if (error instanceof ApiError && error.statusCode === 404) notFound();
@@ -257,13 +257,9 @@ export default async function CustomerChatPage({
     if (!phoneNumberId) throw new Error("No WhatsApp phone number is available.");
     const response = await serverFetch<MessageListResponse>("/v1/wa/messages", {
       query: {
-        phone_number_id: phoneNumberId,
+        customer_id: customerId,
         page: "1",
         page_size: "50",
-        customer_wa_id: customer.bsuid
-          ? undefined
-          : `${customer.country_code}${customer.phone_number}`,
-        customer_meta_user_id: customer.bsuid,
       },
     });
     messages = response.items.sort((first, second) => first.timestamp - second.timestamp);
@@ -484,6 +480,7 @@ export default async function CustomerChatPage({
               initialMessages={messages}
               numberOfPages={numberOfMessagePages}
               phoneNumberId={phoneNumberId}
+              customerId={customerId}
               customerWAId={
                 customer.bsuid ? undefined : `${customer.country_code}${customer.phone_number}`
               }
@@ -491,7 +488,7 @@ export default async function CustomerChatPage({
               recipient={customer.bsuid || `${customer.country_code}${customer.phone_number}`}
             />
             <ChatMessageComposer
-              recipient={customer.bsuid || `${customer.country_code}${customer.phone_number}`}
+              customerId={customerId}
               lastCustomerMessageTimestamp={lastCustomerMessageTimestamp}
             />
           </ChatComposeProvider>

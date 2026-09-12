@@ -38,7 +38,7 @@ function componentText(component: Record<string, unknown>) {
 
 export function CampaignTemplatePreviewButton({ campaign }: { campaign: Campaign }) {
   const [open, setOpen] = useState(false);
-  const components = campaign.send_template?.components ?? [];
+  const components = campaign.send_template_payload?.components ?? [];
 
   return (
     <>

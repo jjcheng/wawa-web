@@ -33,7 +33,7 @@ import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api/client";
 
 type ChatMessageComposerProps = {
-  recipient: string;
+  customerId: string;
   lastCustomerMessageTimestamp: number | null;
 };
 
@@ -78,7 +78,7 @@ function parseVCard(value: string): WhatsAppContact | null {
 }
 
 export function ChatMessageComposer({
-  recipient,
+  customerId,
   lastCustomerMessageTimestamp,
 }: ChatMessageComposerProps) {
   const { replyTarget, setReplyTarget } = useChatCompose();
@@ -171,8 +171,7 @@ export function ChatMessageComposer({
       await apiFetch("/v1/wa/messages", {
         method: "POST",
         body: {
-          recipient_type: "individual",
-          to: recipient,
+          customer_id: Number(customerId),
           ...payload,
           ...(attachmentUrl ? { attachment_url: attachmentUrl } : {}),
           ...(replyTarget ? { context: { message_id: replyTarget.waMessageId } } : {}),

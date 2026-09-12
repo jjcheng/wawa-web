@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import { TEMPLATE_CATEGORIES } from "@/lib/api/schemas";
-import type { BusinessAccount, BusinessPortfolio, Template, TemplateListResponse } from "@/lib/api/types";
+import type { BusinessAccount, Template, TemplateListResponse } from "@/lib/api/types";
 import { metaManageTemplatesUrl } from "@/lib/meta-links";
 import { toWabaOptions, type WabaOption } from "@/lib/waba-options";
 import { WHATSAPP_LANGUAGE_CODES } from "@/lib/whatsapp-languages";
@@ -37,14 +37,11 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
   let managerUrl: string | null = null;
 
   try {
-    const [businessAccount, businessPortfolio] = await Promise.all([
-      serverFetch<BusinessAccount>("/v1/wa/business-accounts"),
-      serverFetch<BusinessPortfolio>("/v1/wa/business-portfolios"),
-    ]);
+    const businessAccount = await serverFetch<BusinessAccount>("/v1/wa/business-accounts");
     wabas = toWabaOptions(businessAccount ? [businessAccount] : []);
     managerUrl = metaManageTemplatesUrl({
-      portfolioId: businessPortfolio?.meta_business_portfolio_id,
-      accountId: businessAccount?.meta_waba_id,
+      portfolioId: businessAccount?.meta_business_portfolio_id,
+      accountId: businessAccount?.waba_id ?? businessAccount?.meta_waba_id,
     });
   } catch (error) {
     wabaError = error instanceof ApiError ? error.message : "Could not load your business accounts.";

@@ -381,29 +381,29 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
             </div>
           ) : null}
           {!importResult ? <div className="max-h-[60vh] overflow-auto">
-            <Table>
+            <Table containerClassName="overflow-visible">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="bg-background sticky left-0 z-10 w-10">
+                  <TableHead className="bg-background sticky top-0 left-0 z-30 w-10">
                     <Checkbox
                       checked={allContactsSelected}
                       onChange={(event) => toggleAllContacts(event.target.checked)}
                       aria-label="Select all contacts"
                     />
                   </TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Organization</TableHead>
-                  <TableHead>Job Title</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Birthday</TableHead>
-                  <TableHead>Address</TableHead>
-                  <TableHead>Gender</TableHead>
-                  <TableHead>Anniversary</TableHead>
-                  <TableHead>Time Zone</TableHead>
-                  <TableHead>Categories</TableHead>
-                  <TableHead>Note</TableHead>
-                  <TableHead>URL</TableHead>
+                  <TableHead className="bg-background sticky top-0 z-20">Name</TableHead>
+                  <TableHead className="bg-background sticky top-0 z-20">Phone</TableHead>
+                  <TableHead className="bg-background sticky top-0 z-20">Organization</TableHead>
+                  <TableHead className="bg-background sticky top-0 z-20">Job Title</TableHead>
+                  <TableHead className="bg-background sticky top-0 z-20">Email</TableHead>
+                  <TableHead className="bg-background sticky top-0 z-20">Birthday</TableHead>
+                  <TableHead className="bg-background sticky top-0 z-20">Address</TableHead>
+                  <TableHead className="bg-background sticky top-0 z-20">Gender</TableHead>
+                  <TableHead className="bg-background sticky top-0 z-20">Anniversary</TableHead>
+                  <TableHead className="bg-background sticky top-0 z-20">Time Zone</TableHead>
+                  <TableHead className="bg-background sticky top-0 z-20">Categories</TableHead>
+                  <TableHead className="bg-background sticky top-0 z-20">Note</TableHead>
+                  <TableHead className="bg-background sticky top-0 z-20">URL</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -444,12 +444,12 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
           {importResult?.skipped.length ? (
             <div className="max-h-[30vh] overflow-auto">
               <h3 className="mb-2 text-sm font-medium">Skipped contacts</h3>
-              <Table>
+              <Table containerClassName="overflow-visible">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Skip reason</TableHead>
+                    <TableHead className="bg-background sticky top-0 z-20">Name</TableHead>
+                    <TableHead className="bg-background sticky top-0 z-20">Phone</TableHead>
+                    <TableHead className="bg-background sticky top-0 z-20">Skip reason</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

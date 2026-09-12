@@ -88,13 +88,15 @@ export default async function PhoneNumbersPage({ searchParams }: PageProps<"/num
                     <TableCell className="font-medium">
                       {number.name || "Unnamed number"}
                     </TableCell>
-                    <TableCell>{formatPhoneNumber(number.phone_number)}</TableCell>
+                    <TableCell>
+                      {formatPhoneNumber(number.display_phone_number || number.phone_number)}
+                    </TableCell>
                     <TableCell>
                       {number.status
                         ? number.status.charAt(0) + number.status.slice(1).toLowerCase()
                         : "—"}
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">
+                    <TableCell>
                       {formatDateTime(number.entry_date)}
                     </TableCell>
                     <TableCell className="text-right">
@@ -102,6 +104,8 @@ export default async function PhoneNumbersPage({ searchParams }: PageProps<"/num
                         <PhoneNumberViewButton
                           id={number.id}
                           name={number.name || "This number"}
+                          status={number.status}
+                          isMaster={user.type === "MASTER"}
                         />
                       </div>
                     </TableCell>

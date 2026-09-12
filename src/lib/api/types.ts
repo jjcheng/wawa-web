@@ -50,12 +50,16 @@ export type BusinessPortfolio = DtoBase & {
 };
 
 export type BusinessAccount = DtoBase & {
+  waba_id?: string;
   meta_waba_id?: string;
   name?: string;
+  meta_business_portfolio_id?: string;
+  meta_business_portfolio_name?: string;
 };
 
 export type PhoneNumber = DtoBase & {
   wa_id?: string;
+  display_phone_number?: string;
   meta_business_portfolio_id?: string;
   meta_waba_id?: string;
   meta_phone_number_id?: string;
@@ -133,10 +137,10 @@ export type Campaign = {
   name: string;
   send_date: string;
   wa_template_id: string;
-  customer_ids: number[];
+  customer_ids?: number[];
   status: string;
   payload?: Record<string, unknown>;
-  send_template?: {
+  send_template_payload?: {
     components?: Record<string, unknown>[];
   };
 };

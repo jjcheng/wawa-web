@@ -45,6 +45,7 @@ type ChatProps = {
   initialMessages: Message[];
   numberOfPages: number;
   phoneNumberId: string;
+  customerId: string;
   customerWAId?: string;
   customerMetaUserId?: string;
   recipient: string;
@@ -309,6 +310,7 @@ export function Chat({
   initialMessages,
   numberOfPages,
   phoneNumberId,
+  customerId,
   customerWAId,
   customerMetaUserId,
   recipient,
@@ -342,9 +344,7 @@ export function Chat({
     try {
       const response = await apiFetch<MessageListResponse>("/v1/wa/messages", {
         query: {
-          phone_number_id: phoneNumberId,
-          customer_wa_id: customerWAId,
-          customer_meta_user_id: customerMetaUserId,
+          customer_id: customerId,
           page: "1",
           page_size: "50",
         },
@@ -398,11 +398,11 @@ export function Chat({
   useEffect(() => {
     if (!customerMetaUserId && !customerWAId) return;
     return realtimeProvider.subscribe(
-      { phoneNumberId, customerWAId, customerMetaUserId },
+      { phoneNumberId, customerId, customerWAId, customerMetaUserId },
       handleRealtimeEvent,
       handleRealtimeError,
     );
-  }, [customerMetaUserId, customerWAId, phoneNumberId]);
+  }, [customerId, customerMetaUserId, customerWAId, phoneNumberId]);
 
   useEffect(() => {
     if (appendedMessages.length === 0) return;
@@ -420,9 +420,7 @@ export function Chat({
     try {
       const response = await apiFetch<MessageListResponse>("/v1/wa/messages", {
         query: {
-          phone_number_id: phoneNumberId,
-          customer_wa_id: customerWAId,
-          customer_meta_user_id: customerMetaUserId,
+          customer_id: customerId,
           page: String(page + 1),
           page_size: "50",
         },
@@ -463,8 +461,7 @@ export function Chat({
       await apiFetch("/v1/wa/messages", {
         method: "POST",
         body: {
-          recipient_type: "individual",
-          to: recipient,
+          customer_id: Number(customerId),
           type: "reaction",
           reaction: { message_id: menu.message.wa_message_id, emoji },
         },

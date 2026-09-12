@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
-import type { BusinessAccount, BusinessPortfolio } from "@/lib/api/types";
+import type { BusinessAccount } from "@/lib/api/types";
 import { metaManageTemplatesUrl } from "@/lib/meta-links";
 import { toWabaOptions, type WabaOption } from "@/lib/waba-options";
 import { CreateTemplateForm } from "./create-template-form";
@@ -18,14 +18,11 @@ export default async function CreateTemplatePage() {
   let managerUrl: string | null = null;
   let loadError: string | null = null;
   try {
-    const [businessAccount, businessPortfolio] = await Promise.all([
-      serverFetch<BusinessAccount>("/v1/wa/business-accounts"),
-      serverFetch<BusinessPortfolio>("/v1/wa/business-portfolios"),
-    ]);
+    const businessAccount = await serverFetch<BusinessAccount>("/v1/wa/business-accounts");
     waba = toWabaOptions(businessAccount ? [businessAccount] : [])[0] ?? null;
     managerUrl = metaManageTemplatesUrl({
-      portfolioId: businessPortfolio?.meta_business_portfolio_id,
-      accountId: businessAccount?.meta_waba_id,
+      portfolioId: businessAccount?.meta_business_portfolio_id,
+      accountId: businessAccount?.waba_id ?? businessAccount?.meta_waba_id,
     });
   } catch (error) {
     loadError =

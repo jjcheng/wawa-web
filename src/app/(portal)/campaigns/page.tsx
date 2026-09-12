@@ -65,7 +65,7 @@ function CampaignTable({ rows, status, name }: { rows: Campaign[]; status: strin
                       <span>{campaign.name}</span>
                     </div>
                   </TableCell>
-                  <TableCell>{campaign.customer_ids.length}</TableCell>
+                  <TableCell>{campaign.customer_ids?.length ?? 0}</TableCell>
                   <TableCell>{formatDateTime(campaign.send_date)}</TableCell>
                   <TableCell>{displayStatus(campaign.status)}</TableCell>
                   <TableCell>{campaignMetric(campaign, "sent")}</TableCell>

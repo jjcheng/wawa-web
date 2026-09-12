@@ -5,6 +5,8 @@ import type { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
 import { serverEnv } from "@/lib/env.server";
 
 export const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
+export const MASTER_SESSION_RETURN_COOKIE = `${serverEnv.SESSION_COOKIE_NAME}_master_return`;
+export const MASTER_SESSION_RETURN_MAX_AGE_SECONDS = 60 * 60;
 
 export function sessionCookieOptions(
   maxAge: number = SESSION_MAX_AGE_SECONDS,

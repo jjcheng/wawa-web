@@ -15,6 +15,7 @@ import { apiFetch } from "@/lib/api/client";
 import { ApiError, toApiError } from "@/lib/api/errors";
 import { setInitialPasswordSchema, type SetInitialPasswordInput } from "@/lib/api/schemas";
 import type { User } from "@/lib/api/types";
+import { restoreMasterSession } from "@/lib/auth/actions";
 import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 
 const FIELDS = [
@@ -42,10 +43,11 @@ export function SetPasswordForm({ next }: { next: string }) {
 
   const mutation = useMutation({
     mutationFn: (values: SetInitialPasswordInput) =>
-      apiFetch<User>("v1/account/users/me/initial-password", { method: "POST", body: values }),
-    onSuccess: () => {
-      toast.success("Password set. Welcome to CoreConcept.");
-      router.push(next);
+      apiFetch<User>("v1/account/users/me/initial-password", { method: "PATCH", body: values }),
+    onSuccess: async () => {
+      const restoredMaster = await restoreMasterSession();
+      toast.success("New WhatsApp number connected.");
+      router.push(restoredMaster ? "/numbers" : next);
       router.refresh();
     },
     onError: (error) => {

@@ -394,9 +394,7 @@ export function CustomerList({
                         />
                         <Button size="sm" variant="outline" asChild>
                           <Link
-                            href={`/customers/${encodeURIComponent(
-                              row.bsuid ?? `${row.country_code}${row.phone_number}`,
-                            )}/chat?identity=${row.bsuid ? "meta_user_id" : "wa_id"}&return_to=${encodeURIComponent(
+                            href={`/customers/${row.id}/chat?return_to=${encodeURIComponent(
                               `${pathname}?${searchParams.toString()}`,
                             )}`}
                           >

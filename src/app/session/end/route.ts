@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { rawServerFetch } from "@/lib/api/server-client";
+import { MASTER_SESSION_RETURN_COOKIE } from "@/lib/auth/cookies";
 import { serverEnv } from "@/lib/env.server";
 
 // Clears a stale/invalid session cookie; server components cannot write cookies
@@ -13,6 +14,8 @@ export async function GET(request: NextRequest) {
   } catch {
     // Clearing the local cookie is enough to end the browser session.
   }
-  (await cookies()).delete(serverEnv.SESSION_COOKIE_NAME);
+  const cookieStore = await cookies();
+  cookieStore.delete(serverEnv.SESSION_COOKIE_NAME);
+  cookieStore.delete(MASTER_SESSION_RETURN_COOKIE);
   return NextResponse.redirect(new URL("/login", request.url));
 }
