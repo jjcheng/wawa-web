@@ -34,6 +34,12 @@ function displayValue(value: unknown) {
   return typeof value === "string" ? value : JSON.stringify(value);
 }
 
+function whatsappWebLink(value: unknown) {
+  if (typeof value !== "string") return null;
+  const phone = value.replace(/\D/g, "");
+  return phone ? `https://wa.me/${phone}` : null;
+}
+
 export function PhoneNumberViewButton({
   id,
   name,
@@ -93,6 +99,24 @@ export function PhoneNumberViewButton({
                     </div>
                   );
                 })}
+                <dt className="text-muted-foreground">Link</dt>
+                <dd className="min-w-0 break-words">
+                  {(() => {
+                    const link = whatsappWebLink(details.display_phone_number || details.phone_number);
+                    return link ? (
+                      <a
+                        href={link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-primary underline underline-offset-2"
+                      >
+                        {link}
+                      </a>
+                    ) : (
+                      "—"
+                    );
+                  })()}
+                </dd>
               </dl>
             ) : null}
           </div>

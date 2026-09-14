@@ -195,7 +195,6 @@ function isVideoMessage(message: Message): message is Message & { payload: Video
 
 function formatMessageTime(timestamp: number) {
   return new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Singapore",
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
@@ -204,7 +203,6 @@ function formatMessageTime(timestamp: number) {
 
 function messageDate(timestamp: number) {
   return new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Singapore",
     weekday: "short",
     day: "2-digit",
     month: "short",
@@ -340,6 +338,7 @@ export default async function CustomerChatPage({
                       <>
                         <ChatMediaViewer
                           mediaId={message.payload.document.id}
+                          messageId={message.id}
                           waMessageId={message.wa_message_id}
                           mediaUrl={message.attachment_url}
                           type="document"
@@ -357,6 +356,7 @@ export default async function CustomerChatPage({
                       <>
                         <ChatMediaViewer
                           mediaId={message.payload.image.id}
+                          messageId={message.id}
                           waMessageId={message.wa_message_id}
                           mediaUrl={message.attachment_url}
                           type="image"
@@ -426,6 +426,7 @@ export default async function CustomerChatPage({
                     {isAudioMessage(message) ? (
                       <ChatMediaViewer
                         mediaId={message.payload.audio.id}
+                        messageId={message.id}
                         waMessageId={message.wa_message_id}
                         mediaUrl={message.attachment_url}
                         type="audio"
@@ -436,6 +437,7 @@ export default async function CustomerChatPage({
                       <>
                         <ChatMediaViewer
                           mediaId={message.payload.video.id}
+                          messageId={message.id}
                           waMessageId={message.wa_message_id}
                           mediaUrl={message.attachment_url}
                           type="video"

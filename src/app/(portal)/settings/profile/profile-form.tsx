@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSyncExternalStore } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -16,8 +17,31 @@ import { ApiError, toApiError } from "@/lib/api/errors";
 import { updateProfileSchema, type UpdateProfileInput } from "@/lib/api/schemas";
 import type { User } from "@/lib/api/types";
 
+const emptySubscribe = () => () => {};
+
+function getLocalTimezoneDisplay(): string {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (!tz) return "";
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZoneName: "shortOffset",
+      timeZone: tz,
+    }).formatToParts(new Date());
+    const offset = parts.find((p) => p.type === "timeZoneName")?.value;
+    return offset ? `${tz} (${offset})` : tz;
+  } catch {
+    return "";
+  }
+}
+
 export function ProfileForm({ user }: { user: User }) {
   const router = useRouter();
+  const timezone = useSyncExternalStore(
+    emptySubscribe,
+    getLocalTimezoneDisplay,
+    () => "",
+  );
+
   const {
     register,
     handleSubmit,
@@ -74,10 +98,24 @@ export function ProfileForm({ user }: { user: User }) {
         {errors.description ? (
           <p className="text-destructive text-sm">{errors.description.message}</p>
         ) : (
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground text-xs">
             A short note about your role, shown to your teammates.
           </p>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="timezone">Timezone</Label>
+        <Input
+          id="timezone"
+          type="text"
+          value={timezone || "Loading timezone..."}
+          readOnly
+          className="bg-muted/50 text-muted-foreground cursor-default"
+        />
+        <p className="text-muted-foreground text-xs">
+          Automatically detected from your browser.
+        </p>
       </div>
 
       <Button type="submit" disabled={mutation.isPending}>

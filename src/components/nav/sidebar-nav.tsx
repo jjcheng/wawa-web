@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Megaphone,
   Phone,
+  Store,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -36,6 +37,7 @@ const SECTIONS = [
     items: [
       { href: "/numbers", label: "Phone Numbers", icon: Phone },
       { href: "/templates", label: "Templates", icon: FileText },
+      { href: "/catalogs", label: "Catalogs", icon: Store },
     ],
   },
   {
@@ -55,26 +57,28 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
           <p className="text-muted-foreground px-2 text-xs font-medium tracking-wide uppercase">
             {section.label}
           </p>
-          {section.items.map((item) => {
-            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onNavigate}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "flex items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors",
-                  active
-                    ? "bg-accent text-accent-foreground font-medium"
-                    : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
-                )}
-              >
-                <item.icon className="size-4" />
-                {item.label}
-              </Link>
-            );
-          })}
+          {section.items
+            .filter((item) => item.href !== "/catalogs" || user.type === "MASTER")
+            .map((item) => {
+              const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onNavigate}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors",
+                    active
+                      ? "bg-accent text-accent-foreground font-medium"
+                      : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+                  )}
+                >
+                  <item.icon className="size-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
         </div>
       ))}
     </nav>

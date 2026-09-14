@@ -4,6 +4,8 @@ import { formatDateTime, formatPhoneNumber } from "@/lib/format";
 export function CustomerInfo({ customer }: { customer: Customer }) {
   return (
     <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+      <dt className="text-muted-foreground">Name</dt>
+      <dd>{customer.display_name || "—"}</dd>
       <dt className="text-muted-foreground">Phone</dt>
       <dd>{formatPhoneNumber(customer.phone_number, customer.country_code)}</dd>
       <dt className="text-muted-foreground">Tags</dt>

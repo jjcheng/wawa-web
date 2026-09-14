@@ -1,7 +1,5 @@
 "use client";
 
-import { useTheme } from "next-themes";
-
 export function TemplatePreviewHtml({
   lightHtml,
   darkHtml,
@@ -11,15 +9,34 @@ export function TemplatePreviewHtml({
   darkHtml?: string;
   className?: string;
 }) {
-  const { resolvedTheme } = useTheme();
-  const html = resolvedTheme === "dark" ? darkHtml || lightHtml : lightHtml || darkHtml;
+  if (!lightHtml && !darkHtml) return null;
 
-  if (!html) return null;
+  const baseClass =
+    "min-w-0 overflow-hidden [&>div:first-child]:!w-auto [&>div:first-child]:!max-w-none [&>div:first-child]:!bg-transparent [&>div:first-child]:!p-0 [&_*]:max-w-full";
+
+  if (lightHtml && darkHtml && lightHtml !== darkHtml) {
+    return (
+      <div className={className}>
+        <div
+          className={`dark:hidden ${baseClass}`}
+          dangerouslySetInnerHTML={{ __html: lightHtml }}
+        />
+        <div
+          className={`hidden dark:block ${baseClass}`}
+          dangerouslySetInnerHTML={{ __html: darkHtml }}
+        />
+      </div>
+    );
+  }
+
+  const html = lightHtml || darkHtml || "";
 
   return (
-    <div
-      className={`min-w-0 overflow-hidden [&>div:first-child]:!w-auto [&>div:first-child]:!max-w-none [&>div:first-child]:!bg-transparent [&>div:first-child]:!p-0 [&_*]:max-w-full ${className}`}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
+    <div className={className}>
+      <div
+        className={baseClass}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    </div>
   );
 }

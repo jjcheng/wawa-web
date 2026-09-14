@@ -24,7 +24,14 @@ export default function GlobalError({
       <p className="text-muted-foreground max-w-md text-sm">
         This page cannot be loaded. If the problem persists, please contact the admin.
       </p>
-      <Button onClick={reset}>Try again</Button>
+      <Button
+        onClick={() => {
+          reset();
+          window.location.reload();
+        }}
+      >
+        Try again
+      </Button>
     </div>
   );
 }

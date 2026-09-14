@@ -11,6 +11,7 @@ import { apiFetch } from "@/lib/api/client";
 
 type ChatMediaViewerProps = {
   mediaId?: string;
+  messageId?: number;
   waMessageId?: string;
   mediaUrl?: string;
   type: "document" | "image" | "sticker" | "audio" | "video";
@@ -21,7 +22,7 @@ type ChatMediaViewerProps = {
 
 export function ChatMediaViewer({
   mediaId,
-  waMessageId,
+  messageId,
   mediaUrl,
   type,
   mimeType,
@@ -41,13 +42,13 @@ export function ChatMediaViewer({
       return;
     }
 
-    if (!mediaId || !waMessageId) return;
+    if (!mediaId || messageId === undefined) return;
 
     setLoading(true);
     try {
       const response = await apiFetch<{ url: string }>("/v1/wa/media", {
         query: {
-          wa_message_id: waMessageId,
+          message_id: String(messageId),
           wa_media_id: mediaId,
         },
       });

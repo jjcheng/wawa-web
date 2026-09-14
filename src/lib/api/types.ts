@@ -56,6 +56,13 @@ export type BusinessAccount = DtoBase & {
   meta_business_portfolio_name?: string;
 };
 
+export type Catalog = {
+  id: string;
+  name: string;
+  vertical?: string;
+  product_count?: number;
+};
+
 export type PhoneNumber = DtoBase & {
   wa_id?: string;
   display_phone_number?: string;
@@ -210,6 +217,7 @@ export type SendTemplateParameter = {
   input_index?: number;
   input_title?: string;
   input_required?: boolean;
+  input_max_length?: number;
   [key: string]: unknown;
 };
 

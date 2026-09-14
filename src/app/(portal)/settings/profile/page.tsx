@@ -35,8 +35,8 @@ export default async function ProfilePage() {
             ) : null}
           </div>
           <CardDescription>
-            Signed in as {formatPhoneNumber(user.phone_number, user.country_code)} — your phone
-            number cannot be changed here.
+            Signed in as <strong className="font-light text-foreground">{formatPhoneNumber(user.phone_number, user.country_code)}</strong>, your phone
+            number cannot be changed.
           </CardDescription>
         </CardHeader>
         <CardContent>

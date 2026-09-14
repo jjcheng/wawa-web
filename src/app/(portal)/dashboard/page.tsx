@@ -60,10 +60,10 @@ export default async function DashboardPage() {
             <TabsTrigger value="my-number">My WhatsApp Number</TabsTrigger>
           </TabsList>
           <TabsContent value="business-account">
-            <DashboardSection dashboard={businessDashboard} businessAccount />
+            <DashboardSection dashboard={businessDashboard} businessAccount showUsageLinks />
           </TabsContent>
           <TabsContent value="my-number">
-            <DashboardSection dashboard={personalDashboard} showPhoneNumbersLink={false} />
+            <DashboardSection dashboard={personalDashboard} showUsageLinks />
           </TabsContent>
         </Tabs>
       ) : (

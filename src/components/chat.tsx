@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowDown, Check, CheckCheck, ContactRound, Info, Loader2, MapPin, Phone, Reply, SmilePlus } from "lucide-react";
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import {
@@ -15,6 +15,7 @@ import { toApiError } from "@/lib/api/errors";
 import type { MessageDetail } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
 import { ChatMediaViewer } from "@/components/chat-media-viewer";
+import { TemplatePreviewHtml } from "@/components/template-preview-html";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -57,7 +58,6 @@ type ChatProps = {
 
 function messageDate(timestamp: number) {
   return new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Singapore",
     weekday: "short",
     day: "2-digit",
     month: "short",
@@ -67,7 +67,6 @@ function messageDate(timestamp: number) {
 
 function messageTime(timestamp: number) {
   return new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Singapore",
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
@@ -172,29 +171,132 @@ function isEmojiOnly(value: string) {
   return value.trim().length > 0 && /^(?:[\p{Extended_Pictographic}\p{Emoji_Presentation}\uFE0F\u200D\s])+$/u.test(value);
 }
 
+function formatWhatsAppText(value: string) {
+  const parts: ReactNode[] = [];
+  let remaining = value;
+  let key = 0;
+
+  while (remaining.length > 0) {
+    if (remaining.startsWith("```")) {
+      const closingIndex = remaining.indexOf("```", 3);
+      if (closingIndex >= 0) {
+        parts.push(
+          <code
+            key={key++}
+            className="rounded bg-black/10 px-1 font-mono text-[0.9em] dark:bg-white/10"
+          >
+            {remaining.slice(3, closingIndex)}
+          </code>,
+        );
+        remaining = remaining.slice(closingIndex + 3);
+        continue;
+      }
+    }
+
+    const marker = remaining[0];
+    if (marker === "*" || marker === "_" || marker === "~") {
+      const closingIndex = remaining.indexOf(marker, 1);
+      if (closingIndex > 1) {
+        const content = remaining.slice(1, closingIndex);
+        if (marker === "*") {
+          parts.push(<strong key={key++}>{content}</strong>);
+        } else if (marker === "_") {
+          parts.push(<em key={key++}>{content}</em>);
+        } else {
+          parts.push(<del key={key++}>{content}</del>);
+        }
+        remaining = remaining.slice(closingIndex + 1);
+        continue;
+      }
+    }
+
+    const nextSpecial = remaining.search(/[\*_~`]/);
+    const textLength = nextSpecial < 0 ? remaining.length : nextSpecial === 0 ? 1 : nextSpecial;
+    parts.push(remaining.slice(0, textLength));
+    remaining = remaining.slice(textLength);
+  }
+
+  return parts;
+}
+
+function toIdString(val: unknown): string | undefined {
+  if (typeof val === "string" && val.trim() !== "") return val.trim();
+  if (typeof val === "number" && !isNaN(val)) return String(val);
+  return undefined;
+}
+
 function reactionEmoji(message: Message) {
-  const payload = message.payload as {
-    reaction?: { emoji?: unknown };
-    reactions?: { emoji?: unknown }[];
-  };
-  if (typeof payload.reaction?.emoji === "string") return payload.reaction.emoji;
-  return payload.reactions?.find((reaction) => typeof reaction.emoji === "string")?.emoji as string | undefined;
+  const payload = message.payload as Record<string, unknown> | undefined;
+  if (!payload) return undefined;
+
+  const reaction = (typeof payload.reaction === "object" && payload.reaction
+    ? payload.reaction
+    : undefined) as Record<string, unknown> | undefined;
+
+  if (typeof reaction?.emoji === "string") return reaction.emoji;
+  if (typeof payload.emoji === "string") return payload.emoji;
+  if (typeof payload.reaction === "string") return payload.reaction;
+
+  if (Array.isArray(payload.reactions)) {
+    for (const item of payload.reactions) {
+      if (item && typeof item === "object" && typeof (item as Record<string, unknown>).emoji === "string") {
+        return (item as Record<string, unknown>).emoji as string;
+      }
+    }
+  }
+
+  const textObj = (typeof payload.text === "object" && payload.text
+    ? payload.text
+    : undefined) as Record<string, unknown> | undefined;
+  if (typeof textObj?.body === "string" && isEmojiOnly(textObj.body)) {
+    return textObj.body.trim();
+  }
+
+  return undefined;
 }
 
 function reactionTargetId(message: Message) {
-  const reaction = (message.payload as { reaction?: { message_id?: unknown } }).reaction;
-  return typeof reaction?.message_id === "string" ? reaction.message_id : undefined;
+  const payload = message.payload as Record<string, unknown> | undefined;
+  if (!payload) return undefined;
+
+  const reaction = (typeof payload.reaction === "object" && payload.reaction
+    ? payload.reaction
+    : undefined) as Record<string, unknown> | undefined;
+
+  const context = (typeof payload.context === "object" && payload.context
+    ? payload.context
+    : undefined) as Record<string, unknown> | undefined;
+
+  return (
+    toIdString(reaction?.message_id) ??
+    toIdString(reaction?.wa_message_id) ??
+    toIdString(reaction?.id) ??
+    toIdString(payload.reaction) ??
+    toIdString(payload.message_id) ??
+    toIdString(payload.wa_message_id) ??
+    toIdString(context?.id) ??
+    toIdString(context?.wa_message_id) ??
+    toIdString(context?.message_id)
+  );
 }
 
 function reactionUserId(message: Message) {
-  const payload = message.payload as { from?: unknown; from_user_id?: unknown };
-  return typeof payload.from_user_id === "string"
-    ? payload.from_user_id
-    : typeof payload.from === "string"
-      ? payload.from
-      : message.sending
-        ? "sender"
-        : "recipient";
+  const payload = message.payload as {
+    from_me?: unknown;
+    fromMe?: unknown;
+    from?: unknown;
+    from_user_id?: unknown;
+  } | undefined;
+  if (
+    message.sending ||
+    payload?.from_me === true ||
+    payload?.fromMe === true ||
+    payload?.from === "sender" ||
+    payload?.from === "agent"
+  ) {
+    return "agent";
+  }
+  return "customer";
 }
 
 function isDisplayableMessage(message: Message) {
@@ -216,10 +318,14 @@ function groupMessagesByDate(messages: Message[]) {
 }
 
 function mergeMessages(current: Message[], incoming: Message[]) {
-  const messagesByWhatsAppId = new Map(
-    [...current, ...incoming].map((message) => [message.wa_message_id, message]),
+  const getMsgKey = (m: Message) =>
+    m.wa_message_id && m.wa_message_id.trim() !== ""
+      ? m.wa_message_id.trim()
+      : `id-${m.id}`;
+  const messagesMap = new Map(
+    [...current, ...incoming].map((message) => [getMsgKey(message), message]),
   );
-  return [...messagesByWhatsAppId.values()].sort((first, second) => first.timestamp - second.timestamp);
+  return [...messagesMap.values()].sort((first, second) => first.timestamp - second.timestamp);
 }
 
 function MessageStatusIcon({ status }: { status?: string }) {
@@ -380,6 +486,11 @@ function MessageContent({ message }: { message: Message }) {
           <p className="font-medium">{typeof errors?.title === "string" ? errors.title : "Unsupported message"}</p>
           {typeof errorData?.details === "string" ? <p className="text-sm opacity-70">{errorData.details}</p> : typeof errors?.message === "string" ? <p className="text-sm opacity-70">{errors.message}</p> : null}
         </div>
+      ) : message.type === "template" && (message.preview_html || message.preview_dark_html) ? (
+        <TemplatePreviewHtml
+          lightHtml={message.preview_html}
+          darkHtml={message.preview_dark_html}
+        />
       ) : template ? (
         <div className="space-y-1 rounded-md bg-black/5 p-2 dark:bg-white/10">
           <p className="text-xs font-medium uppercase tracking-wide opacity-70">Template</p>
@@ -388,7 +499,9 @@ function MessageContent({ message }: { message: Message }) {
           {template.parameters.length > 0 ? (
             <div className="mt-2 space-y-1 border-t border-black/10 pt-2 text-sm dark:border-white/10">
               {template.parameters.map((parameter, index) => (
-                <p key={`${parameter}-${index}`} className="whitespace-pre-wrap">{parameter}</p>
+                <p key={`${parameter}-${index}`} className="whitespace-pre-wrap">
+                  {formatWhatsAppText(parameter)}
+                </p>
               ))}
             </div>
           ) : null}
@@ -396,19 +509,24 @@ function MessageContent({ message }: { message: Message }) {
       ) : interactive ? (
         <div className="space-y-1 rounded-md bg-black/5 p-2 dark:bg-white/10">
           <p className="text-xs font-medium uppercase tracking-wide opacity-70">{interactive.label}</p>
-          <p className="font-medium whitespace-pre-wrap">{interactive.title}</p>
-          {interactive.description ? <p className="text-xs opacity-70">{interactive.description}</p> : null}
+          <p className="font-medium whitespace-pre-wrap">
+            {formatWhatsAppText(interactive.title)}
+          </p>
+          {interactive.description ? (
+            <p className="text-xs opacity-70">{formatWhatsAppText(interactive.description)}</p>
+          ) : null}
         </div>
       ) : button ? (
         <div className="space-y-1 rounded-md bg-black/5 p-2 dark:bg-white/10">
           <p className="text-xs font-medium uppercase tracking-wide opacity-70">Button response</p>
-          <p className="font-medium whitespace-pre-wrap">{button.text}</p>
+          <p className="font-medium whitespace-pre-wrap">{formatWhatsAppText(button.text)}</p>
           {button.payload ? <p className="text-xs opacity-70">{button.payload}</p> : null}
         </div>
       ) : (media?.id || attachmentUrl) && (message.type === "image" || message.type === "sticker" || message.type === "video" || message.type === "audio" || message.type === "document") ? (
         <>
           <ChatMediaViewer
             mediaId={media?.id}
+            messageId={message.id}
             waMessageId={message.wa_message_id}
             mediaUrl={attachmentUrl || undefined}
             type={message.type as "image" | "sticker" | "video" | "audio" | "document"}
@@ -416,7 +534,9 @@ function MessageContent({ message }: { message: Message }) {
             filename={media?.filename}
             autoLoad={message.auto_load_media}
           />
-          {media?.caption ? <p className="mt-2 whitespace-pre-wrap">{media.caption}</p> : null}
+          {media?.caption ? (
+            <p className="mt-2 whitespace-pre-wrap">{formatWhatsAppText(media.caption)}</p>
+          ) : null}
         </>
       ) : location?.latitude !== undefined && location.longitude !== undefined ? (
         <a href={`https://www.google.com/maps?q=${location.latitude},${location.longitude}`} target="_blank" rel="noreferrer" className="flex items-start gap-3 rounded-md bg-black/5 p-2 dark:bg-white/10">
@@ -427,7 +547,11 @@ function MessageContent({ message }: { message: Message }) {
         <div className="space-y-2">{contacts.map((contact, index) => <div key={index} className="rounded-md bg-black/5 p-3 dark:bg-white/10"><div className="flex items-center gap-2"><ContactRound className="size-5" /><p className="text-sm font-medium">{contact.name?.formatted_name || "Contact"}</p></div>{contact.phones?.map((phone, phoneIndex) => <p key={phoneIndex} className="mt-2 flex items-center gap-2 text-sm"><Phone className="size-3.5" />{phone.phone}</p>)}</div>)}</div>
       ) : (() => {
         const body = messageBody(message);
-        return <p className={`whitespace-pre-wrap ${isEmojiOnly(body) ? "text-4xl leading-tight" : ""}`}>{body}</p>;
+        return (
+          <p className={`whitespace-pre-wrap ${isEmojiOnly(body) ? "text-4xl leading-tight" : ""}`}>
+            {formatWhatsAppText(body)}
+          </p>
+        );
       })()}
     </>
   );
@@ -477,19 +601,21 @@ export function Chat({
           page_size: "50",
         },
       });
-      const recentMessages = response.items.filter(isDisplayableMessage);
-      setMessages((current) => {
-        const merged = new Map(current.map((message) => [message.wa_message_id, message]));
-        for (const message of recentMessages) merged.set(message.wa_message_id, message);
-        return [...merged.values()].sort((first, second) => first.timestamp - second.timestamp);
-      });
+      const recentMessages = response.items.filter(
+        (m) => isDisplayableMessage(m) || m.type === "reaction",
+      );
+      setMessages((current) => mergeMessages(current, recentMessages));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not refresh messages after reconnecting.");
     }
   }
 
   const handleRealtimeEvent = useEffectEvent((event: { type: "message"; message: Message } | { type: "status"; status: ChatMessageStatus } | { type: "connection"; state: string }) => {
-    if (event.type === "message" && event.message.type !== "unsupported" && isDisplayableMessage(event.message)) {
+    if (
+      event.type === "message" &&
+      event.message.type !== "unsupported" &&
+      (isDisplayableMessage(event.message) || event.message.type === "reaction")
+    ) {
       appendMessage({ ...event.message, auto_load_media: true });
     }
     if (event.type === "status") {
@@ -535,6 +661,7 @@ export function Chat({
   useEffect(() => {
     if (appendedMessages.length === 0) return;
     const latestMessage = appendedMessages[appendedMessages.length - 1];
+    if (latestMessage?.type === "reaction") return;
     if (isNearBottomRef.current || latestMessage?.sending) {
       window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
       setShowScrollToLatest(false);
@@ -586,14 +713,16 @@ export function Chat({
   }, [menu]);
 
   async function reactToMessage(emoji: string) {
-    if (!menu?.message.wa_message_id) return;
+    if (!menu?.message) return;
+    const targetMessageId = menu.message.wa_message_id?.trim() || (menu.message.id ? String(menu.message.id) : "");
+    if (!targetMessageId) return;
     try {
       await apiFetch("/v1/wa/messages", {
         method: "POST",
         body: {
           customer_id: Number(customerId),
           type: "reaction",
-          reaction: { message_id: menu.message.wa_message_id, emoji },
+          reaction: { message_id: targetMessageId, emoji },
         },
       });
       setMenu(null);
@@ -606,19 +735,73 @@ export function Chat({
     .sort((a, b) => a.timestamp - b.timestamp)
     .filter(
       (message, index, current) =>
-        current.findIndex((candidate) => candidate.wa_message_id === message.wa_message_id) === index,
+        current.findIndex(
+          (candidate) =>
+            (message.wa_message_id && candidate.wa_message_id === message.wa_message_id) ||
+            candidate.id === message.id,
+        ) === index,
     );
   const reactionByMessageId = new Map<string, { emoji: string; userId: string }[]>();
   for (const message of allMessages) {
+    if (message.type !== "reaction") continue;
     const targetId = reactionTargetId(message);
     const emoji = reactionEmoji(message);
-    if (message.type === "reaction" && targetId && emoji) {
-      const reactions = reactionByMessageId.get(targetId) ?? [];
-      const userId = reactionUserId(message);
-      const existingIndex = reactions.findIndex((reaction) => reaction.userId === userId);
-      if (existingIndex >= 0) reactions.splice(existingIndex, 1);
+    if (!targetId || emoji === undefined) continue;
+
+    const targetMsg = allMessages.find((candidate) => {
+      if (candidate.type === "reaction") return false;
+      const candidateId = candidate.id !== undefined ? String(candidate.id) : undefined;
+      const candidateWaId = candidate.wa_message_id?.trim();
+      const candidatePayloadMsgId = toIdString(
+        (candidate.payload as Record<string, unknown> | undefined)?.message_id,
+      );
+      const candidatePayloadWaId = toIdString(
+        (candidate.payload as Record<string, unknown> | undefined)?.wa_message_id,
+      );
+      const candidatePayloadId = toIdString(
+        (candidate.payload as Record<string, unknown> | undefined)?.id,
+      );
+
+      return (
+        candidateId === targetId ||
+        candidateWaId === targetId ||
+        candidatePayloadMsgId === targetId ||
+        candidatePayloadWaId === targetId ||
+        candidatePayloadId === targetId
+      );
+    });
+
+    const userId = reactionUserId(message);
+    const primaryKey = targetMsg
+      ? targetMsg.wa_message_id?.trim() || String(targetMsg.id)
+      : targetId;
+
+    const reactions = reactionByMessageId.get(primaryKey) ?? [];
+    const existingIndex = reactions.findIndex((reaction) => reaction.userId === userId);
+    if (existingIndex >= 0) {
+      reactions.splice(existingIndex, 1);
+    }
+    if (emoji.trim() !== "") {
       reactions.push({ emoji, userId });
-      reactionByMessageId.set(targetId, reactions.slice(-2));
+    }
+
+    reactionByMessageId.set(primaryKey, reactions);
+    if (targetId !== primaryKey) {
+      reactionByMessageId.set(targetId, reactions);
+    }
+    if (targetMsg) {
+      if (targetMsg.wa_message_id?.trim()) {
+        reactionByMessageId.set(targetMsg.wa_message_id.trim(), reactions);
+      }
+      if (targetMsg.id !== undefined) {
+        reactionByMessageId.set(String(targetMsg.id), reactions);
+      }
+      const pId = toIdString((targetMsg.payload as Record<string, unknown> | undefined)?.id);
+      if (pId) reactionByMessageId.set(pId, reactions);
+      const pWaId = toIdString((targetMsg.payload as Record<string, unknown> | undefined)?.wa_message_id);
+      if (pWaId) reactionByMessageId.set(pWaId, reactions);
+      const pMsgId = toIdString((targetMsg.payload as Record<string, unknown> | undefined)?.message_id);
+      if (pMsgId) reactionByMessageId.set(pMsgId, reactions);
     }
   }
   const visibleMessages = allMessages.filter(isDisplayableMessage);
@@ -644,41 +827,103 @@ export function Chat({
         <section key={group.date}>
           <p className="sticky top-[68px] z-30 mx-auto mb-3 w-fit rounded-lg bg-[#e9edef] px-2 py-0.5 text-[0.6875rem] leading-5 text-[#54656f] shadow-sm dark:bg-[#182229] dark:text-[#8696a0]">{group.date}</p>
           {group.messages.map((message) => (
-            <div key={message.id} className={reactionByMessageId.has(message.wa_message_id) ? "mb-2 flex flex-col" : undefined}>
-              <div onContextMenu={(event) => { event.preventDefault(); setShowEmojis(false); setMenu({ message, x: event.clientX, y: event.clientY }); }} className={message.type === "sticker" ? `relative mb-2 w-fit max-w-[80%] text-base leading-[1.35] ${message.sending ? "ml-auto" : ""}` : message.sending ? "relative mb-2 ml-auto w-fit max-w-[80%] rounded-[7.5px] rounded-tr-none border border-[#edf0f1] bg-[#d9fdd3] px-2 py-1.5 text-base leading-[1.35] text-[#111b21] dark:border-[#087663] dark:bg-[#005c4b] dark:text-[#e9edef]" : "relative mb-2 w-fit max-w-[80%] rounded-[7.5px] rounded-tl-none border border-[#edf0f1] bg-white px-2 py-1.5 text-base leading-[1.35] text-[#111b21] dark:border-[#314047] dark:bg-[#202c33] dark:text-[#e9edef]"}>
-                <MessageContent message={message} />
-                <p className="mt-0.5 flex items-center justify-end gap-1 text-[0.6875rem] leading-none text-[#667781] dark:text-[#aebac1]">
-                  {messageTime(message.timestamp)}
-                  {message.sending ? (
-                    <>
-                      {message.status?.toLowerCase() !== "failed" &&
-                      message.status?.toLowerCase() !== "error" ? (
-                        <MessageStatusIcon status={message.status} />
-                      ) : null}
-                      <MessageInfoPopover
-                        messageId={message.id}
-                        hasError={
-                          message.status?.toLowerCase() === "failed" ||
-                          message.status?.toLowerCase() === "error"
-                        }
-                      />
-                    </>
-                  ) : null}
-                </p>
-              </div>
-              {reactionByMessageId.get(message.wa_message_id)?.length ? (
-                <div className={`mt-0.5 flex gap-0.5 ${message.sending ? "self-end" : "self-start"}`}>
-                  {reactionByMessageId.get(message.wa_message_id)?.map((reaction) => (
-                    <span
-                      key={`${reaction.userId}-${reaction.emoji}`}
-                      className="rounded-full bg-background px-1 text-xl leading-none shadow-sm"
-                      aria-label={`Reaction: ${reaction.emoji}`}
-                    >
-                      {reaction.emoji}
-                    </span>
-                  ))}
+            <div
+              key={message.id}
+              className={`mb-4 flex flex-col ${message.sending ? "items-end" : "items-start"}`}
+            >
+              <div
+                className={`flex w-fit max-w-[80%] flex-col ${
+                  message.sending ? "items-end" : "items-start"
+                }`}
+              >
+                <div
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    setShowEmojis(false);
+                    setMenu({ message, x: event.clientX, y: event.clientY });
+                  }}
+                  className={
+                    message.type === "sticker" || message.type === "template"
+                      ? "relative mb-1 w-full text-base leading-[1.35]"
+                      : message.sending
+                        ? "relative mb-1 min-w-0 w-full [overflow-wrap:anywhere] rounded-[7.5px] rounded-tr-none border border-[#edf0f1] bg-[#d9fdd3] px-2 py-1.5 text-base leading-[1.35] text-[#111b21] dark:border-[#087663] dark:bg-[#005c4b] dark:text-[#e9edef]"
+                        : "relative mb-1 min-w-0 w-full [overflow-wrap:anywhere] rounded-[7.5px] rounded-tl-none border border-[#edf0f1] bg-white px-2 py-1.5 text-base leading-[1.35] text-[#111b21] dark:border-[#314047] dark:bg-[#202c33] dark:text-[#e9edef]"
+                  }
+                >
+                  <MessageContent message={message} />
                 </div>
-              ) : null}
+                {(() => {
+                  const payloadId = toIdString((message.payload as Record<string, unknown> | undefined)?.id);
+                  const payloadWaId = toIdString((message.payload as Record<string, unknown> | undefined)?.wa_message_id);
+                  const payloadMsgId = toIdString((message.payload as Record<string, unknown> | undefined)?.message_id);
+
+                  const reactions =
+                    (message.wa_message_id ? reactionByMessageId.get(message.wa_message_id.trim()) : undefined) ??
+                    (message.id !== undefined ? reactionByMessageId.get(String(message.id)) : undefined) ??
+                    (payloadId ? reactionByMessageId.get(payloadId) : undefined) ??
+                    (payloadWaId ? reactionByMessageId.get(payloadWaId) : undefined) ??
+                    (payloadMsgId ? reactionByMessageId.get(payloadMsgId) : undefined);
+
+                  const timeAndStatus = (
+                    <span className="flex items-center gap-1 text-[0.6875rem] leading-none text-[#667781] dark:text-[#aebac1]">
+                      {messageTime(message.timestamp)}
+                      {message.sending ? (
+                        <>
+                          {message.status?.toLowerCase() !== "failed" &&
+                          message.status?.toLowerCase() !== "error" ? (
+                            <MessageStatusIcon status={message.status} />
+                          ) : null}
+                          <MessageInfoPopover
+                            messageId={message.id}
+                            hasError={
+                              message.status?.toLowerCase() === "failed" ||
+                              message.status?.toLowerCase() === "error"
+                            }
+                          />
+                        </>
+                      ) : null}
+                    </span>
+                  );
+
+                  const reactionElements = reactions?.length ? (
+                    <div className="flex items-center gap-0.5">
+                      {reactions.map((reaction) => (
+                        <span
+                          key={`${reaction.userId}-${reaction.emoji}`}
+                          className="rounded-full bg-background px-1 text-xl leading-none shadow-sm"
+                          aria-label={`Reaction: ${reaction.emoji}`}
+                        >
+                          {reaction.emoji}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null;
+
+                  if (message.sending) {
+                    return (
+                      <div
+                        className={`mt-0.5 flex w-full items-center gap-2 ${
+                          !reactionElements ? "justify-end" : "justify-between"
+                        }`}
+                      >
+                        {reactionElements}
+                        {timeAndStatus}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      className={`mt-0.5 flex w-full items-center gap-2 ${
+                        !reactionElements ? "justify-start" : "justify-between"
+                      }`}
+                    >
+                      {timeAndStatus}
+                      {reactionElements}
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
           ))}
         </section>

@@ -33,3 +33,26 @@ export function metaManageTemplatesUrl({
 
   return `https://business.facebook.com/latest/whatsapp_manager/message_templates/?${params}`;
 }
+
+/** Builds a link to Meta's Commerce Manager catalogs page for a business portfolio or specific catalog. */
+export function metaCommerceManagerUrl({
+  portfolioId,
+  catalogId,
+}: {
+  portfolioId?: string | null;
+  catalogId?: string | null;
+} = {}): string | null {
+  const trimmedPortfolioId = portfolioId?.trim();
+  const trimmedCatalogId = catalogId?.trim();
+
+  if (trimmedCatalogId && trimmedPortfolioId) {
+    return `https://business.facebook.com/commerce_manager/catalogs/${encodeURIComponent(trimmedCatalogId)}/overview/?business_id=${encodeURIComponent(trimmedPortfolioId)}`;
+  }
+  if (trimmedCatalogId) {
+    return `https://business.facebook.com/commerce_manager/catalogs/${encodeURIComponent(trimmedCatalogId)}/overview/`;
+  }
+  if (trimmedPortfolioId) {
+    return `https://business.facebook.com/commerce_manager/catalogs/?business_id=${encodeURIComponent(trimmedPortfolioId)}`;
+  }
+  return "https://business.facebook.com/commerce_manager/";
+}

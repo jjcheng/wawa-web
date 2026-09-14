@@ -1,10 +1,9 @@
 "use client";
 
-import { MessagesSquare, Phone, Plus, Send, Users, Loader2 } from "lucide-react";
+import { MessagesSquare, Phone, Send, Users, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
@@ -15,11 +14,11 @@ const dashboardRequests = new Map<string, Promise<Dashboard>>();
 export function DashboardSection({
   dashboard,
   businessAccount,
-  showPhoneNumbersLink = true,
+  showUsageLinks = false,
 }: {
   dashboard: Dashboard;
   businessAccount?: boolean;
-  showPhoneNumbersLink?: boolean;
+  showUsageLinks?: boolean;
 }) {
   const requestKey = businessAccount ? "business" : "personal";
   const [sectionDashboard, setSectionDashboard] = useState(dashboard);
@@ -38,16 +37,20 @@ export function DashboardSection({
   }, [businessAccount, requestKey]);
 
   const stats = [
-    { label: "Connected phone numbers", value: sectionDashboard.active_phone_numbers, icon: Phone, href: showPhoneNumbersLink ? "/numbers" : undefined },
+    { label: "Connected phone numbers", value: sectionDashboard.active_phone_numbers, icon: Phone, href: "/numbers" },
     { label: "Active customers", value: sectionDashboard.active_customers, icon: Users, href: "/customers" },
-    { label: "Messages sent (30d)", value: sectionDashboard.messages_sent_last_30_days, icon: Send },
-    { label: "Messages delivered (30d)", value: sectionDashboard.messages_delivered_last_30_days, icon: MessagesSquare },
+    { label: "Messages sent (30d)", value: sectionDashboard.messages_sent_last_30_days, icon: Send, href: showUsageLinks ? "/usage" : undefined },
+    { label: "Messages delivered (30d)", value: sectionDashboard.messages_delivered_last_30_days, icon: MessagesSquare, href: showUsageLinks ? "/usage" : undefined },
   ];
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {stats.map((stat) => (
-        <Card key={stat.label} size="sm" className="relative">
+      {stats.map((stat) => {
+        const card = (
+          <Card
+            size="sm"
+            className={stat.href ? "transition-colors group-hover:bg-accent/50" : undefined}
+          >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 px-3 py-2">
             <CardDescription>{stat.label}</CardDescription>
             <stat.icon className="text-muted-foreground size-4" />
@@ -62,15 +65,22 @@ export function DashboardSection({
               <p className="text-destructive mt-1 text-xs">{dashboardError}</p>
             ) : null}
           </CardContent>
-          {stat.href ? (
-            <Button asChild size="icon-xs" variant="default" className="absolute right-3 bottom-3 rounded-full shadow-sm">
-              <Link href={stat.href} aria-label={`Go to ${stat.label}`} title={`Go to ${stat.label}`}>
-                <Plus />
-              </Link>
-            </Button>
-          ) : null}
-        </Card>
-      ))}
+          </Card>
+        );
+
+        return stat.href ? (
+          <Link
+            key={stat.label}
+            href={stat.href}
+            aria-label={`Go to ${stat.label}`}
+            className="group rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            {card}
+          </Link>
+        ) : (
+          <div key={stat.label}>{card}</div>
+        );
+      })}
     </div>
   );
 }

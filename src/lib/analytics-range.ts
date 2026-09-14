@@ -11,10 +11,8 @@ export const ANALYTICS_RANGES = [
 const DEFAULT_RANGE_DAYS = 7;
 const DEFAULT_GRANULARITY: AnalyticsGranularity = "DAY";
 const TEMPLATE_ANALYTICS_MAX_DAYS = 89;
-const ANALYTICS_TIME_ZONE = "Asia/Singapore";
 
 const analyticsDateFormatter = new Intl.DateTimeFormat("en-CA", {
-  timeZone: ANALYTICS_TIME_ZONE,
   year: "numeric",
   month: "2-digit",
   day: "2-digit",

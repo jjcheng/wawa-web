@@ -124,7 +124,15 @@ export function CreateTemplateForm({ waba }: { waba: WabaOption }) {
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="name">Name</Label>
-          <Input id="name" placeholder="order_confirmation" {...register("name")} />
+          <Input
+            id="name"
+            placeholder="order_confirmation"
+            {...register("name", {
+              onChange: (event) => {
+                event.target.value = event.target.value.replaceAll(" ", "_");
+              },
+            })}
+          />
           {errors.name ? (
             <p className="text-destructive text-sm">{errors.name.message}</p>
           ) : (

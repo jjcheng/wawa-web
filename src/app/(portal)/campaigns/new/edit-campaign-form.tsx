@@ -3,7 +3,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -133,6 +132,59 @@ function sendInput(
   )?.parameters?.[parameterIndex];
 }
 
+function variableMaxLength(
+  template: Template | undefined,
+  key: string,
+  headerVariables: string[],
+  bodyVariables: string[],
+  buttons: TemplateButtonInput[],
+): number | undefined {
+  let param: SendTemplateParameter | undefined;
+  let isCouponCode = false;
+
+  if (headerVariables.includes(key)) {
+    const index = headerVariables.indexOf(key);
+    param = sendInput(template, "header", index);
+  } else if (key.startsWith("body:")) {
+    const varName = key.slice(5);
+    const index = bodyVariables.indexOf(varName);
+    param = sendInput(template, "body", index);
+  } else if (key.startsWith("button:")) {
+    const button = buttons.find((b) => b.key === key);
+    if (button) {
+      param = sendInput(template, "button", 0, String(button.buttonIndex));
+      if (button.variable === "code" || param?.type === "coupon_code") {
+        isCouponCode = true;
+      }
+    }
+  }
+
+  if (param?.type === "coupon_code") {
+    isCouponCode = true;
+  }
+
+  if (param?.input_max_length && param.input_max_length > 0) {
+    return param.input_max_length;
+  }
+
+  if (isCouponCode) {
+    return 6;
+  }
+
+  return undefined;
+}
+
+function fieldConstraintsLabel(
+  required?: boolean,
+  maxLength?: number,
+): string | null {
+  const parts: string[] = [];
+  if (required) parts.push("required");
+  if (maxLength) parts.push(`max length ${maxLength}`);
+  if (parts.length === 0) return null;
+  return `(${parts.join(", ")})`;
+}
+
 function buildSendComponents(
   components: Record<string, unknown>[] | undefined,
   variableValues: Record<string, string>,
@@ -231,7 +283,6 @@ export function EditCampaignForm({
   templates: Template[];
 }) {
   const router = useRouter();
-  const { resolvedTheme } = useTheme();
   const {
     register,
     handleSubmit,
@@ -339,6 +390,34 @@ export function EditCampaignForm({
   const missingVariableKeys = new Set(
     variableKeys.filter((key) => requiredVariableKeys.has(key) && !resolvedVariableValue(key).trim()),
   );
+  const tooLongVariableKeys = new Map<string, { max: number; label: string }>();
+  for (const key of variableKeys) {
+    const val = resolvedVariableValue(key).trim();
+    if (!val) continue;
+    const max = variableMaxLength(
+      selectedTemplate,
+      key,
+      headerVariables,
+      bodyVariables,
+      buttons,
+    );
+    if (max && val.length > max) {
+      const isCoupon =
+        (key.startsWith("button:") && (key.endsWith(":code") || key.includes("code"))) ||
+        sendInput(
+          selectedTemplate,
+          "button",
+          0,
+          key.startsWith("button:") ? key.split(":")[1] : undefined,
+        )?.type === "coupon_code";
+      tooLongVariableKeys.set(key, {
+        max,
+        label: isCoupon
+          ? "Coupon code must be at most 6 characters."
+          : `Must be at most ${max} characters.`,
+      });
+    }
+  }
   const templatesByCategory = templates.reduce<Record<string, Template[]>>(
     (groups, template) => {
       const category = template.category || "Other";
@@ -352,22 +431,21 @@ export function EditCampaignForm({
     mutationFn: async (values: EditCampaignInput) => {
       let headerMediaUrl: string | undefined;
       if (mediaHeader) {
-        if (headerFile) {
-          const media = await apiFetch<{ url?: string }>("v1/wa/media", {
-            method: "POST",
-            rawBody: headerFile,
-            contentType: headerFile.type,
-            query: {
-              to_meta: "false",
-              filename: headerFile.name,
-              content_type: headerFile.type,
-            },
-          });
-          headerMediaUrl = media.url;
-          if (!headerMediaUrl) throw new Error("Media upload did not return a URL.");
-        } else if (headerExampleHandle) {
-          headerMediaUrl = headerExampleHandle;
+        if (!headerFile) {
+          throw new Error(`Upload a ${headerFormat.toLowerCase()} file.`);
         }
+        const media = await apiFetch<{ url?: string }>("v1/wa/media", {
+          method: "POST",
+          rawBody: headerFile,
+          contentType: headerFile.type,
+          query: {
+            to_meta: "false",
+            filename: headerFile.name,
+            content_type: headerFile.type,
+          },
+        });
+        headerMediaUrl = media.url;
+        if (!headerMediaUrl) throw new Error("Media upload did not return a URL.");
       }
       return apiFetch("v1/campaigns", {
         method: "POST",
@@ -376,7 +454,7 @@ export function EditCampaignForm({
           send_date:
             values.schedule === "Send later" ? new Date(values.send_date).toISOString() : null,
           wa_template_id: values.template_id,
-          sent_template: {
+          send_template: {
             components: buildSendComponents(
               selectedTemplate?.send_components,
               variableValues,
@@ -421,7 +499,8 @@ export function EditCampaignForm({
     }
     if (
       missingVariableKeys.size > 0 ||
-      (mediaHeader && !headerFile && !headerExampleHandle) ||
+      tooLongVariableKeys.size > 0 ||
+      (mediaHeader && !headerFile) ||
       (locationHeader &&
         (!headerLocationDetails ||
           !headerLocationDetails.name.trim() ||
@@ -436,7 +515,7 @@ export function EditCampaignForm({
         name: values.name.trim(),
         send_date: values.schedule === "Send later" ? new Date(values.send_date).toISOString() : null,
         wa_template_id: values.template_id,
-        sent_template: {
+        send_template: {
           components: buildSendComponents(
             selectedTemplate?.send_components,
             variableValues,
@@ -611,7 +690,7 @@ export function EditCampaignForm({
                     file={headerFile}
                     onChange={setHeaderFile}
                   />
-                  {validationAttempted && !headerFile && !headerExampleHandle ? (
+                  {validationAttempted && !headerFile ? (
                     <p className="text-destructive text-sm">
                       Upload a {headerFormat.toLowerCase()} file.
                     </p>
@@ -674,58 +753,79 @@ export function EditCampaignForm({
                   ) : null}
                 </div>
               ) : null}
-              {headerVariables.map((variable) => (
-                <div key={variable} className="space-y-2">
-                  <button
-                    type="button"
-                    className="text-sm font-medium hover:underline"
-                    onClick={() => {
-                      setHighlightedVariable({
-                        name: variable,
-                        occurrenceIndexes: variableOccurrenceIndexes(
-                          selectedTemplate,
-                          headerComponent,
-                          variable,
-                        ),
-                      });
-                      setHighlightedButton(null);
-                    }}
-                  >
-                    {sendInput(selectedTemplate, "header", headerVariables.indexOf(variable))?.input_title ||
-                      `{{${variable}}}`}
-                    {sendInput(selectedTemplate, "header", headerVariables.indexOf(variable))?.input_required ? (
-                      <span className="text-muted-foreground ml-1 font-normal">(required)</span>
+              {headerVariables.map((variable) => {
+                const param = sendInput(
+                  selectedTemplate,
+                  "header",
+                  headerVariables.indexOf(variable),
+                );
+                const maxLen = variableMaxLength(
+                  selectedTemplate,
+                  variable,
+                  headerVariables,
+                  bodyVariables,
+                  buttons,
+                );
+                const constraints = fieldConstraintsLabel(param?.input_required, maxLen);
+                return (
+                  <div key={variable} className="space-y-2">
+                    <button
+                      type="button"
+                      className="text-sm font-medium hover:underline"
+                      onClick={() => {
+                        setHighlightedVariable({
+                          name: variable,
+                          occurrenceIndexes: variableOccurrenceIndexes(
+                            selectedTemplate,
+                            headerComponent,
+                            variable,
+                          ),
+                        });
+                        setHighlightedButton(null);
+                      }}
+                    >
+                      {param?.input_title || `{{${variable}}}`}
+                      {constraints ? (
+                        <span className="text-muted-foreground ml-1 font-normal">
+                          {constraints}
+                        </span>
+                      ) : null}
+                    </button>
+                    <TemplateVariableInput
+                      id={`template-variable-${variable}`}
+                      source={variableSources[variable] ?? "custom"}
+                      value={variableValues[variable] ?? ""}
+                      mappedValue={customerParameterValue(
+                        previewCustomer,
+                        variableSources[variable] ?? "custom",
+                      )}
+                      maxLength={maxLen}
+                      onSourceChange={(source) =>
+                        setVariableSources((currentSources) => ({
+                          ...currentSources,
+                          [variable]: source,
+                        }))
+                      }
+                      onValueChange={(value) =>
+                        setVariableValues((currentValues) => ({
+                          ...currentValues,
+                          [variable]: value,
+                        }))
+                      }
+                      placeholder={`Enter ${variable}`}
+                    />
+                    {validationAttempted && missingVariableKeys.has(variable) ? (
+                      <p className="text-destructive text-sm">
+                        Enter a value for {`{{${variable}}}`}.
+                      </p>
+                    ) : validationAttempted && tooLongVariableKeys.has(variable) ? (
+                      <p className="text-destructive text-sm">
+                        {tooLongVariableKeys.get(variable)?.label}
+                      </p>
                     ) : null}
-                  </button>
-                  <TemplateVariableInput
-                    id={`template-variable-${variable}`}
-                    source={variableSources[variable] ?? "custom"}
-                    value={variableValues[variable] ?? ""}
-                    mappedValue={customerParameterValue(
-                      previewCustomer,
-                      variableSources[variable] ?? "custom",
-                    )}
-                    onSourceChange={(source) =>
-                      setVariableSources((currentSources) => ({
-                        ...currentSources,
-                        [variable]: source,
-                      }))
-                    }
-                    onValueChange={(value) =>
-                      setVariableValues((currentValues) => ({
-                        ...currentValues,
-                        [variable]: value,
-                      }))
-                    }
-                    placeholder={`Enter ${variable}`}
-                  />
-                  {validationAttempted && missingVariableKeys.has(variable) ? (
-                    <p className="text-destructive text-sm">
-                      Enter a value for {`{{${variable}}}`}.
-                    </p>
-                  ) : null}
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           ) : null}
           {bodyVariables.length > 0 ? (
@@ -733,57 +833,76 @@ export function EditCampaignForm({
               <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 Body
               </p>
-              {bodyVariables.map((variable, index) => (
-                <div key={`body-${variable}`} className="space-y-2">
-                  <button
-                    type="button"
-                    className="text-sm font-medium hover:underline"
-                    onClick={() => {
-                      setHighlightedVariable({
-                        name: variable,
-                        occurrenceIndexes: variableOccurrenceIndexes(
-                          selectedTemplate,
-                          bodyComponent,
-                          variable,
-                        ),
-                      });
-                      setHighlightedButton(null);
-                    }}
-                  >
-                    {sendInput(selectedTemplate, "body", index)?.input_title || `{{${variable}}}`}
-                    {sendInput(selectedTemplate, "body", index)?.input_required ? (
-                      <span className="text-muted-foreground ml-1 font-normal">(required)</span>
+              {bodyVariables.map((variable, index) => {
+                const key = `body:${variable}`;
+                const param = sendInput(selectedTemplate, "body", index);
+                const maxLen = variableMaxLength(
+                  selectedTemplate,
+                  key,
+                  headerVariables,
+                  bodyVariables,
+                  buttons,
+                );
+                const constraints = fieldConstraintsLabel(param?.input_required, maxLen);
+                return (
+                  <div key={`body-${variable}`} className="space-y-2">
+                    <button
+                      type="button"
+                      className="text-sm font-medium hover:underline"
+                      onClick={() => {
+                        setHighlightedVariable({
+                          name: variable,
+                          occurrenceIndexes: variableOccurrenceIndexes(
+                            selectedTemplate,
+                            bodyComponent,
+                            variable,
+                          ),
+                        });
+                        setHighlightedButton(null);
+                      }}
+                    >
+                      {param?.input_title || `{{${variable}}}`}
+                      {constraints ? (
+                        <span className="text-muted-foreground ml-1 font-normal">
+                          {constraints}
+                        </span>
+                      ) : null}
+                    </button>
+                    <TemplateVariableInput
+                      id={`template-body-variable-${variable}`}
+                      source={variableSources[key] ?? "custom"}
+                      value={variableValues[key] ?? ""}
+                      mappedValue={customerParameterValue(
+                        previewCustomer,
+                        variableSources[key] ?? "custom",
+                      )}
+                      maxLength={maxLen}
+                      onSourceChange={(source) =>
+                        setVariableSources((currentSources) => ({
+                          ...currentSources,
+                          [key]: source,
+                        }))
+                      }
+                      onValueChange={(value) =>
+                        setVariableValues((currentValues) => ({
+                          ...currentValues,
+                          [key]: value,
+                        }))
+                      }
+                      placeholder={`Enter ${variable}`}
+                    />
+                    {validationAttempted && missingVariableKeys.has(key) ? (
+                      <p className="text-destructive text-sm">
+                        Enter a value for {`{{${variable}}}`}.
+                      </p>
+                    ) : validationAttempted && tooLongVariableKeys.has(key) ? (
+                      <p className="text-destructive text-sm">
+                        {tooLongVariableKeys.get(key)?.label}
+                      </p>
                     ) : null}
-                  </button>
-                  <TemplateVariableInput
-                    id={`template-body-variable-${variable}`}
-                    source={variableSources[`body:${variable}`] ?? "custom"}
-                    value={variableValues[`body:${variable}`] ?? ""}
-                    mappedValue={customerParameterValue(
-                      previewCustomer,
-                      variableSources[`body:${variable}`] ?? "custom",
-                    )}
-                    onSourceChange={(source) =>
-                      setVariableSources((currentSources) => ({
-                        ...currentSources,
-                        [`body:${variable}`]: source,
-                      }))
-                    }
-                    onValueChange={(value) =>
-                      setVariableValues((currentValues) => ({
-                        ...currentValues,
-                        [`body:${variable}`]: value,
-                      }))
-                    }
-                    placeholder={`Enter ${variable}`}
-                  />
-                  {validationAttempted && missingVariableKeys.has(`body:${variable}`) ? (
-                    <p className="text-destructive text-sm">
-                      Enter a value for {`{{${variable}}}`}.
-                    </p>
-                  ) : null}
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           ) : null}
           {buttons.length > 0 ? (
@@ -791,55 +910,77 @@ export function EditCampaignForm({
               <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 Buttons
               </p>
-              {buttons.map((button) => (
-                <div key={button.key} className="space-y-2">
-                  <button
-                    type="button"
-                    className="text-sm font-medium hover:underline"
-                    title={button.label}
-                    onClick={() => {
-                      setHighlightedVariable(null);
-                      setHighlightedButton({
-                        index: button.buttonIndex,
-                        label: button.label,
-                      });
-                    }}
-                  >
-                    {sendInput(selectedTemplate, "button", 0, String(button.buttonIndex))?.input_title ||
-                      `{{${button.variable}}}`}
-                    {sendInput(selectedTemplate, "button", 0, String(button.buttonIndex))?.input_required ? (
-                      <span className="text-muted-foreground ml-1 font-normal">(required)</span>
+              {buttons.map((button) => {
+                const param = sendInput(
+                  selectedTemplate,
+                  "button",
+                  0,
+                  String(button.buttonIndex),
+                );
+                const maxLen = variableMaxLength(
+                  selectedTemplate,
+                  button.key,
+                  headerVariables,
+                  bodyVariables,
+                  buttons,
+                );
+                const constraints = fieldConstraintsLabel(param?.input_required, maxLen);
+                return (
+                  <div key={button.key} className="space-y-2">
+                    <button
+                      type="button"
+                      className="text-sm font-medium hover:underline"
+                      title={button.label}
+                      onClick={() => {
+                        setHighlightedVariable(null);
+                        setHighlightedButton({
+                          index: button.buttonIndex,
+                          label: button.label,
+                        });
+                      }}
+                    >
+                      {param?.input_title || `{{${button.variable}}}`}
+                      {constraints ? (
+                        <span className="text-muted-foreground ml-1 font-normal">
+                          {constraints}
+                        </span>
+                      ) : null}
+                    </button>
+                    <TemplateVariableInput
+                      id={`template-${button.key}`}
+                      source={variableSources[button.key] ?? "custom"}
+                      value={variableValues[button.key] ?? ""}
+                      mappedValue={customerParameterValue(
+                        previewCustomer,
+                        variableSources[button.key] ?? "custom",
+                      )}
+                      maxLength={maxLen}
+                      onSourceChange={(source) =>
+                        setVariableSources((currentSources) => ({
+                          ...currentSources,
+                          [button.key]: source,
+                        }))
+                      }
+                      onValueChange={(value) =>
+                        setVariableValues((currentValues) => ({
+                          ...currentValues,
+                          [button.key]: value,
+                        }))
+                      }
+                      placeholder={button.placeholder}
+                    />
+                    {validationAttempted && missingVariableKeys.has(button.key) ? (
+                      <p className="text-destructive text-sm">
+                        Enter a value for {`{{${button.variable}}}`}.
+                      </p>
+                    ) : validationAttempted && tooLongVariableKeys.has(button.key) ? (
+                      <p className="text-destructive text-sm">
+                        {tooLongVariableKeys.get(button.key)?.label}
+                      </p>
                     ) : null}
-                  </button>
-                  <TemplateVariableInput
-                    id={`template-${button.key}`}
-                    source={variableSources[button.key] ?? "custom"}
-                    value={variableValues[button.key] ?? ""}
-                    mappedValue={customerParameterValue(
-                      previewCustomer,
-                      variableSources[button.key] ?? "custom",
-                    )}
-                    onSourceChange={(source) =>
-                      setVariableSources((currentSources) => ({
-                        ...currentSources,
-                        [button.key]: source,
-                      }))
-                    }
-                    onValueChange={(value) =>
-                      setVariableValues((currentValues) => ({
-                        ...currentValues,
-                        [button.key]: value,
-                      }))
-                    }
-                    placeholder={button.placeholder}
-                  />
-                  {validationAttempted && missingVariableKeys.has(button.key) ? (
-                    <p className="text-destructive text-sm">
-                      Enter a value for {`{{${button.variable}}}`}.
-                    </p>
-                  ) : null}
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           ) : null}
         </div>
@@ -849,22 +990,43 @@ export function EditCampaignForm({
           {campaignId ? "Save campaign" : "Start campaign"}
         </Button>
       </div>
-      {(resolvedTheme === "dark" ? selectedTemplate?.raw_dark_html : selectedTemplate?.raw_html) ? (
+      {(selectedTemplate?.raw_html || selectedTemplate?.raw_dark_html) ? (
         <div className="min-w-0 self-start lg:col-start-2 lg:row-start-1">
           <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
             Preview
           </p>
-          <TemplateRawPreview
-            html={
-              (resolvedTheme === "dark"
-                ? selectedTemplate?.raw_dark_html || selectedTemplate?.raw_html
-                : selectedTemplate?.raw_html || selectedTemplate?.raw_dark_html) ?? ""
-            }
-            highlightedVariable={highlightedVariable}
-            variableSubstitutions={previewVariableSubstitutions}
-            highlightedButton={highlightedButton}
-            location={headerLocationDetails}
-          />
+          {selectedTemplate.raw_html &&
+          selectedTemplate.raw_dark_html &&
+          selectedTemplate.raw_html !== selectedTemplate.raw_dark_html ? (
+            <>
+              <div className="dark:hidden">
+                <TemplateRawPreview
+                  html={selectedTemplate.raw_html}
+                  highlightedVariable={highlightedVariable}
+                  variableSubstitutions={previewVariableSubstitutions}
+                  highlightedButton={highlightedButton}
+                  location={headerLocationDetails}
+                />
+              </div>
+              <div className="hidden dark:block">
+                <TemplateRawPreview
+                  html={selectedTemplate.raw_dark_html}
+                  highlightedVariable={highlightedVariable}
+                  variableSubstitutions={previewVariableSubstitutions}
+                  highlightedButton={highlightedButton}
+                  location={headerLocationDetails}
+                />
+              </div>
+            </>
+          ) : (
+            <TemplateRawPreview
+              html={selectedTemplate.raw_html || selectedTemplate.raw_dark_html || ""}
+              highlightedVariable={highlightedVariable}
+              variableSubstitutions={previewVariableSubstitutions}
+              highlightedButton={highlightedButton}
+              location={headerLocationDetails}
+            />
+          )}
         </div>
       ) : null}
     </form>

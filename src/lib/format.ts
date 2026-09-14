@@ -1,7 +1,4 @@
-const TIME_ZONE = "Asia/Singapore";
-
 const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
-  timeZone: TIME_ZONE,
   day: "numeric",
   month: "short",
   year: "numeric",
@@ -11,7 +8,6 @@ const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
 });
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  timeZone: TIME_ZONE,
   day: "numeric",
   month: "short",
   year: "numeric",

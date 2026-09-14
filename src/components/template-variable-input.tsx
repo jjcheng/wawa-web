@@ -23,6 +23,7 @@ export function TemplateVariableInput({
   value,
   mappedValue,
   placeholder,
+  maxLength,
   onSourceChange,
   onValueChange,
 }: {
@@ -31,6 +32,7 @@ export function TemplateVariableInput({
   value: string;
   mappedValue: string;
   placeholder: string;
+  maxLength?: number;
   onSourceChange: (source: CustomerParameterSource) => void;
   onValueChange: (value: string) => void;
 }) {
@@ -57,6 +59,7 @@ export function TemplateVariableInput({
         onChange={(event) => onValueChange(event.target.value)}
         placeholder={source === "custom" ? placeholder : "Resolved per customer"}
         readOnly={source !== "custom"}
+        maxLength={maxLength}
         className={source !== "custom" ? "bg-muted/50" : undefined}
       />
     </div>

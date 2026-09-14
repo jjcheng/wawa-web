@@ -17,6 +17,8 @@ export type ChatMessage = {
   attachment_url?: string;
   status?: string;
   auto_load_media?: boolean;
+  preview_html?: string;
+  preview_dark_html?: string;
 };
 
 export type ChatMessageStatus = { wa_message_id: string; status: string };
