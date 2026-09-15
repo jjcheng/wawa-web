@@ -10,16 +10,36 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const STATUS_OPTIONS = ["ALL", "PENDING", "SENDING", "COMPLETED", "CANCELLED"];
+const DEFAULT_STATUS_OPTIONS = ["ALL", "PENDING", "SENDING", "COMPLETED", "CANCELLED"];
 
 function displayStatus(status: string) {
-  return status.charAt(0) + status.slice(1).toLowerCase();
+  const labelMap: Record<string, string> = {
+    rejected: "Rejected",
+    accepted: "Accepted",
+    sent: "Sent",
+    delivered: "Delivered",
+    read: "Read",
+    failed: "Failed",
+  };
+
+  const normalized = status.trim();
+  if (!normalized) return "—";
+  const mapped = labelMap[normalized.toLowerCase()];
+  if (mapped) return mapped;
+  return normalized.charAt(0) + normalized.slice(1).toLowerCase();
 }
 
-export function CampaignStatusFilter({ value }: { value: string }) {
+export function CampaignStatusFilter({
+  value,
+  options = DEFAULT_STATUS_OPTIONS,
+}: {
+  value: string;
+  options?: string[];
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const safeValue = options.includes(value) ? value : "ALL";
 
   function setStatus(nextStatus: string) {
     const params = new URLSearchParams(searchParams);
@@ -28,8 +48,13 @@ export function CampaignStatusFilter({ value }: { value: string }) {
     router.push(`${pathname}?${params.toString()}`);
   }
 
+  function optionLabel(option: string) {
+    if (option === "ALL") return "Status";
+    return displayStatus(option);
+  }
+
   return (
-    <Select value={value} onValueChange={setStatus}>
+    <Select value={safeValue} onValueChange={setStatus}>
       <SelectTrigger
         className="h-7 border-none px-0 pl-1 font-medium shadow-none"
         aria-label="Filter campaigns by status"
@@ -37,9 +62,9 @@ export function CampaignStatusFilter({ value }: { value: string }) {
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        {STATUS_OPTIONS.map((option) => (
+        {options.map((option) => (
           <SelectItem key={option} value={option}>
-            {option === "ALL" ? "Status" : displayStatus(option)}
+            {optionLabel(option)}
           </SelectItem>
         ))}
       </SelectContent>

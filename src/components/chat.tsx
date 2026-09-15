@@ -328,7 +328,8 @@ function mergeMessages(current: Message[], incoming: Message[]) {
   return [...messagesMap.values()].sort((first, second) => first.timestamp - second.timestamp);
 }
 
-function MessageStatusIcon({ status }: { status?: string }) {
+function MessageStatusIcon({ status, hasError }: { status?: string; hasError?: boolean }) {
+  if (hasError) return null;
   const normalized = status?.toLowerCase();
   if (normalized === "failed" || normalized === "error") return null;
   if (normalized === "delivered") return <CheckCheck className="size-3.5" aria-label="Delivered" />;
@@ -341,9 +342,11 @@ function MessageStatusIcon({ status }: { status?: string }) {
 function MessageInfoPopover({
   messageId,
   hasError,
+  errorMessage,
 }: {
   messageId: number;
   hasError?: boolean;
+  errorMessage?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -352,6 +355,8 @@ function MessageInfoPopover({
 
   const hasDetailError =
     hasError ||
+    Boolean(errorMessage?.trim()) ||
+    Boolean(details?.error_message?.trim()) ||
     Boolean(
       details?.statuses?.some(
         (status) => status.error_message && status.error_message.trim() !== "",
@@ -428,6 +433,15 @@ function MessageInfoPopover({
                 <>
                   <dt className="text-muted-foreground">Campaign ID</dt>
                   <dd>{details.campaign_id}</dd>
+                </>
+              ) : null}
+
+              {errorMessage?.trim() || details.error_message?.trim() ? (
+                <>
+                  <dt className="text-muted-foreground">Error</dt>
+                  <dd className="break-words text-destructive">
+                    {errorMessage?.trim() || details.error_message?.trim()}
+                  </dd>
                 </>
               ) : null}
             </dl>
@@ -871,14 +885,19 @@ export function Chat({
                         <>
                           {message.status?.toLowerCase() !== "failed" &&
                           message.status?.toLowerCase() !== "error" ? (
-                            <MessageStatusIcon status={message.status} />
+                            <MessageStatusIcon
+                              status={message.status}
+                              hasError={Boolean(message.error_message?.trim())}
+                            />
                           ) : null}
                           <MessageInfoPopover
                             messageId={message.id}
                             hasError={
                               message.status?.toLowerCase() === "failed" ||
-                              message.status?.toLowerCase() === "error"
+                              message.status?.toLowerCase() === "error" ||
+                              Boolean(message.error_message?.trim())
                             }
+                            errorMessage={message.error_message}
                           />
                         </>
                       ) : null}

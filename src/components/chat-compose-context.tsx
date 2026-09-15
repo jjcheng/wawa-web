@@ -16,6 +16,7 @@ export type ChatMessage = {
   payload: Record<string, unknown>;
   attachment_url?: string;
   status?: string;
+  error_message?: string;
   auto_load_media?: boolean;
   preview_html?: string;
   preview_dark_html?: string;

@@ -6,7 +6,6 @@ import { CampaignNameFilter } from "./campaign-name-filter";
 import { CampaignCancelButton } from "./campaign-cancel-button";
 import { CampaignDeleteButton } from "./campaign-delete-button";
 import { CampaignViewButton } from "./campaign-view-button";
-import { CampaignTemplatePreviewButton } from "./campaign-template-preview-button";
 import { PageHeader } from "@/components/page-header";
 import { TableEmptyState } from "@/components/table-empty-state";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,15 +24,23 @@ import {
 
 export const metadata: Metadata = { title: "Campaigns" };
 
-const COLUMN_COUNT = 8;
-
-function campaignMetric(campaign: Campaign, key: string) {
-  const value = campaign.payload?.[key];
-  return typeof value === "number" ? value : 0;
-}
+const COLUMN_COUNT = 5;
 
 function displayStatus(status: string) {
-  return status.charAt(0) + status.slice(1).toLowerCase();
+  const labelMap: Record<string, string> = {
+    rejected: "Rejected",
+    accepted: "Accepted",
+    sent: "Sent",
+    delivered: "Delivered",
+    read: "Read",
+    failed: "Failed",
+  };
+
+  const normalized = status.trim();
+  if (!normalized) return "—";
+  const mapped = labelMap[normalized.toLowerCase()];
+  if (mapped) return mapped;
+  return normalized.charAt(0) + normalized.slice(1).toLowerCase();
 }
 
 function CampaignTable({ rows, status, name }: { rows: Campaign[]; status: string; name: string }) {
@@ -47,9 +54,6 @@ function CampaignTable({ rows, status, name }: { rows: Campaign[]; status: strin
               <TableHead>Audience</TableHead>
               <TableHead>Send date</TableHead>
               <TableHead><CampaignStatusFilter value={status} /></TableHead>
-              <TableHead>Sent</TableHead>
-                  <TableHead>Accepted</TableHead>
-                  <TableHead>Failed</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -60,17 +64,11 @@ function CampaignTable({ rows, status, name }: { rows: Campaign[]; status: strin
               rows.map((campaign) => (
                 <TableRow key={campaign.id}>
                   <TableCell className="font-medium">
-                    <div className="flex items-center gap-1">
-                      <CampaignTemplatePreviewButton campaign={campaign} />
-                      <span>{campaign.name}</span>
-                    </div>
+                    {campaign.name}
                   </TableCell>
                   <TableCell>{campaign.recipient_count ?? campaign.customer_ids?.length ?? 0}</TableCell>
                   <TableCell>{formatDateTime(campaign.send_date)}</TableCell>
                   <TableCell>{displayStatus(campaign.status)}</TableCell>
-                  <TableCell>{campaignMetric(campaign, "sent")}</TableCell>
-                  <TableCell>{campaignMetric(campaign, "accepted")}</TableCell>
-                  <TableCell>{campaignMetric(campaign, "failed")}</TableCell>
                   <TableCell className="text-right whitespace-nowrap">
                     <div className="flex items-center justify-end gap-2">
                       <CampaignViewButton campaign={campaign} />

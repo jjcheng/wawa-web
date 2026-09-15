@@ -161,6 +161,13 @@ export type CampaignListResponse = {
   additional_data?: Record<string, unknown>;
 };
 
+export type CampaignRecipientMessage = {
+  status?: string;
+  error_message?: string;
+  attempts?: number;
+  next_attempt_at?: string | null | { Time?: string; Valid?: boolean };
+};
+
 export type CampaignRecipient = {
   id: number;
   customer_name: string;
@@ -173,6 +180,7 @@ export type CampaignRecipient = {
   attempts: number;
   next_attempt_at?: string | null | { Time?: string; Valid?: boolean };
   last_error?: string;
+  message?: CampaignRecipientMessage | null;
 };
 
 export type CampaignRecipientListResponse = {
@@ -180,8 +188,10 @@ export type CampaignRecipientListResponse = {
   number_of_pages?: number;
   number_of_items?: number;
   next_page_offset?: unknown;
-  additional_data?: Record<string, unknown>;
+  additional_data?: Record<string, unknown> | null;
 };
+
+export type CampaignStatisticsResponse = Record<string, number | string>;
 
 export type TemplateQualityScore = {
   score?: string;
@@ -320,6 +330,7 @@ export type MessageDetail = DtoBase & {
   billable?: boolean;
   category?: string;
   billing_type?: string;
+  error_message?: string;
   statuses?: MessageStatusEventDetail[];
   preview_html?: string;
   preview_dark_html?: string;

@@ -4,7 +4,6 @@ const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
   hour: "numeric",
   minute: "2-digit",
-  timeZoneName: "short",
 });
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {

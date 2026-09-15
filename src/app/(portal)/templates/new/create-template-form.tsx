@@ -55,7 +55,7 @@ export function CreateTemplateForm({ waba }: { waba: WabaOption }) {
     defaultValues: {
       waba_id: waba.wabaId,
       name: "",
-      language: "en_US",
+      language: "en",
       category: "UTILITY",
       header_text: "",
       body_text: "",
@@ -78,7 +78,7 @@ export function CreateTemplateForm({ waba }: { waba: WabaOption }) {
     reset({
       waba_id: waba.wabaId,
       name: selectedSample.name ?? "",
-      language: selectedSample.language ?? "en_US",
+      language: selectedSample.language ?? "en",
       category,
       header_text: componentText("HEADER"),
       body_text: componentText("BODY"),
