@@ -39,7 +39,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           </div>
 
           <EmbeddedSignupButton
-            label="Onboard with WhatsApp Business Number"
+            label="Onboard with WhatsApp"
             className="w-full"
             redirectTo={null}
           />

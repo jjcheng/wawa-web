@@ -42,15 +42,15 @@ export function LoginForm({ next }: { next?: string }) {
 
       <div className="space-y-2">
         <Label htmlFor="phone_number">Phone number</Label>
-        <div className="flex gap-2">
-          <CountryCodeSelect name="country_code" />
+        <div className="flex flex-row gap-2">
+          <CountryCodeSelect name="country_code" className="h-[36px] w-20 shrink-0" />
           <Input
             id="phone_number"
             name="phone_number"
             inputMode="tel"
             autoComplete="username"
-            placeholder="enter your phone number"
-            className={cn("flex-1", MEDIUM_BUTTON_HEIGHT)}
+            placeholder="enter phone number"
+            className={cn("h-[36px] w-full flex-1", MEDIUM_BUTTON_HEIGHT)}
             aria-invalid={Boolean(fieldError(state, "phone_number"))}
             required
           />
@@ -60,11 +60,7 @@ export function LoginForm({ next }: { next?: string }) {
         ) : null}
         {fieldError(state, "phone_number") ? (
           <p className="text-destructive text-sm">{fieldError(state, "phone_number")}</p>
-        ) : (
-          <p className="text-muted-foreground text-sm">
-            Select country code and enter the phone number without it.
-          </p>
-        )}
+        ) : null}
       </div>
 
       <div className="space-y-2">

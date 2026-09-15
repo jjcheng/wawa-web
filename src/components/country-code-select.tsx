@@ -31,15 +31,15 @@ export function CountryCodeSelect({
       onValueChange={onValueChange}
     >
       <SelectTrigger
-        className={cn("w-38", MEDIUM_BUTTON_HEIGHT, className)}
+        className={cn("w-20", MEDIUM_BUTTON_HEIGHT, className)}
         aria-label="Country code"
       >
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        {COUNTRY_CODES.map(({ code, name: countryName }) => (
+        {COUNTRY_CODES.map(({ code }) => (
           <SelectItem key={code} value={code}>
-            {code} - {countryName}
+            {code}
           </SelectItem>
         ))}
       </SelectContent>
