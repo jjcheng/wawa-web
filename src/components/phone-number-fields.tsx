@@ -19,6 +19,8 @@ export function PhoneNumberFields({
   phoneAriaInvalid,
   phoneRequired,
   phoneMaxLength,
+  countryError,
+  phoneError,
   className,
 }: {
   countryName: string;
@@ -33,30 +35,39 @@ export function PhoneNumberFields({
   phoneAriaInvalid?: boolean;
   phoneRequired?: boolean;
   phoneMaxLength?: number;
+  countryError?: string;
+  phoneError?: string;
   className?: string;
 }) {
   return (
     <div className={cn("flex flex-row gap-2", className)}>
-      <CountryCodeSelect
-        name={countryName}
-        value={countryValue}
-        onValueChange={onCountryChange}
-        className="h-[36px] w-24 shrink-0"
-      />
-      <Input
-        id={phoneId ?? phoneName}
-        name={phoneName}
-        type="tel"
-        inputMode="tel"
-        autoComplete={phoneAutoComplete}
-        placeholder={phonePlaceholder}
-        value={phoneValue}
-        onChange={onPhoneChange}
-        maxLength={phoneMaxLength}
-        className={cn("h-[36px] w-full flex-1", MEDIUM_BUTTON_HEIGHT)}
-        aria-invalid={phoneAriaInvalid}
-        required={phoneRequired}
-      />
+      <div className="w-24 shrink-0">
+        <CountryCodeSelect
+          name={countryName}
+          value={countryValue}
+          onValueChange={onCountryChange}
+          className="h-[36px] w-24"
+          aria-invalid={Boolean(countryError)}
+        />
+        {countryError ? <p className="text-destructive mt-1 text-sm">{countryError}</p> : null}
+      </div>
+      <div className="min-w-0 flex-1">
+        <Input
+          id={phoneId ?? phoneName}
+          name={phoneName}
+          type="tel"
+          inputMode="tel"
+          autoComplete={phoneAutoComplete}
+          placeholder={phonePlaceholder}
+          value={phoneValue}
+          onChange={onPhoneChange}
+          maxLength={phoneMaxLength}
+          className={cn("h-[36px] w-full", MEDIUM_BUTTON_HEIGHT)}
+          aria-invalid={phoneAriaInvalid}
+          required={phoneRequired}
+        />
+        {phoneError ? <p className="text-destructive mt-1 text-sm">{phoneError}</p> : null}
+      </div>
     </div>
   );
 }

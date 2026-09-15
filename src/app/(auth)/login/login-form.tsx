@@ -4,7 +4,6 @@ import { Loader2 } from "lucide-react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -33,27 +32,17 @@ export function LoginForm({ next }: { next?: string }) {
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="next" value={next ?? ""} />
 
-      {state.message ? (
-        <Alert variant="destructive">
-          <AlertDescription>{state.message}</AlertDescription>
-        </Alert>
-      ) : null}
-
       <div className="space-y-2">
         <Label htmlFor="phone_number">Phone number</Label>
         <PhoneNumberFields
           countryName="country_code"
           phoneName="phone_number"
           phoneAutoComplete="username"
+          countryError={fieldError(state, "country_code")}
+          phoneError={fieldError(state, "phone_number")}
           phoneAriaInvalid={Boolean(fieldError(state, "phone_number"))}
           phoneRequired
         />
-        {fieldError(state, "country_code") ? (
-          <p className="text-destructive text-sm">{fieldError(state, "country_code")}</p>
-        ) : null}
-        {fieldError(state, "phone_number") ? (
-          <p className="text-destructive text-sm">{fieldError(state, "phone_number")}</p>
-        ) : null}
       </div>
 
       <div className="space-y-2">
