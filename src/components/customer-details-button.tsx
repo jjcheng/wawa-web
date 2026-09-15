@@ -197,7 +197,7 @@ export function CustomerDetailsButton({
                   name="customer-country-code"
                   value={countryCode}
                   onValueChange={setCountryCode}
-                  className="w-full"
+                  className="w-24"
                 />
                 {saveErrors.countryCode ? <p className="text-destructive text-sm">{saveErrors.countryCode}</p> : null}
               </label>

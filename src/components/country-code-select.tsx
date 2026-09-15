@@ -31,7 +31,7 @@ export function CountryCodeSelect({
       onValueChange={onValueChange}
     >
       <SelectTrigger
-        className={cn("w-20", MEDIUM_BUTTON_HEIGHT, className)}
+        className={cn("w-24", MEDIUM_BUTTON_HEIGHT, className)}
         aria-label="Country code"
       >
         <SelectValue />

@@ -14,4 +14,4 @@ export const COUNTRY_CODES = Array.from(
       return countriesByCode;
     }, new Map<string, { country: string; name: string; code: string }>()),
 ).map(([, country]) => country)
-  .sort((first, second) => first.name.localeCompare(second.name));
+  .sort((first, second) => Number(first.code) - Number(second.code));

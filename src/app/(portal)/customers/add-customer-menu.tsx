@@ -7,8 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { CountryCodeSelect } from "@/components/country-code-select";
 import { CustomerTagsSelect } from "@/components/customer-tags-select";
+import { PhoneNumberFields } from "@/components/phone-number-fields";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -263,26 +263,17 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
                 onChange={(event) => setDisplayName(event.target.value)}
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-2">
-                <Label htmlFor="customer-country-code">Country code</Label>
-                <CountryCodeSelect
-                  name="customer-country-code"
-                  value={countryCode}
-                  onValueChange={setCountryCode}
-                  className="w-full"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="customer-phone">Phone number</Label>
-                <Input
-                  id="customer-phone"
-                  type="tel"
-                  maxLength={13}
-                  value={phoneNumber}
-                  onChange={(event) => setPhoneNumber(event.target.value)}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="customer-phone">Phone number</Label>
+              <PhoneNumberFields
+                countryName="customer-country-code"
+                phoneName="customer-phone"
+                countryValue={countryCode}
+                onCountryChange={setCountryCode}
+                phoneValue={phoneNumber}
+                onPhoneChange={(event) => setPhoneNumber(event.target.value)}
+                phoneMaxLength={13}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="customer-tags">Tags</Label>

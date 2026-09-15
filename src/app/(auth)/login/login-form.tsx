@@ -6,10 +6,9 @@ import { useFormStatus } from "react-dom";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { CountryCodeSelect } from "@/components/country-code-select";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
+import { PhoneNumberFields } from "@/components/phone-number-fields";
 import { loginAction, type LoginState } from "@/lib/auth/actions";
 import { cn, MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 
@@ -42,19 +41,13 @@ export function LoginForm({ next }: { next?: string }) {
 
       <div className="space-y-2">
         <Label htmlFor="phone_number">Phone number</Label>
-        <div className="flex flex-row gap-2">
-          <CountryCodeSelect name="country_code" className="h-[36px] w-20 shrink-0" />
-          <Input
-            id="phone_number"
-            name="phone_number"
-            inputMode="tel"
-            autoComplete="username"
-            placeholder="enter phone number"
-            className={cn("h-[36px] w-full flex-1", MEDIUM_BUTTON_HEIGHT)}
-            aria-invalid={Boolean(fieldError(state, "phone_number"))}
-            required
-          />
-        </div>
+        <PhoneNumberFields
+          countryName="country_code"
+          phoneName="phone_number"
+          phoneAutoComplete="username"
+          phoneAriaInvalid={Boolean(fieldError(state, "phone_number"))}
+          phoneRequired
+        />
         {fieldError(state, "country_code") ? (
           <p className="text-destructive text-sm">{fieldError(state, "country_code")}</p>
         ) : null}
