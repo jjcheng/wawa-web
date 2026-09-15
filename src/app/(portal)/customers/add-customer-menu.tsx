@@ -259,6 +259,7 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
               <Label htmlFor="customer-name">Name</Label>
               <Input
                 id="customer-name"
+                placeholder="enter customer name"
                 value={displayName}
                 onChange={(event) => setDisplayName(event.target.value)}
               />
