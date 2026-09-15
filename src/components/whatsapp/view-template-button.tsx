@@ -26,10 +26,12 @@ export function ViewTemplateButton({
   template,
   onDeleted,
   iconOnly = false,
+  canDelete = false,
 }: {
   template: Template;
   onDeleted?: () => void;
   iconOnly?: boolean;
+  canDelete?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const components = template.components ?? [];
@@ -123,18 +125,20 @@ export function ViewTemplateButton({
             })}
           </div>
         )}
-        <DialogFooter>
-          <DeleteTemplateButton
-            id={template.id}
-            wabaId={template.waba_id ?? ""}
-            name={template.name ?? ""}
-            triggerVariant="destructive"
-            onDeleted={() => {
-              setOpen(false);
-              onDeleted?.();
-            }}
-          />
-        </DialogFooter>
+        {canDelete ? (
+          <DialogFooter>
+            <DeleteTemplateButton
+              id={template.id}
+              wabaId={template.waba_id ?? ""}
+              name={template.name ?? ""}
+              triggerVariant="destructive"
+              onDeleted={() => {
+                setOpen(false);
+                onDeleted?.();
+              }}
+            />
+          </DialogFooter>
+        ) : null}
       </DialogContent>
     </Dialog>
   );

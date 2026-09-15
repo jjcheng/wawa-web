@@ -13,6 +13,7 @@ import { metaManageTemplatesUrl } from "@/lib/meta-links";
 import { toWabaOptions, type WabaOption } from "@/lib/waba-options";
 import { WHATSAPP_LANGUAGE_CODES } from "@/lib/whatsapp-languages";
 import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
+import { requireUser } from "@/lib/auth/session";
 import { TemplatesTable } from "./templates-table";
 
 export const metadata: Metadata = { title: "Templates" };
@@ -30,6 +31,7 @@ const STATUS_OPTIONS = [
 const QUALITY_SCORE_OPTIONS = ["ALL", "GREEN", "YELLOW", "RED", "UNKNOWN"];
 
 export default async function TemplatesPage({ searchParams }: PageProps<"/templates">) {
+  const user = await requireUser();
   let wabas: WabaOption[] = [];
   let wabaError: string | null = null;
   let templates: Template[] = [];
@@ -147,6 +149,7 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
           language={language}
           initialTemplates={templates}
           initialAfterCursor={afterCursor}
+          canDelete={user.type === "MASTER"}
         />
       ) : null}
     </>

@@ -57,6 +57,7 @@ export function TemplatesTable({
   language,
   initialTemplates,
   initialAfterCursor,
+  canDelete,
 }: {
   wabaId: string;
   limit: string;
@@ -67,6 +68,7 @@ export function TemplatesTable({
   language: string;
   initialTemplates: Template[];
   initialAfterCursor?: string;
+  canDelete: boolean;
 }) {
   const [templates, setTemplates] = useState(initialTemplates);
   const [afterCursor, setAfterCursor] = useState(initialAfterCursor);
@@ -296,6 +298,7 @@ export function TemplatesTable({
                     <TableCell className="text-right">
                       <ViewTemplateButton
                         template={template}
+                        canDelete={canDelete}
                         onDeleted={() =>
                           setTemplates((currentTemplates) =>
                             currentTemplates.filter((currentTemplate) => currentTemplate.id !== template.id),
