@@ -29,6 +29,7 @@ export function EmbeddedSignupButton({
       asChild
       className={cn(
         MEDIUM_BUTTON_HEIGHT,
+        "py-2",
         "bg-[#25D366] text-white hover:bg-[#1EBE5B] focus-visible:ring-[#25D366]/50",
         className,
       )}

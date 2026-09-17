@@ -253,13 +253,14 @@ export function Topbar({ user }: { user: User }) {
               </p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem asChild className="cursor-pointer py-2">
               <Link href="/settings/profile">
                 <Settings className="size-4" /> Settings
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
+              className="cursor-pointer py-2"
               onSelect={(event) => {
                 event.preventDefault();
                 clearBusinessContextCache();
