@@ -32,7 +32,16 @@ export default async function CampaignRecipientsPage({
   const params = await searchParams;
   const campaignId = typeof params.campaign_id === "string" ? params.campaign_id : "";
   const name = typeof params.name === "string" ? params.name : "";
-  const recipientStatusOptions = ["ALL", "REJECTED", "ACCEPTED", "SENT", "DELIVERED", "READ", "FAILED"];
+  const recipientStatusOptions = [
+    "ALL",
+    "REJECTED",
+    "ACCEPTED",
+    "SENT",
+    "DELIVERED",
+    "READ",
+    "FAILED",
+    "UNPROCESSED",
+  ];
   const requestedStatus = typeof params.status === "string" ? params.status : "ALL";
   const status = recipientStatusOptions.includes(requestedStatus) ? requestedStatus : "ALL";
   let recipients: CampaignRecipient[] = [];
@@ -102,6 +111,7 @@ export default async function CampaignRecipientsPage({
                     delivered: "Delivered",
                     read: "Read",
                     failed: "Failed",
+                    unprocessed: "Unprocessed",
                   };
                   return labelMap[key] ?? key;
                 })()}
@@ -157,6 +167,7 @@ export default async function CampaignRecipientsPage({
                           delivered: "Delivered",
                           read: "Read",
                           failed: "Failed",
+                          unprocessed: "Unprocessed",
                         };
                         const raw = String(messageStatus || "").trim();
                         if (!raw) return "—";

@@ -20,6 +20,7 @@ function displayStatus(status: string) {
     delivered: "Delivered",
     read: "Read",
     failed: "Failed",
+    unprocessed: "Unprocessed",
   };
 
   const normalized = status.trim();
