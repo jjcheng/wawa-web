@@ -51,7 +51,7 @@ export default async function PhoneNumbersPage({ searchParams }: PageProps<"/num
         title="Phone numbers"
         description={
           user.type === "MASTER"
-            ? "All phone numbers under your WhatsApp Business account."
+            ? "All phone numbers under your WhatsApp Business Account."
             : "Your registered WhatsApp business number."
         }
         action={user.type === "MASTER" ? <EmbeddedSignupButton /> : undefined}

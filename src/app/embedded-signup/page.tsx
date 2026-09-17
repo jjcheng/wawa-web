@@ -56,7 +56,7 @@ export default async function EmbeddedSignupPage({ searchParams }: PageProps<"/e
         </CardHeader>
         <CardContent className="space-y-6">
           <ol className="text-muted-foreground list-decimal space-y-2 pl-4 text-sm">
-            <li>Create or select your WhatsApp Business account.</li>
+            <li>Create or select your WhatsApp Business Account.</li>
             <li>Add or select a phone number and provide profile details.</li>
             <li>Add your payment method to start messaging your customers (billed directly by Meta).</li>
           </ol>

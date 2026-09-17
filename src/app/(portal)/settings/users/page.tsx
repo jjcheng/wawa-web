@@ -36,11 +36,14 @@ export default async function UsersPage() {
           {loadError}
         </div>
       ) : (
-        <Card className="rounded-md py-0">
-          <CardContent className="overflow-x-auto p-0">
-            <UsersTable users={users} currentUserId={currentUser.id} />
-          </CardContent>
-        </Card>
+        <>
+          <Card className="rounded-md py-0">
+            <CardContent className="overflow-x-auto p-0">
+              <UsersTable users={users} currentUserId={currentUser.id} />
+            </CardContent>
+          </Card>
+          <p className="mt-3 text-sm text-muted-foreground">MASTER users cannot be updated.</p>
+        </>
       )}
     </>
   );

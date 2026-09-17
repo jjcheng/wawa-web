@@ -56,7 +56,7 @@ export default async function DashboardPage() {
       {user.type === "MASTER" ? (
         <Tabs defaultValue="business-account" className="space-y-4">
           <TabsList aria-label="Dashboard overview">
-            <TabsTrigger value="business-account">Entire Business Account</TabsTrigger>
+            <TabsTrigger value="business-account">Business Account</TabsTrigger>
             <TabsTrigger value="my-number">My WhatsApp Number</TabsTrigger>
           </TabsList>
           <TabsContent value="business-account">
