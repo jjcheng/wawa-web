@@ -486,7 +486,7 @@ export function CreateTemplateForm({
   const [templateButtons, setTemplateButtons] = useState<TemplateButton[]>(() =>
     initialTemplate ? templateButtonsFromTemplate(initialTemplate) : [],
   );
-  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [previewMediaUrl, setPreviewMediaUrl] = useState<string | null>(null);
   const [bodyVariableTextAttempted, setBodyVariableTextAttempted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const headerInputRef = useRef<HTMLInputElement | null>(null);
@@ -561,19 +561,23 @@ export function CreateTemplateForm({
   }, [initialTemplate, reset, selectedSample, waba.wabaId]);
 
   useEffect(() => {
-    if (mediaSample !== "IMAGE" || !mediaSampleFile?.type.startsWith("image/")) {
-      queueMicrotask(() => setPreviewImageUrl(null));
+    const canPreviewMedia =
+      (mediaSample === "IMAGE" && mediaSampleFile?.type.startsWith("image/")) ||
+      (mediaSample === "VIDEO" && mediaSampleFile?.type.startsWith("video/")) ||
+      (mediaSample === "DOCUMENT" && mediaSampleFile?.type === "application/pdf");
+    if (!canPreviewMedia || !mediaSampleFile) {
+      queueMicrotask(() => setPreviewMediaUrl(null));
       return;
     }
 
-    const imageUrl = URL.createObjectURL(mediaSampleFile);
+    const mediaUrl = URL.createObjectURL(mediaSampleFile);
     let active = true;
     queueMicrotask(() => {
-      if (active) setPreviewImageUrl(imageUrl);
+      if (active) setPreviewMediaUrl(mediaUrl);
     });
     return () => {
       active = false;
-      URL.revokeObjectURL(imageUrl);
+      URL.revokeObjectURL(mediaUrl);
     };
   }, [mediaSample, mediaSampleFile]);
 
@@ -1501,15 +1505,32 @@ export function CreateTemplateForm({
           )}
         >
           {mediaSample !== "NONE" ? (
-            previewImageUrl ? (
+            mediaSample === "IMAGE" && previewMediaUrl ? (
               <div className="-mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)]">
                 <Image
-                  src={previewImageUrl}
+                  src={previewMediaUrl}
                   alt="Selected header image preview"
                   width={320}
                   height={224}
                   unoptimized
                   className="block h-auto max-h-56 w-full rounded-none object-contain"
+                />
+              </div>
+            ) : mediaSample === "VIDEO" && previewMediaUrl ? (
+              <div className="-mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)]">
+                <video
+                  src={previewMediaUrl}
+                  controls
+                  preload="metadata"
+                  className="block h-auto max-h-56 w-full rounded-none object-contain"
+                />
+              </div>
+            ) : mediaSample === "DOCUMENT" && previewMediaUrl ? (
+              <div className="-mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)]">
+                <iframe
+                  src={previewMediaUrl}
+                  title="Selected header document preview"
+                  className="block h-56 w-full border-0"
                 />
               </div>
             ) : mediaSample === "IMAGE" && existingHeaderUrl ? (
@@ -1539,7 +1560,7 @@ export function CreateTemplateForm({
                 />
               </div>
             ) : mediaSample === "LOCATION" ? (
-              <div className="mb-2 overflow-hidden rounded-md bg-muted/50 dark:bg-white/10">
+              <div className="-mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)] overflow-hidden bg-muted/50 dark:bg-white/10">
                 <Image
                   src={LOCATION_HEADER_PREVIEW_IMAGE_URL}
                   alt="Location map preview"
@@ -1548,7 +1569,7 @@ export function CreateTemplateForm({
                   unoptimized
                   className="h-38 w-full object-cover"
                 />
-                <div className="space-y-0.5 p-2">
+                <div className="space-y-0.5 px-3 py-2">
                   <p className="font-medium">Location name</p>
                   <p className="text-xs text-[#667781] dark:text-[#aebac1]">Location address</p>
                 </div>

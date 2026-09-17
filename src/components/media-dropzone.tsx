@@ -1,8 +1,6 @@
 "use client";
 
 import { Upload, X } from "lucide-react";
-import Image from "next/image";
-import { useEffect, useState } from "react";
 import { useDropzone, type Accept } from "react-dropzone";
 
 import { Button } from "@/components/ui/button";
@@ -35,7 +33,6 @@ export function MediaDropzone({
   file: File | null;
   onChange: (file: File | null) => void;
 }) {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { getRootProps, getInputProps, isDragActive, fileRejections } = useDropzone({
     accept: ACCEPT_BY_FORMAT[format],
     maxSize: MAX_SIZE_BY_FORMAT[format],
@@ -43,22 +40,6 @@ export function MediaDropzone({
     multiple: false,
     onDropAccepted: ([acceptedFile]) => onChange(acceptedFile ?? null),
   });
-
-  useEffect(() => {
-    if (!file || !file.type.startsWith("image/")) {
-      queueMicrotask(() => setPreviewUrl(null));
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    let active = true;
-    queueMicrotask(() => {
-      if (active) setPreviewUrl(url);
-    });
-    return () => {
-      active = false;
-      URL.revokeObjectURL(url);
-    };
-  }, [file]);
 
   return (
     <div className="space-y-2">
@@ -80,29 +61,17 @@ export function MediaDropzone({
         </div>
       ) : null}
       {file ? (
-        <div className="bg-muted flex flex-col gap-2 rounded-md p-2 text-sm">
-          {previewUrl ? (
-            <Image
-              src={previewUrl}
-              alt="Selected file preview"
-              width={640}
-              height={256}
-              unoptimized
-              className="h-auto max-h-64 w-full rounded object-contain"
-            />
-          ) : null}
-          <div className="flex items-center justify-between gap-2">
-            <span className="min-w-0 truncate">{file.name}</span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-xs"
-              aria-label={`Remove ${file.name}`}
-              onClick={() => onChange(null)}
-            >
-              <X />
-            </Button>
-          </div>
+        <div className="bg-muted flex items-center justify-between gap-2 rounded-md p-2 text-sm">
+          <span className="min-w-0 truncate">{file.name}</span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            aria-label={`Remove ${file.name}`}
+            onClick={() => onChange(null)}
+          >
+            <X />
+          </Button>
         </div>
       ) : null}
       {fileRejections.length > 0 ? (
