@@ -100,7 +100,11 @@ export function ProductsTable({
   return (
     <div className="space-y-4">
       {sets.length > 0 ? (
-        <div className="flex max-w-full flex-wrap gap-2" aria-label="Catalog sets" role="list">
+        <div
+          className="flex max-w-full flex-nowrap gap-2 overflow-x-auto pb-1"
+          aria-label="Catalog sets"
+          role="list"
+        >
           {sets.map((set) => (
             <Button
               key={set.id}
