@@ -10,12 +10,15 @@ const TABS = [
   { href: "/settings/password", label: "Password" },
 ];
 
-export function SettingsTabs() {
+export function SettingsTabs({ isMaster = false }: { isMaster?: boolean }) {
   const pathname = usePathname();
+  const tabs = isMaster
+    ? [...TABS, { href: "/settings/users", label: "Users" }]
+    : TABS;
 
   return (
     <div className="mb-4 flex gap-1 border-b">
-      {TABS.map((tab) => (
+      {tabs.map((tab) => (
         <Link
           key={tab.href}
           href={tab.href}

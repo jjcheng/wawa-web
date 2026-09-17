@@ -25,7 +25,7 @@ export default async function ProfilePage() {
         title="Account Settings"
         description="Manage your profile and login password"
       />
-      <SettingsTabs />
+      <SettingsTabs isMaster={user.type === "MASTER"} />
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
