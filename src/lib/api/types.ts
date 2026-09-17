@@ -63,6 +63,44 @@ export type Catalog = {
   product_count?: number;
 };
 
+export type CatalogSet = {
+  id: string;
+  name?: string;
+  [key: string]: unknown;
+};
+
+export type CatalogSetListResponse = {
+  items: CatalogSet[];
+  number_of_pages?: number;
+  number_of_items?: number;
+  next_page_offset?: unknown;
+  additional_data?: Record<string, unknown>;
+};
+
+export type Product = {
+  id: string;
+  name?: string;
+  title?: string;
+  description?: string;
+  price?: string | number | null;
+  sale_price?: string | number | null;
+  currency?: string;
+  condition?: string;
+  category?: string;
+  availability?: string;
+  status?: string;
+  image_url?: string;
+  [key: string]: unknown;
+};
+
+export type ProductListResponse = {
+  items: Product[];
+  number_of_pages?: number;
+  number_of_items?: number;
+  next_page_offset?: unknown;
+  additional_data?: Record<string, unknown>;
+};
+
 export type PhoneNumber = DtoBase & {
   wa_id?: string;
   display_phone_number?: string;

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
@@ -51,7 +52,7 @@ export default async function CatalogsPage() {
     <>
       <PageHeader
         title="Catalogs"
-        description="Product catalogs owned by your Meta business portfolio."
+        description="Product catalogs owned by your Meta business portfolio, upload or edit in Meta Commerce Manager."
         action={
           managerUrl ? (
             <Button asChild variant="outline" className={MEDIUM_BUTTON_HEIGHT}>
@@ -76,8 +77,7 @@ export default async function CatalogsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Catalog Name</TableHead>
-                  <TableHead>Catalog ID</TableHead>
+                  <TableHead>Name</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Products</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -88,16 +88,10 @@ export default async function CatalogsPage() {
                   <TableEmptyState colSpan={5}>No product catalogs found.</TableEmptyState>
                 ) : (
                   catalogs.map((catalog) => {
-                    const catalogManagerUrl = metaCommerceManagerUrl({
-                      catalogId: catalog.id,
-                    });
                     return (
                       <TableRow key={catalog.id}>
                         <TableCell className="font-medium">
                           {catalog.name || "Unnamed catalog"}
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {catalog.id}
                         </TableCell>
                         <TableCell className="capitalize">
                           {catalog.vertical ? catalog.vertical.replaceAll("_", " ") : "—"}
@@ -108,21 +102,11 @@ export default async function CatalogsPage() {
                             : "—"}
                         </TableCell>
                         <TableCell className="text-right">
-                          {catalogManagerUrl ? (
-                            <Button asChild variant="ghost" size="sm">
-                              <a
-                                href={catalogManagerUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1.5"
-                              >
-                                View in Commerce Manager
-                                <ExternalLink className="size-3.5" />
-                              </a>
-                            </Button>
-                          ) : (
-                            "—"
-                          )}
+                          <Button asChild variant="outline" size="sm">
+                            <Link href={`/catalogs/${encodeURIComponent(catalog.id)}/products`}>
+                              View
+                            </Link>
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
