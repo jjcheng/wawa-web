@@ -68,18 +68,16 @@ export const embeddedSignupSchema = z.object({
 });
 export type EmbeddedSignupInput = z.infer<typeof embeddedSignupSchema>;
 
-export const TEMPLATE_CATEGORIES = ["MARKETING", "UTILITY", "AUTHENTICATION"] as const;
+export const TEMPLATE_CATEGORIES = ["MARKETING", "UTILITY"] as const;
 export const TEMPLATE_MEDIA_SAMPLE_TYPES = ["NONE", "IMAGE", "VIDEO", "DOCUMENT", "LOCATION"] as const;
 
 export { WHATSAPP_LANGUAGES as TEMPLATE_LANGUAGES } from "@/lib/whatsapp-languages";
 
 const TEMPLATE_LANGUAGE_CODES = WHATSAPP_LANGUAGE_CODES;
-export const TEMPLATE_NAME_MAX_LENGTH = 512;
+export const TEMPLATE_NAME_MAX_LENGTH = 508;
 export const HEADER_TEXT_MAX_LENGTH = 60;
 export const BODY_TEXT_MAX_LENGTH = 1024;
 export const FOOTER_TEXT_MAX_LENGTH = 60;
-const ABUSIVE_OR_THREATENING_LANGUAGE_PATTERN =
-  /\b(?:abuse|abusive|assault|attack|bomb|die|harm|harass|hate|idiot|kill|murder|stupid|threat|threaten|violent)\b/i;
 const WHATSAPP_DIRECT_LINK_PATTERN = /(?:https?:\/\/)?(?:www\.)?wa\.me\b/i;
 
 function countTemplateVariables(value: string) {
@@ -134,9 +132,6 @@ export const createTemplateSchema = z
       })
       .refine((value) => !WHATSAPP_DIRECT_LINK_PATTERN.test(value), {
         message: "Do not include direct links to WhatsApp (wa.me)",
-      })
-      .refine((value) => !ABUSIVE_OR_THREATENING_LANGUAGE_PATTERN.test(value), {
-        message: "Do not include abusive language or threats",
       }),
     body_variable_samples: z.array(z.string().trim()),
     footer_text: z.string().trim().max(FOOTER_TEXT_MAX_LENGTH, "Footer is limited to 60 characters"),

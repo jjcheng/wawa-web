@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
@@ -27,12 +27,9 @@ function SignInButton() {
 
 export function LoginForm({ next }: { next?: string }) {
   const [state, formAction] = useActionState<LoginState, FormData>(loginAction, {});
-  const [countryCode, setCountryCode] = useState("65");
-
-  useEffect(() => {
-    const savedCountryCode = window.localStorage.getItem("country_code");
-    if (savedCountryCode) setCountryCode(savedCountryCode);
-  }, []);
+  const [countryCode, setCountryCode] = useState(() =>
+    typeof window === "undefined" ? "65" : window.localStorage.getItem("country_code") ?? "65",
+  );
 
   function handleCountryCodeChange(nextCountryCode: string) {
     window.localStorage.setItem("country_code", nextCountryCode);

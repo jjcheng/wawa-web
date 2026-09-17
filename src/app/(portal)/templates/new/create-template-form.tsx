@@ -393,6 +393,11 @@ function templateHeaderHandle(component: Record<string, unknown> | undefined) {
   return templateExampleValues(component, "header_handle")[0] || null;
 }
 
+function templateCategory(value: string | undefined): CreateTemplateInput["category"] {
+  const normalizedValue = value?.trim().toUpperCase();
+  return TEMPLATE_CATEGORIES.find((option) => option === normalizedValue) ?? "MARKETING";
+}
+
 function templateButtonsFromTemplate(template: Template): TemplateButton[] {
   const component = template.components?.find(
     (item) => String(item.type ?? "").toUpperCase() === "BUTTONS",
@@ -435,7 +440,7 @@ function templateFormValues(template: Template, wabaId: string): CreateTemplateI
   const mediaSample = ["NONE", "IMAGE", "VIDEO", "DOCUMENT", "LOCATION"].includes(headerFormat)
     ? (headerFormat as CreateTemplateInput["media_sample"])
     : "NONE";
-  const category = TEMPLATE_CATEGORIES.find((option) => option === template.category) ?? "MARKETING";
+  const category = templateCategory(template.category);
   const language = TEMPLATE_LANGUAGES.find((option) => option.code === template.language)?.code ?? "en";
   const bodySamples = templateExampleValues(body, "body_text");
 
@@ -473,6 +478,9 @@ export function CreateTemplateForm({
   const [existingHeaderHandle, setExistingHeaderHandle] = useState<string | null>(() =>
     initialTemplate ? templateHeaderHandle(templateComponent(initialTemplate, "HEADER")) : null,
   );
+  const [existingHeaderUrl, setExistingHeaderUrl] = useState<string | null>(() =>
+    initialTemplate ? templateHeaderHandle(templateComponent(initialTemplate, "HEADER")) : null,
+  );
   const [headerTypeOpen, setHeaderTypeOpen] = useState(false);
   const [buttonOptionsOpen, setButtonOptionsOpen] = useState(false);
   const [templateButtons, setTemplateButtons] = useState<TemplateButton[]>(() =>
@@ -494,26 +502,23 @@ export function CreateTemplateForm({
   } = useForm<CreateTemplateInput>({
     resolver: zodResolver(createTemplateSchema),
     mode: "onChange",
-    defaultValues: {
-      waba_id: waba.wabaId,
-      name: "",
-      language: "en",
-      category: "MARKETING",
-      media_sample: "NONE",
-      header_text: "",
-      header_variable_samples: [],
-      body_text: "",
-      body_variable_samples: [],
-      footer_text: "",
-    },
+    defaultValues: initialTemplate
+      ? templateFormValues(initialTemplate, waba.wabaId)
+      : {
+          waba_id: waba.wabaId,
+          name: "",
+          language: "en",
+          category: "MARKETING",
+          media_sample: "NONE",
+          header_text: "",
+          header_variable_samples: [],
+          body_text: "",
+          body_variable_samples: [],
+          footer_text: "",
+        },
   });
 
   const mediaSample = useWatch({ control, name: "media_sample" }) ?? "NONE";
-
-  useEffect(() => {
-    if (!initialTemplate || selectedSample) return;
-    reset(templateFormValues(initialTemplate, waba.wabaId));
-  }, [initialTemplate, reset, selectedSample, waba.wabaId]);
 
   useEffect(() => {
     function handleTemplateJsonLoad(event: Event) {
@@ -521,7 +526,9 @@ export function CreateTemplateForm({
       if (!detail || typeof detail !== "object" || !Array.isArray(detail.components)) return;
       reset(templateFormValues(detail, waba.wabaId));
       setTemplateButtons(templateButtonsFromTemplate(detail));
-      setExistingHeaderHandle(templateHeaderHandle(templateComponent(detail, "HEADER")));
+      const headerUrl = templateHeaderHandle(templateComponent(detail, "HEADER"));
+      setExistingHeaderHandle(headerUrl);
+      setExistingHeaderUrl(headerUrl);
     }
 
     window.addEventListener(TEMPLATE_JSON_LOAD_EVENT, handleTemplateJsonLoad);
@@ -529,7 +536,7 @@ export function CreateTemplateForm({
   }, [reset, waba.wabaId]);
 
   useEffect(() => {
-    if (!selectedSample) return;
+    if (!selectedSample || initialTemplate) return;
 
     const componentText = (type: string) => {
       const text = selectedSample.components?.find(
@@ -537,8 +544,7 @@ export function CreateTemplateForm({
       )?.text;
       return typeof text === "string" ? text : "";
     };
-    const category =
-      TEMPLATE_CATEGORIES.find((option) => option === selectedSample.category) ?? "MARKETING";
+    const category = templateCategory(selectedSample.category);
 
     reset({
       waba_id: waba.wabaId,
@@ -552,7 +558,7 @@ export function CreateTemplateForm({
       body_variable_samples: [],
       footer_text: componentText("FOOTER"),
     });
-  }, [reset, selectedSample, waba.wabaId]);
+  }, [initialTemplate, reset, selectedSample, waba.wabaId]);
 
   useEffect(() => {
     if (mediaSample !== "IMAGE" || !mediaSampleFile?.type.startsWith("image/")) {
@@ -604,7 +610,7 @@ export function CreateTemplateForm({
         ...(initialTemplate ? { id: initialTemplate.id } : {}),
         name: values.name,
         language: values.language,
-        category: values.category,
+        category: templateCategory(values.category),
         parameter_format: "POSITIONAL",
         components,
       };
@@ -963,7 +969,10 @@ export function CreateTemplateForm({
           control={control}
           name="category"
           render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
+            <Select
+              value={field.value ?? "MARKETING"}
+              onValueChange={(value) => field.onChange(templateCategory(value))}
+            >
               <SelectTrigger id="category" className="w-full">
                 <SelectValue />
               </SelectTrigger>
@@ -1014,6 +1023,7 @@ export function CreateTemplateForm({
                       field.onChange(value);
                       setHeaderTypeOpen(false);
                       setMediaSampleFile(null);
+                      setExistingHeaderUrl(null);
                       setExistingHeaderHandle(null);
                       if (value !== "NONE") {
                         setValue("header_text", "", { shouldDirty: true, shouldValidate: true });
@@ -1039,11 +1049,20 @@ export function CreateTemplateForm({
 
       {mediaSampleNeedsFile ? (
         <div className="space-y-2">
-          <Label>{MEDIA_SAMPLE_LABELS[mediaSample]} sample</Label>
+          <div className="flex items-center justify-between gap-2">
+            <Label>{MEDIA_SAMPLE_LABELS[mediaSample]} sample</Label>
+          </div>
           <MediaDropzone
+            key={`${mediaSample}-${mediaSampleFile?.name ?? "empty"}`}
             format={mediaSample}
             file={mediaSampleFile}
-            onChange={setMediaSampleFile}
+            onChange={(file) => {
+              setMediaSampleFile(file);
+              if (file) {
+                setExistingHeaderHandle(null);
+                setExistingHeaderUrl(null);
+              }
+            }}
           />
         </div>
       ) : null}
@@ -1491,6 +1510,32 @@ export function CreateTemplateForm({
                   height={224}
                   unoptimized
                   className="block h-auto max-h-56 w-full rounded-none object-contain"
+                />
+              </div>
+            ) : mediaSample === "IMAGE" && existingHeaderUrl ? (
+              <div className="-mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={existingHeaderUrl}
+                  alt="Template header image preview"
+                  className="block h-auto max-h-56 w-full rounded-none object-contain"
+                />
+              </div>
+            ) : mediaSample === "VIDEO" && existingHeaderUrl ? (
+              <div className="-mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)]">
+                <video
+                  src={existingHeaderUrl}
+                  controls
+                  preload="metadata"
+                  className="block h-auto max-h-56 w-full rounded-none object-contain"
+                />
+              </div>
+            ) : mediaSample === "DOCUMENT" && existingHeaderUrl ? (
+              <div className="-mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)]">
+                <iframe
+                  src={existingHeaderUrl}
+                  title="Template header document preview"
+                  className="block h-56 w-full border-0"
                 />
               </div>
             ) : mediaSample === "LOCATION" ? (

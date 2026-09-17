@@ -33,7 +33,15 @@ export default async function CreateTemplatePage({
       accountId: businessAccount?.waba_id,
     });
     if (editId) {
-      editTemplate = await serverFetch<Template>(`/v1/wa/templates/${encodeURIComponent(editId)}`);
+      const response = await serverFetch<Template>(`/v1/wa/templates/${encodeURIComponent(editId)}`);
+      console.log("[TemplateEdit] GET /v1/wa/templates/:id response", {
+        id: editId,
+        response,
+      });
+      if (!response || typeof response !== "object" || !response.id) {
+        throw new ApiError("Template details were empty or incomplete.", 502);
+      }
+      editTemplate = response;
     }
   } catch (error) {
     loadError =
