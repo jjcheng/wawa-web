@@ -21,6 +21,15 @@ export const metadata: Metadata = {
   },
   description:
     "CoreConcept — WhatsApp-integrated CRM. Manage your WhatsApp Business numbers, contacts and conversations.",
+  icons: {
+    icon: [
+      { url: "/favicons/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicons/favicon.ico", type: "image/x-icon" },
+    ],
+    shortcut: "/favicons/favicon.ico",
+    apple: "/favicons/apple-touch-icon.png",
+  },
+  manifest: "/favicons/site.webmanifest",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
