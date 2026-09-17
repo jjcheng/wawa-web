@@ -133,6 +133,16 @@
   }
 }
 
+@layer utilities {
+  .h-38 {
+    height: 9.5rem;
+  }
+
+  .mb-5 {
+    margin-bottom: 1.25rem;
+  }
+}
+
 @keyframes navigation-progress {
   0% {
     transform: scaleX(0.04);

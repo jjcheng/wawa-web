@@ -1,6 +1,8 @@
 "use client";
 
+import EmojiPicker, { EmojiStyle, Theme, type EmojiClickData } from "emoji-picker-react";
 import { ArrowDown, Check, CheckCheck, ContactRound, Info, Loader2, MapPin, Phone, Reply, SmilePlus } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -580,6 +582,7 @@ export function Chat({
   customerMetaUserId,
 }: ChatProps) {
   const { appendMessage, appendedMessages, setReplyTarget, updateMessageStatus } = useChatCompose();
+  const { resolvedTheme } = useTheme();
   const [messages, setMessages] = useState(() => initialMessages);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -745,6 +748,10 @@ export function Chat({
     }
   }
 
+  function handleReactionEmojiClick(emojiData: EmojiClickData) {
+    void reactToMessage(emojiData.emoji);
+  }
+
   const allMessages = [...messages, ...appendedMessages]
     .sort((a, b) => a.timestamp - b.timestamp)
     .filter(
@@ -820,6 +827,7 @@ export function Chat({
   }
   const visibleMessages = allMessages.filter(isDisplayableMessage);
   const messageGroups = groupMessagesByDate(visibleMessages);
+  const emojiPickerTheme = resolvedTheme === "dark" ? Theme.DARK : Theme.LIGHT;
 
   return (
     <div className="pb-20">
@@ -948,10 +956,23 @@ export function Chat({
         </section>
       ))}
       {menu ? (
-        <div ref={menuRef} className="fixed z-50 w-52 max-w-[calc(100vw-1rem)] rounded-lg bg-popover p-1 shadow-md ring-1 ring-[#edf0f1] dark:ring-foreground/10" style={{ left: Math.max(8, Math.min(menu.x, window.innerWidth - 216)), top: Math.max(8, Math.min(menu.y, window.innerHeight - (showEmojis ? 224 : 80))) }}>
+        <div ref={menuRef} className={`fixed z-50 max-w-[calc(100vw-1rem)] rounded-lg bg-popover p-1 shadow-md ring-1 ring-[#edf0f1] dark:ring-foreground/10 ${showEmojis ? "w-[328px]" : "w-52"}`} style={{ left: Math.max(8, Math.min(menu.x, window.innerWidth - (showEmojis ? 336 : 216))), top: Math.max(8, Math.min(menu.y, window.innerHeight - (showEmojis ? 472 : 80))) }}>
           <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => { setReplyTarget({ waMessageId: menu.message.wa_message_id, preview: messageBody(menu.message) }); setMenu(null); }}><Reply />Reply</Button>
           <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => setShowEmojis(true)}><SmilePlus />React</Button>
-          {showEmojis ? <div className="border-t p-1.5"><div className="grid max-h-28 grid-cols-6 gap-1 overflow-y-auto">{["👍", "❤️", "😂", "😮", "😢", "🙏", "👏", "🔥", "😍", "🎉", "✅", "💯", "🤔", "👀", "🙌", "😅", "💪", "🤝", "💚", "✨", "😁", "😎", "🤗", "🫡"].map((emoji) => <button key={emoji} type="button" className="flex size-10 items-center justify-center rounded p-0 text-[1.5rem] leading-none hover:bg-muted" onClick={() => void reactToMessage(emoji)}>{emoji}</button>)}</div><input aria-label="Paste an emoji and press Enter" placeholder="Paste an emoji and press Enter" className="mt-2 h-7 w-full rounded border bg-transparent px-2 text-xs" onPaste={(event) => { const emoji = event.clipboardData.getData("text").trim(); if (emoji) { event.preventDefault(); void reactToMessage(emoji); } }} onKeyDown={(event) => { if (event.key === "Enter" && event.currentTarget.value.trim()) { event.preventDefault(); void reactToMessage(event.currentTarget.value.trim()); } }} /></div> : null}
+          {showEmojis ? (
+            <div className="border-t p-1.5">
+              <EmojiPicker
+                onEmojiClick={handleReactionEmojiClick}
+                emojiStyle={EmojiStyle.NATIVE}
+                theme={emojiPickerTheme}
+                width={308}
+                height={380}
+                lazyLoadEmojis
+                previewConfig={{ showPreview: false }}
+                searchPlaceHolder="Search emoji"
+              />
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

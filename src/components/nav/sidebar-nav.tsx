@@ -50,7 +50,7 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
   const pathname = usePathname();
 
   return (
-    <nav className="flex h-full flex-col gap-6 p-4">
+    <nav className="flex h-full flex-col gap-5 p-3">
       <Brand className="px-2" />
       {SECTIONS.filter((section) => user.type === "MASTER" || section.label !== "Analytics").map((section) => (
         <div key={section.label} className="space-y-1">

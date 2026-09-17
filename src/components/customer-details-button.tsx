@@ -203,7 +203,18 @@ export function CustomerDetailsButton({
               </label>
               <label className="grid gap-1 text-sm">
                 <span className="text-muted-foreground">Phone number</span>
-                <input required maxLength={13} value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} className="border-input h-9 rounded-md border bg-transparent px-3" />
+                <input
+                  required
+                  maxLength={13}
+                  inputMode="numeric"
+                  value={phoneNumber}
+                  onKeyDown={(event) => {
+                    if (event.metaKey || event.ctrlKey || event.altKey || event.key.length !== 1) return;
+                    if (!/\d/.test(event.key)) event.preventDefault();
+                  }}
+                  onChange={(event) => setPhoneNumber(event.target.value.replace(/\D/g, ""))}
+                  className="border-input h-9 rounded-md border bg-transparent px-3"
+                />
                 {saveErrors.phoneNumber ? <p className="text-destructive text-sm">{saveErrors.phoneNumber}</p> : null}
               </label>
             </div>

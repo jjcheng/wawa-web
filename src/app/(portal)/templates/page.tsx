@@ -55,7 +55,7 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
     (requested && wabas.some((waba) => waba.wabaId === requested)
       ? requested
       : wabas[0]?.wabaId) ?? "";
-  const limit = typeof params.limit === "string" ? params.limit : "10";
+  const limit = typeof params.limit === "string" ? params.limit : "25";
   const requestedCategory = typeof params.category === "string" ? params.category : undefined;
   const category =
     requestedCategory && (TEMPLATE_CATEGORIES as readonly string[]).includes(requestedCategory)

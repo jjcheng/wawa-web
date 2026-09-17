@@ -81,7 +81,7 @@ function UserRow({ user, currentUserId }: { user: User; currentUserId: number })
   return (
     <>
       <TableRow>
-      <TableCell className="font-medium">{user.name || "—"}</TableCell>
+      <TableCell>{user.name || "—"}</TableCell>
       <TableCell>{formatPhoneNumber(user.phone_number, user.country_code) || "—"}</TableCell>
       <TableCell>{user.email || "—"}</TableCell>
       <TableCell>

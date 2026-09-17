@@ -239,6 +239,7 @@ export type TemplateQualityScore = {
 
 export type Template = {
   id: string;
+  by_api?: boolean;
   waba_id?: string;
   name?: string;
   status?: string;

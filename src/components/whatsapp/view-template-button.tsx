@@ -1,6 +1,7 @@
 "use client";
 
 import { Eye } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -58,7 +59,7 @@ export function ViewTemplateButton({
           {iconOnly ? <Eye /> : "View"}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[80vh] min-w-0 overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[80vh] min-w-0 overflow-hidden sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-lg">{template.name || "Template"}</DialogTitle>
           <DialogDescription>
@@ -68,75 +69,97 @@ export function ViewTemplateButton({
           </DialogDescription>
         </DialogHeader>
 
-        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
           {details.map((detail) => (
             <div key={detail.label} className="contents">
               <dt className="text-muted-foreground">{detail.label}</dt>
               <dd className="break-all">{detail.value}</dd>
             </div>
           ))}
-        </dl>
+          </dl>
 
-        {qualityReasons.length > 0 ? (
+          {qualityReasons.length > 0 ? (
+            <div>
+              <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                Quality reasons
+              </p>
+              <ul className="mt-1 list-disc pl-4 text-sm">
+                {qualityReasons.map((reason) => (
+                  <li key={reason}>{reason}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
           <div>
-            <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-              Quality reasons
+            <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
+              Preview
             </p>
-            <ul className="mt-1 list-disc pl-4 text-sm">
-              {qualityReasons.map((reason) => (
-                <li key={reason}>{reason}</li>
-              ))}
-            </ul>
+            {template.preview_html || template.preview_dark_html ? (
+              <TemplatePreviewHtml
+                lightHtml={template.preview_html}
+                darkHtml={template.preview_dark_html}
+              />
+            ) : components.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                Meta did not return any components for this template.
+              </p>
+            ) : (
+              <div className="min-w-0 overflow-hidden">
+                {components.map((component, index) => {
+                  const text = componentText(component);
+                  if (!text) return null;
+
+                  const type = String(component.type ?? "BODY").toUpperCase();
+                  const textClassName =
+                    type === "HEADER"
+                      ? "font-semibold"
+                      : type === "FOOTER"
+                        ? "text-muted-foreground text-xs"
+                        : "text-sm";
+
+                  return (
+                    <p
+                      key={index}
+                      className={`${index > 0 ? "mt-2" : ""} ${textClassName} break-all whitespace-pre-wrap`}
+                    >
+                      {text}
+                    </p>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        ) : null}
-
-        <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">Preview</p>
-        {template.preview_html || template.preview_dark_html ? (
-          <TemplatePreviewHtml
-            lightHtml={template.preview_html}
-            darkHtml={template.preview_dark_html}
-          />
-        ) : components.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            Meta did not return any components for this template.
-          </p>
-        ) : (
-          <div className="min-w-0 overflow-hidden">
-            {components.map((component, index) => {
-              const text = componentText(component);
-              if (!text) return null;
-
-              const type = String(component.type ?? "BODY").toUpperCase();
-              const textClassName =
-                type === "HEADER"
-                  ? "font-semibold"
-                  : type === "FOOTER"
-                    ? "text-muted-foreground text-xs"
-                    : "text-sm";
-
-              return (
-                <p
-                  key={index}
-                  className={`${index > 0 ? "mt-2" : ""} ${textClassName} break-all whitespace-pre-wrap`}
-                >
-                  {text}
-                </p>
-              );
-            })}
-          </div>
-        )}
-        {canDelete ? (
+        </div>
+        {template.by_api || canDelete ? (
           <DialogFooter>
-            <DeleteTemplateButton
-              id={template.id}
-              wabaId={template.waba_id ?? ""}
-              name={template.name ?? ""}
-              triggerVariant="destructive"
-              onDeleted={() => {
-                setOpen(false);
-                onDeleted?.();
-              }}
-            />
+            <div className="flex w-full items-center justify-between gap-2">
+              {template.by_api ? (
+                <Button asChild variant="outline" size="sm" className={SMALL_BUTTON_HEIGHT}>
+                  <Link
+                    href={`/templates/new?edit=${encodeURIComponent(template.id)}`}
+                    onClick={() => setOpen(false)}
+                  >
+                    Edit
+                  </Link>
+                </Button>
+              ) : (
+                <span />
+              )}
+              {canDelete ? (
+                <DeleteTemplateButton
+                  id={template.id}
+                  wabaId={template.waba_id ?? ""}
+                  name={template.name ?? ""}
+                  triggerVariant="destructive"
+                  onDeleted={() => {
+                    setOpen(false);
+                    onDeleted?.();
+                  }}
+                />
+              ) : null}
+            </div>
           </DialogFooter>
         ) : null}
       </DialogContent>

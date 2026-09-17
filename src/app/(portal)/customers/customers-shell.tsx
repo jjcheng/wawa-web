@@ -20,7 +20,6 @@ export function CustomersShell({
   initialNumberOfPages,
   name,
   pageSize,
-  phoneNumber,
   tags,
   status,
 }: {
@@ -28,7 +27,6 @@ export function CustomersShell({
   initialNumberOfPages: number;
   name: string;
   pageSize: string;
-  phoneNumber: string;
   tags: string[];
   status: "ACTIVE" | "INACTIVE";
 }) {
@@ -55,7 +53,7 @@ export function CustomersShell({
     try {
       const nextPage = currentPage + 1;
       const result = await apiFetch<CustomerListResponse>("v1/customers", {
-        query: { page: String(nextPage), page_size: pageSize, status, name, phone_number: phoneNumber, tags },
+        query: { page: String(nextPage), page_size: pageSize, status, name, tags },
       });
       setRows((currentRows) => [...currentRows, ...result.items]);
       setCurrentPage(nextPage);
@@ -94,7 +92,6 @@ export function CustomersShell({
       <CustomerList
         rows={rows}
         name={name}
-        phoneNumber={phoneNumber}
         initialTags={tags}
         status={status}
         newTags={newTags}

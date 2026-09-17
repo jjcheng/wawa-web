@@ -6,17 +6,25 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
-import type { BusinessAccount } from "@/lib/api/types";
+import type { BusinessAccount, Template } from "@/lib/api/types";
 import { metaManageTemplatesUrl } from "@/lib/meta-links";
 import { toWabaOptions, type WabaOption } from "@/lib/waba-options";
 import { CreateTemplateForm } from "./create-template-form";
+import { TemplateJsonLoader } from "./template-json-loader";
 
 export const metadata: Metadata = { title: "Create template" };
 
-export default async function CreateTemplatePage() {
+export default async function CreateTemplatePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ edit?: string | string[] }>;
+}) {
   let waba: WabaOption | null = null;
+  let editTemplate: Template | undefined;
   let managerUrl: string | null = null;
   let loadError: string | null = null;
+  const editParam = (await searchParams).edit;
+  const editId = Array.isArray(editParam) ? editParam[0] : editParam;
   try {
     const businessAccount = await serverFetch<BusinessAccount>("/v1/wa/business-accounts");
     waba = toWabaOptions(businessAccount ? [businessAccount] : [])[0] ?? null;
@@ -24,6 +32,9 @@ export default async function CreateTemplatePage() {
       portfolioId: businessAccount?.meta_business_portfolio_id,
       accountId: businessAccount?.waba_id,
     });
+    if (editId) {
+      editTemplate = await serverFetch<Template>(`/v1/wa/templates/${encodeURIComponent(editId)}`);
+    }
   } catch (error) {
     loadError =
       error instanceof ApiError ? error.message : "Could not load your business accounts.";
@@ -31,9 +42,28 @@ export default async function CreateTemplatePage() {
 
   return (
     <>
-      <BackBar href="/templates" />
+      <BackBar href="/templates" actions={<TemplateJsonLoader />} />
 
-      <PageHeader title="Create template" />
+      <PageHeader
+        title={editTemplate ? "Edit template" : "Create template"}
+        description={
+          <>
+            For complete template creation, use{" "}
+            {managerUrl ? (
+              <a
+                href={managerUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-foreground font-semibold underline underline-offset-2"
+              >
+                WhatsApp Manager
+              </a>
+            ) : (
+              "WhatsApp Manager"
+            )}. Use this page only to create simple templates.
+          </>
+        }
+      />
 
       {loadError ? (
         <Alert variant="destructive" className="mb-4">
@@ -44,24 +74,7 @@ export default async function CreateTemplatePage() {
       {waba && !loadError ? (
         <Card>
           <CardContent>
-            <p className="text-muted-foreground mb-4 text-sm">
-              For complete template creation features, use{" "}
-              {managerUrl ? (
-                <a
-                  href={managerUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-foreground font-semibold underline underline-offset-2"
-                >
-                  WhatsApp Manager
-                </a>
-              ) : (
-                "WhatsApp Manager"
-              )}
-              , this is recommended by Meta. Use this page only to create a simple templates
-              with no variable.
-            </p>
-            <CreateTemplateForm waba={waba} />
+            <CreateTemplateForm waba={waba} initialTemplate={editTemplate} />
           </CardContent>
         </Card>
       ) : (

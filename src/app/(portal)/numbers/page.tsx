@@ -82,10 +82,10 @@ export default async function PhoneNumbersPage({ searchParams }: PageProps<"/num
                   <TableEmptyState colSpan={6}>No phone numbers found.</TableEmptyState>
                 ) : phoneNumbers.map((number) => (
                   <TableRow key={number.id}>
-                    <TableCell className="font-medium">
+                    <TableCell>
                       {number.user_name || "—"}
                     </TableCell>
-                    <TableCell className="font-medium">
+                    <TableCell>
                       {number.name || "Unnamed number"}
                     </TableCell>
                     <TableCell>

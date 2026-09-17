@@ -45,7 +45,6 @@ export function CustomerList({
   onDeleted,
   onUpdated,
   name,
-  phoneNumber,
   initialTags,
   status,
 }: {
@@ -54,7 +53,6 @@ export function CustomerList({
   onDeleted?: (customerId: number) => void;
   onUpdated?: (customer: Customer) => void;
   name: string;
-  phoneNumber: string;
   initialTags: string[];
   status: "ACTIVE" | "INACTIVE";
 }) {
@@ -65,7 +63,6 @@ export function CustomerList({
   const [tags, setTags] = useState<string[]>([]);
   const [tagError, setTagError] = useState<string | null>(null);
   const [nameInput, setNameInput] = useState(name);
-  const [phoneInput, setPhoneInput] = useState(phoneNumber);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [bulkActionPending, setBulkActionPending] = useState(false);
   const [invalidPhonePopoverId, setInvalidPhonePopoverId] = useState<number | null>(null);
@@ -129,16 +126,15 @@ export function CustomerList({
     router.push(`${pathname}?${params.toString()}`);
   }
 
-  function submitSearch(field: "name" | "phone_number", value: string) {
+  function submitSearch(field: "name", value: string) {
     const params = new URLSearchParams(searchParams);
     if (value.trim()) params.set(field, value.trim());
     else params.delete(field);
     router.push(`${pathname}?${params.toString()}`);
   }
 
-  function clearSearch(field: "name" | "phone_number") {
-    if (field === "name") setNameInput("");
-    else setPhoneInput("");
+  function clearSearch(field: "name") {
+    setNameInput("");
     submitSearch(field, "");
   }
 
@@ -293,34 +289,7 @@ export function CustomerList({
                     ) : null}
                   </div>
                 </TableHead>
-                <TableHead>
-                  <div className="relative">
-                    <Search className="text-muted-foreground pointer-events-none absolute inset-y-0 left-0 my-auto box-content size-3.5 pl-1" />
-                    <Input
-                      value={phoneInput}
-                      onChange={(event) => setPhoneInput(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") {
-                          event.preventDefault();
-                          submitSearch("phone_number", phoneInput);
-                        }
-                      }}
-                      placeholder="Phone"
-                      aria-label="Search customers by phone number"
-                      className="h-7 border-none pr-6 pl-6 font-medium shadow-none focus-visible:ring-0"
-                    />
-                    {phoneInput ? (
-                      <button
-                        type="button"
-                        onClick={() => clearSearch("phone_number")}
-                        aria-label="Clear phone search"
-                        className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 flex items-center pr-1"
-                      >
-                        <X className="size-3.5" />
-                      </button>
-                    ) : null}
-                  </div>
-                </TableHead>
+                <TableHead>Phone</TableHead>
                 <TableHead>
                   <TableHeaderMultiSelect
                     label="Tags"

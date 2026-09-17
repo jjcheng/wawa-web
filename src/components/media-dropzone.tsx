@@ -9,16 +9,21 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const ACCEPT_BY_FORMAT: Record<string, Accept | undefined> = {
-  IMAGE: { "image/*": [] },
-  VIDEO: { "video/*": [] },
-  DOCUMENT: {
-    "application/pdf": [".pdf"],
-    "application/msword": [".doc"],
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
-    "application/vnd.ms-excel": [".xls"],
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
-    "text/csv": [".csv"],
-  },
+  IMAGE: { "image/jpeg": [".jpg", ".jpeg"], "image/png": [".png"] },
+  VIDEO: { "video/mp4": [".mp4"], "video/3gpp": [".3gp"] },
+  DOCUMENT: { "application/pdf": [".pdf"] },
+};
+
+const MAX_SIZE_BY_FORMAT: Record<string, number> = {
+  IMAGE: 5 * 1024 * 1024,
+  DOCUMENT: 16 * 1024 * 1024,
+  VIDEO: 100 * 1024 * 1024,
+};
+
+const SUPPORTED_TYPES_BY_FORMAT: Record<string, string> = {
+  IMAGE: ".jpg, .jpeg, .png (max 5 MB)",
+  DOCUMENT: ".pdf (max 16 MB)",
+  VIDEO: ".mp4, .3gp (max 100 MB)",
 };
 
 export function MediaDropzone({
@@ -33,6 +38,7 @@ export function MediaDropzone({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { getRootProps, getInputProps, isDragActive, fileRejections } = useDropzone({
     accept: ACCEPT_BY_FORMAT[format],
+    maxSize: MAX_SIZE_BY_FORMAT[format],
     maxFiles: 1,
     multiple: false,
     onDropAccepted: ([acceptedFile]) => onChange(acceptedFile ?? null),
@@ -70,6 +76,7 @@ export function MediaDropzone({
             {isDragActive ? "Drop the file here" : `Drag and drop ${format.toLowerCase()} here`}
           </p>
           <p className="text-muted-foreground text-xs">or click to browse</p>
+          <p className="text-muted-foreground text-xs">{SUPPORTED_TYPES_BY_FORMAT[format]}</p>
         </div>
       ) : null}
       {file ? (
@@ -100,7 +107,7 @@ export function MediaDropzone({
       ) : null}
       {fileRejections.length > 0 ? (
         <p className="text-destructive text-sm">
-          Select a supported {format.toLowerCase()} file.
+          Select a supported {format.toLowerCase()} file: {SUPPORTED_TYPES_BY_FORMAT[format]}.
         </p>
       ) : null}
     </div>

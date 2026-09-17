@@ -14,7 +14,7 @@ export function PhoneNumberFields({
   phoneValue,
   onPhoneChange,
   phoneId,
-  phonePlaceholder = "enter phone number",
+  phonePlaceholder = "Enter phone number",
   phoneAutoComplete,
   phoneAriaInvalid,
   phoneRequired,
@@ -60,7 +60,14 @@ export function PhoneNumberFields({
           autoComplete={phoneAutoComplete}
           placeholder={phonePlaceholder}
           value={phoneValue}
-          onChange={onPhoneChange}
+          onKeyDown={(event) => {
+            if (event.metaKey || event.ctrlKey || event.altKey || event.key.length !== 1) return;
+            if (!/\d/.test(event.key)) event.preventDefault();
+          }}
+          onChange={(event) => {
+            event.target.value = event.target.value.replace(/\D/g, "");
+            onPhoneChange?.(event);
+          }}
           maxLength={phoneMaxLength}
           className={cn("h-[36px] w-full", MEDIUM_BUTTON_HEIGHT)}
           aria-invalid={phoneAriaInvalid}

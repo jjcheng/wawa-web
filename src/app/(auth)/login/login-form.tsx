@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,17 @@ function SignInButton() {
 
 export function LoginForm({ next }: { next?: string }) {
   const [state, formAction] = useActionState<LoginState, FormData>(loginAction, {});
+  const [countryCode, setCountryCode] = useState("65");
+
+  useEffect(() => {
+    const savedCountryCode = window.localStorage.getItem("country_code");
+    if (savedCountryCode) setCountryCode(savedCountryCode);
+  }, []);
+
+  function handleCountryCodeChange(nextCountryCode: string) {
+    window.localStorage.setItem("country_code", nextCountryCode);
+    setCountryCode(nextCountryCode);
+  }
 
   return (
     <form action={formAction} className="space-y-4">
@@ -37,6 +48,8 @@ export function LoginForm({ next }: { next?: string }) {
         <PhoneNumberFields
           countryName="country_code"
           phoneName="phone_number"
+          countryValue={countryCode}
+          onCountryChange={handleCountryCodeChange}
           phoneAutoComplete="username"
           countryError={fieldError(state, "country_code")}
           phoneError={fieldError(state, "phone_number")}
@@ -50,7 +63,7 @@ export function LoginForm({ next }: { next?: string }) {
         <PasswordInput
           id="password"
           name="password"
-          placeholder="enter your password"
+          placeholder="Enter your password"
           autoComplete="current-password"
           className={MEDIUM_BUTTON_HEIGHT}
           aria-invalid={Boolean(fieldError(state, "password"))}

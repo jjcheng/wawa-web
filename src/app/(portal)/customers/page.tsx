@@ -15,14 +15,13 @@ export default async function CustomersPage({ searchParams }: PageProps<"/custom
   const requestedPageSize = typeof params.page_size === "string" ? params.page_size : "100";
   const pageSize = PAGE_SIZES.includes(requestedPageSize) ? requestedPageSize : "100";
   const name = typeof params.name === "string" ? params.name : "";
-  const phoneNumber = typeof params.phone_number === "string" ? params.phone_number : "";
   const tags = Array.isArray(params.tags)
     ? params.tags
     : typeof params.tags === "string"
       ? [params.tags]
       : [];
   const customers = await serverFetch<CustomerListResponse>("/v1/customers", {
-    query: { page: "1", page_size: pageSize, status, name, phone_number: phoneNumber, tags },
+    query: { page: "1", page_size: pageSize, status, name, tags },
   }).catch((error) => {
     if (error instanceof ApiError) return { items: [], number_of_pages: 0 };
     throw error;
@@ -34,7 +33,6 @@ export default async function CustomersPage({ searchParams }: PageProps<"/custom
         initialNumberOfPages={customers.number_of_pages ?? 1}
         name={name}
         pageSize={pageSize}
-        phoneNumber={phoneNumber}
         tags={tags}
         status={status}
       />
