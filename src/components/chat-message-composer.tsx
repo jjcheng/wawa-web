@@ -17,7 +17,7 @@ import {
 } from "@floating-ui/react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

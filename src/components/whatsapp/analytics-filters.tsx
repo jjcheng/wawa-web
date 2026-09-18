@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { useNavigationProgress } from "@/components/nav/navigation-progress";
 import { ANALYTICS_GRANULARITIES, ANALYTICS_RANGES } from "@/lib/analytics-range";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 export function AnalyticsFilters({
   range,

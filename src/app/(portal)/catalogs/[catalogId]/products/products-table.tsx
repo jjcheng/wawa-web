@@ -1,6 +1,7 @@
 "use client";
 
 import { LoadMoreButton } from "@/components/load-more-button";
+import { ProductImageStack } from "@/components/product-image-stack";
 import { TableEmptyState } from "@/components/table-empty-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -141,12 +142,7 @@ export function ProductsTable({
                   >
                     <TableCell>
                       {product.image_url ? (
-                        <img
-                          src={product.image_url}
-                          alt={product.name || product.title || "Product"}
-                          loading="lazy"
-                          className="size-15 rounded-md object-cover"
-                        />
+                        <ProductImageStack product={product} />
                       ) : (
                         "—"
                       )}

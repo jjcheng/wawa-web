@@ -27,6 +27,9 @@ export type EmbeddedSignupState = {
   status?: User["status"];
   wa_activated?: boolean;
   wa_activation_error?: string;
+  /** Set when the API did not issue an access token; tells the client where to send the user. */
+  redirectTo?: string;
+  loggedIn?: boolean;
 };
 
 function safeNextPath(value: FormDataEntryValue | null) {
@@ -145,29 +148,35 @@ export async function completeEmbeddedSignup(input: unknown): Promise<EmbeddedSi
   }
 
   const needsPassword = envelope.data?.status === "PENDING_PASSWORD";
-  const shouldUseNewSession = !masterSessionToken || needsPassword;
   const accessToken = envelope.data?.access_token;
-  if (shouldUseNewSession && !accessToken) {
-    return { message: "WhatsApp onboarding succeeded but no access token was issued." };
+
+  if (accessToken) {
+    // The API issued a token for the signed-up account: auto-login as that account.
+    if (masterSessionToken && needsPassword) {
+      cookieStore.set(
+        MASTER_SESSION_RETURN_COOKIE,
+        masterSessionToken,
+        sessionCookieOptions(MASTER_SESSION_RETURN_MAX_AGE_SECONDS),
+      );
+    } else {
+      cookieStore.delete(MASTER_SESSION_RETURN_COOKIE);
+    }
+    cookieStore.set(serverEnv.SESSION_COOKIE_NAME, accessToken, sessionCookieOptions());
+    return {
+      status: envelope.data?.status,
+      wa_activated: envelope.data?.wa_activated,
+      loggedIn: true,
+    };
   }
 
-  if (masterSessionToken && needsPassword) {
-    cookieStore.set(
-      MASTER_SESSION_RETURN_COOKIE,
-      masterSessionToken,
-      sessionCookieOptions(MASTER_SESSION_RETURN_MAX_AGE_SECONDS),
-    );
-  } else {
-    cookieStore.delete(MASTER_SESSION_RETURN_COOKIE);
-  }
-  if (shouldUseNewSession && accessToken) {
-    cookieStore.set(serverEnv.SESSION_COOKIE_NAME, accessToken, sessionCookieOptions());
+  if (needsPassword) {
+    return { message: "WhatsApp onboarding succeeded but no access token was issued." };
   }
 
   return {
     status: envelope.data?.status,
     wa_activated: envelope.data?.wa_activated,
-    wa_activation_error: envelope.data?.wa_activation_error,
+    redirectTo: masterSessionToken ? "/numbers" : "/login",
   };
 }
 

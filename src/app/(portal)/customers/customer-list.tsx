@@ -4,7 +4,7 @@ import { Info, Loader2, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import { TableEmptyState } from "@/components/table-empty-state";
 import { TableHeaderMultiSelect } from "@/components/table-header-multi-select";

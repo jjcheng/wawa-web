@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import { apiFetch } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";

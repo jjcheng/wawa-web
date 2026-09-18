@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import { PasswordStrengthIndicator } from "@/components/password-strength-indicator";
 import { Button } from "@/components/ui/button";

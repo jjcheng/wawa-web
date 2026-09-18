@@ -21,7 +21,7 @@ export default async function NewCampaignPage({
     const wabaId = businessAccount?.waba_id;
     if (wabaId) {
       const templateResponse = await serverFetch<TemplateListResponse>("/v1/wa/templates", {
-        query: { waba_id: wabaId, limit: "100" },
+        query: { waba_id: wabaId, limit: "100", status: "APPROVED" },
       });
       templates = templateResponse.items;
     }

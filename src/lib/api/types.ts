@@ -90,6 +90,7 @@ export type Product = {
   availability?: string;
   status?: string;
   image_url?: string;
+  additional_image_urls?: string[];
   [key: string]: unknown;
 };
 

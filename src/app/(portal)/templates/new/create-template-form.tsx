@@ -24,7 +24,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import { MediaDropzone } from "@/components/media-dropzone";
 import { Button } from "@/components/ui/button";

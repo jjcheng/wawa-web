@@ -3,7 +3,6 @@
 import {
   FileText,
   Gauge,
-  Inbox,
   LayoutDashboard,
   Megaphone,
   Phone,
@@ -22,7 +21,6 @@ const SECTIONS = [
     label: "Overview",
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { href: "/inbox", label: "Inbox", icon: Inbox },
     ],
   },
   {

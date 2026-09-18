@@ -2,7 +2,7 @@
 
 import { FileUp } from "lucide-react";
 import { useRef, useSyncExternalStore, type ChangeEvent } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import { Button } from "@/components/ui/button";
 

@@ -4,7 +4,7 @@ import EmojiPicker, { EmojiStyle, Theme, type EmojiClickData } from "emoji-picke
 import { ArrowDown, Check, CheckCheck, ContactRound, Info, Loader2, Phone, Reply, SmilePlus } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import {
   type ChatMessage,

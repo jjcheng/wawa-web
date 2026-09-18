@@ -12,6 +12,7 @@ import type {
   ProductListResponse,
 } from "@/lib/api/types";
 import { requireUser } from "@/lib/auth/session";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ProductsTable } from "./products-table";
 
@@ -71,7 +72,17 @@ export default async function CatalogProductsPage({
       <PageHeader
         title="Products"
         description={catalogName ? `Products in ${catalogName}.` : "Products in this catalog."}
-        action={<Button>Build Website</Button>}
+        action={
+          <Button asChild>
+            <Link
+              href={`/catalogs/${encodeURIComponent(catalogId)}/products/website`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Build website
+            </Link>
+          </Button>
+        }
       />
 
       {loadError ? (

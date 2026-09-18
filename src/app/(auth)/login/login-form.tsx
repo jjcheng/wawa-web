@@ -40,6 +40,10 @@ export function LoginForm({ next }: { next?: string }) {
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="next" value={next ?? ""} />
 
+      {state.message ? (
+        <p className="text-destructive text-sm">{state.message}</p>
+      ) : null}
+
       <div className="space-y-2">
         <Label htmlFor="phone_number">Phone number</Label>
         <PhoneNumberFields

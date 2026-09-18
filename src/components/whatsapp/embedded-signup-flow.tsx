@@ -1,10 +1,11 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import confetti from "canvas-confetti";
+import { CircleCheckIcon, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,20 @@ import { completeEmbeddedSignup } from "@/lib/auth/actions";
 import { cn, MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 
 const GRAPH_VERSION = "v26.0";
+
+function showConnectedToast() {
+  toast.success("WhatsApp account connected", {
+    description: "You're all set to start messaging your customers.",
+    icon: <CircleCheckIcon className="size-4 text-emerald-500" />,
+    duration: 6000,
+  });
+  void confetti({
+    particleCount: 100,
+    spread: 70,
+    origin: { y: 0.6 },
+    colors: ["#25D366", "#1877F2", "#34D399"],
+  });
+}
 
 type SignupSession = {
   phone_number_id?: string;
@@ -62,6 +77,7 @@ export function EmbeddedSignupFlow({
   const signupActiveRef = useRef(false);
   const [signupAborted, setSignupAborted] = useState(false);
   const [signupStarted, setSignupStarted] = useState(false);
+  const [signupError, setSignupError] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: (payload: unknown) => {
@@ -73,19 +89,21 @@ export function EmbeddedSignupFlow({
     },
     onSuccess: (result) => {
       if (result.wa_activated === false) {
+        const message =
+          result.wa_activation_error || result.message || "Meta could not activate the WhatsApp account.";
         signupActiveRef.current = false;
         isSubmittingRef.current = false;
         setSignupStarted(false);
+        setSignupError(message);
         setSignupAborted(true);
-        toast.error(
-          `${result.wa_activation_error || result.message || "Meta could not activate the WhatsApp account."} Please retry.`,
-        );
+        toast.error(`${message} Please retry.`);
         return;
       }
       if (result.message) {
         signupActiveRef.current = false;
         isSubmittingRef.current = false;
         setSignupStarted(false);
+        setSignupError(result.message);
         setSignupAborted(true);
         toast.error(result.message);
         return;
@@ -95,14 +113,22 @@ export function EmbeddedSignupFlow({
         router.push(`/set-password?next=${encodeURIComponent(destination)}`);
         return;
       }
-      toast.success("WhatsApp account connected.");
+      if (!result.loggedIn) {
+        // No access token was issued: send the user back to where they can see the result.
+        showConnectedToast();
+        router.push(result.redirectTo ?? "/login");
+        router.refresh();
+        return;
+      }
+      showConnectedToast();
       router.push(destination);
       router.refresh();
     },
-    onError: () => {
+    onError: (error) => {
       signupActiveRef.current = false;
       isSubmittingRef.current = false;
       setSignupStarted(false);
+      setSignupError(error instanceof Error ? error.message : "WhatsApp onboarding failed. Please try again.");
       setSignupAborted(true);
       toast.error("WhatsApp onboarding failed. Please try again.");
     },
@@ -194,6 +220,7 @@ export function EmbeddedSignupFlow({
     authorizationCodeRef.current = null;
     setSignupStarted(true);
     setSignupAborted(false);
+    setSignupError(null);
     if (!window.FB) {
       signupActiveRef.current = false;
       isSubmittingRef.current = false;
@@ -244,6 +271,9 @@ export function EmbeddedSignupFlow({
   if (signupAborted) {
     return (
       <div className={cn("grid gap-3 text-center", className)}>
+        {signupError ? (
+          <p className="text-destructive text-sm">{signupError}</p>
+        ) : null}
         <p className="text-destructive text-sm font-medium">
           Signup aborted, refresh the page to try again
         </p>

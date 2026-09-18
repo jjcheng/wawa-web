@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import { EditCampaignForm } from "../../campaigns/new/edit-campaign-form";
 import { apiFetch } from "@/lib/api/client";

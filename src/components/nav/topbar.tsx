@@ -3,7 +3,7 @@
 import { ExternalLink, LogOut, Menu, RefreshCw, Settings } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import { SidebarNav } from "@/components/nav/sidebar-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
