@@ -27,12 +27,12 @@ export function ViewTemplateButton({
   template,
   onDeleted,
   iconOnly = false,
-  canDelete = false,
+  isMaster = false,
 }: {
   template: Template;
   onDeleted?: () => void;
   iconOnly?: boolean;
-  canDelete?: boolean;
+  isMaster?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const components = template.components ?? [];
@@ -69,7 +69,7 @@ export function ViewTemplateButton({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+        <div className="min-h-0 flex-1 space-y-4 !overflow-y-auto overscroll-contain pr-1">
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
           {details.map((detail) => (
             <div key={detail.label} className="contents">
@@ -132,7 +132,7 @@ export function ViewTemplateButton({
             )}
           </div>
         </div>
-        {template.by_api || canDelete ? (
+        {isMaster ? (
           <DialogFooter>
             <div className="flex w-full items-center justify-between gap-2">
               {template.by_api ? (
@@ -147,7 +147,7 @@ export function ViewTemplateButton({
               ) : (
                 <span />
               )}
-              {canDelete ? (
+              {isMaster ? (
                 <DeleteTemplateButton
                   id={template.id}
                   wabaId={template.waba_id ?? ""}

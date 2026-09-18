@@ -49,6 +49,7 @@ import {
   TEMPLATE_CATEGORIES,
   TEMPLATE_LANGUAGES,
   TEMPLATE_NAME_MAX_LENGTH,
+  TEMPLATE_VARIABLE_MAX_LENGTH,
   toTemplateComponents,
   type CreateTemplateInput,
 } from "@/lib/api/schemas";
@@ -122,8 +123,13 @@ const TEMPLATE_BUTTON_TEXT_MAX_LENGTH = 25;
 const TEMPLATE_BUTTON_URL_MAX_LENGTH = 2000;
 const TEMPLATE_BUTTON_PHONE_MAX_LENGTH = 20;
 const TEMPLATE_BUTTON_OFFER_CODE_MAX_LENGTH = 20;
-const LOCATION_HEADER_PREVIEW_IMAGE_URL =
-  "https://www.onemap.gov.sg/api/staticmap/getStaticImage?layerchosen=default&zoom=17&height=450&width=450&lat=1.32&lng=103.85";
+const LOCATION_HEADER_PREVIEW_IMAGE_URL = new URL("https://maps.googleapis.com/maps/api/staticmap");
+LOCATION_HEADER_PREVIEW_IMAGE_URL.searchParams.set("center", "1.32,103.85");
+LOCATION_HEADER_PREVIEW_IMAGE_URL.searchParams.set("zoom", "17");
+LOCATION_HEADER_PREVIEW_IMAGE_URL.searchParams.set("size", "450x450");
+LOCATION_HEADER_PREVIEW_IMAGE_URL.searchParams.set("maptype", "roadmap");
+LOCATION_HEADER_PREVIEW_IMAGE_URL.searchParams.set("markers", "color:red|1.32,103.85");
+LOCATION_HEADER_PREVIEW_IMAGE_URL.searchParams.set("key", process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "");
 const HEADER_VARIABLE = "{{1}}";
 const TEMPLATE_VARIABLE_PATTERN = /\{\{\s*\d+\s*\}\}/g;
 const TEMPLATE_NAME_CHARACTER_PATTERN = /^[a-z0-9_]$/;
@@ -873,7 +879,10 @@ export function CreateTemplateForm({
     setTemplateButtons((currentButtons) =>
       currentButtons.map((button, buttonIndex) =>
         buttonIndex === index && button.type === "COPY_CODE"
-          ? { ...button, offerCode: offerCode.slice(0, TEMPLATE_BUTTON_OFFER_CODE_MAX_LENGTH) }
+          ? {
+              ...button,
+              offerCode: offerCode.replace(/[^a-zA-Z0-9]/g, "").slice(0, TEMPLATE_BUTTON_OFFER_CODE_MAX_LENGTH),
+            }
           : button,
       ),
     );
@@ -996,7 +1005,7 @@ export function CreateTemplateForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="media_sample">Header type</Label>
+        <Label htmlFor="media_sample" className="text-sm font-medium tracking-wide text-muted-foreground uppercase">Header</Label>
         <Controller
           control={control}
           name="media_sample"
@@ -1117,12 +1126,19 @@ export function CreateTemplateForm({
                     className="bg-muted/50"
                   />
                   <div className="space-y-2">
-                    <Input
-                      id={`header-variable-sample-${variable}`}
-                      aria-label={`Sample text for header variable ${variable}`}
-                      placeholder="Sample text"
-                      {...register(`header_variable_samples.${index}`)}
-                    />
+                    <div className="relative">
+                      <Input
+                        id={`header-variable-sample-${variable}`}
+                        aria-label={`Sample text for header variable ${variable}`}
+                        placeholder="Sample text"
+                        maxLength={TEMPLATE_VARIABLE_MAX_LENGTH}
+                        className="pr-12"
+                        {...register(`header_variable_samples.${index}`)}
+                      />
+                      <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
+                        {headerVariableSamples[index]?.length ?? 0}/{TEMPLATE_VARIABLE_MAX_LENGTH}
+                      </span>
+                    </div>
                     {errors.header_variable_samples?.[index] ? (
                       <p className="text-destructive text-sm">
                         {errors.header_variable_samples[index]?.message}
@@ -1136,8 +1152,8 @@ export function CreateTemplateForm({
         </div>
       ) : null}
 
-      <div className="space-y-2">
-        <Label htmlFor="body_text">Body</Label>
+      <div className="space-y-2 pt-3">
+        <Label htmlFor="body_text" className="text-sm font-medium tracking-wide text-muted-foreground uppercase">Body</Label>
         <div className="relative">
           <Textarea
             id="body_text"
@@ -1218,7 +1234,7 @@ export function CreateTemplateForm({
         ) : null}
         {bodyVariables.length > 0 ? (
           <div className="space-y-2">
-            <p className="text-sm font-medium">Body variable samples</p>
+            <p className="text-sm font-medium">Body variable examples</p>
             {bodyVariables.map((variable, index) => (
               <div key={variable} className="grid gap-2 sm:grid-cols-[6.5rem_minmax(0,1fr)]">
                 <Input
@@ -1229,12 +1245,19 @@ export function CreateTemplateForm({
                   className="bg-muted/50"
                 />
                 <div className="space-y-2">
-                  <Input
-                    id={`body-variable-sample-${variable}`}
-                    aria-label={`Sample text for body variable ${variable}`}
-                    placeholder="Sample text"
-                    {...register(`body_variable_samples.${index}`)}
-                  />
+                    <div className="relative">
+                      <Input
+                        id={`body-variable-sample-${variable}`}
+                        aria-label={`Sample text for body variable ${variable}`}
+                        placeholder="Sample text"
+                        maxLength={TEMPLATE_VARIABLE_MAX_LENGTH}
+                        className="pr-12"
+                        {...register(`body_variable_samples.${index}`)}
+                      />
+                      <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
+                        {bodyVariableSamples[index]?.length ?? 0}/{TEMPLATE_VARIABLE_MAX_LENGTH}
+                      </span>
+                    </div>
                   {errors.body_variable_samples?.[index] ? (
                     <p className="text-destructive text-sm">
                       {errors.body_variable_samples[index]?.message}
@@ -1247,8 +1270,8 @@ export function CreateTemplateForm({
         ) : null}
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="footer_text">Footer (optional)</Label>
+      <div className="space-y-2 pt-3">
+        <Label htmlFor="footer_text" className="text-sm font-medium tracking-wide text-muted-foreground uppercase">Footer (optional)</Label>
         <div className="relative">
           <Input
             id="footer_text"
@@ -1266,8 +1289,8 @@ export function CreateTemplateForm({
         ) : null}
       </div>
 
-      <div className="space-y-2">
-        <p className="text-sm font-medium">Buttons</p>
+      <div className="pt-3 space-y-2">
+        <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">Buttons</p>
         <p className="text-muted-foreground text-sm">
           Create buttons that let customers respond to your message or take action. You can add up
           to ten buttons. If you add more than three buttons, they will appear in a list.
@@ -1427,6 +1450,10 @@ export function CreateTemplateForm({
                           className="pr-12"
                           aria-label={`Button ${index + 1} offer code`}
                           placeholder="Enter offer code"
+                          onKeyDown={(event) => {
+                            if (event.metaKey || event.ctrlKey || event.altKey || event.key.length !== 1) return;
+                            if (!/[a-zA-Z0-9]/.test(event.key)) event.preventDefault();
+                          }}
                           onChange={(event) =>
                             updateTemplateButtonOfferCode(index, event.target.value)
                           }
@@ -1562,7 +1589,7 @@ export function CreateTemplateForm({
             ) : mediaSample === "LOCATION" ? (
               <div className="-mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)] overflow-hidden bg-muted/50 dark:bg-white/10">
                 <Image
-                  src={LOCATION_HEADER_PREVIEW_IMAGE_URL}
+                  src={LOCATION_HEADER_PREVIEW_IMAGE_URL.toString()}
                   alt="Location map preview"
                   width={450}
                   height={450}

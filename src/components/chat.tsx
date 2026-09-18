@@ -1,7 +1,7 @@
 "use client";
 
 import EmojiPicker, { EmojiStyle, Theme, type EmojiClickData } from "emoji-picker-react";
-import { ArrowDown, Check, CheckCheck, ContactRound, Info, Loader2, MapPin, Phone, Reply, SmilePlus } from "lucide-react";
+import { ArrowDown, Check, CheckCheck, ContactRound, Info, Loader2, Phone, Reply, SmilePlus } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -82,8 +82,19 @@ function messageBody(message: Message) {
     if (typeof text.body === "string") return text.body;
   }
   if (message.type === "template" && typeof payload.template === "object" && payload.template) {
-    const template = payload.template as { name?: unknown };
-    if (typeof template.name === "string") return template.name;
+    const template = payload.template as {
+      name?: unknown;
+      components?: { type?: unknown; text?: unknown; parameters?: { text?: unknown }[] }[];
+    };
+    const templateText = template.components
+      ?.flatMap((component) => {
+        const type = typeof component.type === "string" ? component.type.toUpperCase() : "";
+        const isBodyLike = type === "BODY" || type === "HEADER" || type === "FOOTER";
+        return isBodyLike && typeof component.text === "string" ? [component.text] : [];
+      })
+      .join(" ");
+    if (templateText) return templateText;
+    return typeof template.name === "string" ? template.name : "Template message";
   }
   if (message.type === "interactive" && typeof payload.interactive === "object" && payload.interactive) {
     const interactive = payload.interactive as {
@@ -101,6 +112,13 @@ function messageBody(message: Message) {
     if (typeof button.payload === "string") return button.payload;
   }
   return message.type;
+}
+
+function buttonResponseContextText(message: Message) {
+  const text = messageBody(message).trim();
+  if (!text) return undefined;
+
+  return text;
 }
 
 function templateDetails(message: Message) {
@@ -221,6 +239,23 @@ function formatWhatsAppText(value: string) {
   return parts;
 }
 
+function locationStaticMapUrl(location: { latitude?: number; longitude?: number } | null | undefined) {
+  const latitude = Number(location?.latitude ?? 1.32);
+  const longitude = Number(location?.longitude ?? 103.85);
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  if (!apiKey) return null;
+
+  const url = new URL("https://maps.googleapis.com/maps/api/staticmap");
+  const coordinates = `${latitude},${longitude}`;
+  url.searchParams.set("center", coordinates);
+  url.searchParams.set("zoom", "17");
+  url.searchParams.set("size", "480x220");
+  url.searchParams.set("maptype", "roadmap");
+  url.searchParams.set("markers", `color:red|${coordinates}`);
+  url.searchParams.set("key", apiKey);
+  return url.toString();
+}
+
 function toIdString(val: unknown): string | undefined {
   if (typeof val === "string" && val.trim() !== "") return val.trim();
   if (typeof val === "number" && !isNaN(val)) return String(val);
@@ -279,6 +314,26 @@ function reactionTargetId(message: Message) {
     toIdString(context?.id) ??
     toIdString(context?.wa_message_id) ??
     toIdString(context?.message_id)
+  );
+}
+
+function buttonResponseTargetId(message: Message) {
+  if (message.type !== "button") return undefined;
+  const payload = message.payload as Record<string, unknown> | undefined;
+  if (!payload) return undefined;
+  const button = (typeof payload.button === "object" && payload.button
+    ? payload.button
+    : undefined) as Record<string, unknown> | undefined;
+  const context = (typeof payload.context === "object" && payload.context
+    ? payload.context
+    : undefined) as Record<string, unknown> | undefined;
+
+  return (
+    toIdString(context?.id) ??
+    toIdString(context?.wa_message_id) ??
+    toIdString(context?.message_id) ??
+    toIdString(button?.message_id) ??
+    toIdString(button?.wa_message_id)
   );
 }
 
@@ -475,7 +530,15 @@ function MessageInfoPopover({
   );
 }
 
-function MessageContent({ message }: { message: Message }) {
+function MessageContent({
+  message,
+  onButtonResponseClick,
+  buttonResponseContext,
+}: {
+  message: Message;
+  onButtonResponseClick?: () => void;
+  buttonResponseContext?: string;
+}) {
   const payload = message.payload;
   const media = payload[message.type] as
     | { id?: string; mime_type?: string; caption?: string; filename?: string; url?: string }
@@ -533,11 +596,23 @@ function MessageContent({ message }: { message: Message }) {
           ) : null}
         </div>
       ) : button ? (
-        <div className="space-y-1 rounded-md bg-black/5 p-2 dark:bg-white/10">
+        <button
+          type="button"
+          onClick={onButtonResponseClick}
+          disabled={!onButtonResponseClick}
+          className="w-full space-y-1 rounded-md text-left disabled:cursor-default"
+        >
+          {buttonResponseContext ? (
+            <p
+              className="border-l-2 border-[#06cf9c] pl-2 mb-2 text-xs text-[#54656f] dark:text-[#aebac1]"
+              style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}
+            >
+              {buttonResponseContext}
+            </p>
+          ) : null}
           <p className="text-xs font-medium uppercase tracking-wide opacity-70">Button response</p>
           <p className="font-medium whitespace-pre-wrap">{formatWhatsAppText(button.text)}</p>
-          {button.payload ? <p className="text-xs opacity-70">{button.payload}</p> : null}
-        </div>
+        </button>
       ) : (media?.id || attachmentUrl) && (message.type === "image" || message.type === "sticker" || message.type === "video" || message.type === "audio" || message.type === "document") ? (
         <>
           <ChatMediaViewer
@@ -555,9 +630,20 @@ function MessageContent({ message }: { message: Message }) {
           ) : null}
         </>
       ) : location?.latitude !== undefined && location.longitude !== undefined ? (
-        <a href={`https://www.google.com/maps?q=${location.latitude},${location.longitude}`} target="_blank" rel="noreferrer" className="flex items-start gap-3 rounded-md bg-black/5 p-2 dark:bg-white/10">
-          <MapPin className="mt-0.5 size-5 shrink-0" />
-          <span><span className="block text-sm font-medium">{location.name || "Location"}</span>{location.address ? <span className="mt-0.5 block text-xs opacity-70">{location.address}</span> : null}</span>
+        <a href={`https://www.google.com/maps?q=${location.latitude},${location.longitude}`} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-md">
+          {(() => {
+            const staticMapUrl = locationStaticMapUrl(location);
+            return staticMapUrl ? (
+              <img
+                src={staticMapUrl}
+                alt="Location map"
+                className="h-28 w-full object-cover"
+              />
+            ) : null;
+          })()}
+          <div className="flex items-start gap-3 py-1 px-1">
+            <span><span className="block text-sm font-medium">{location.name || "Location"}</span>{location.address ? <span className="mt-0.5 block text-xs opacity-70">{location.address}</span> : null}</span>
+          </div>
         </a>
       ) : contacts?.length ? (
         <div className="space-y-2">{contacts.map((contact, index) => <div key={index} className="rounded-md bg-black/5 p-3 dark:bg-white/10"><div className="flex items-center gap-2"><ContactRound className="size-5" /><p className="text-sm font-medium">{contact.name?.formatted_name || "Contact"}</p></div>{contact.phones?.map((phone, phoneIndex) => <p key={phoneIndex} className="mt-2 flex items-center gap-2 text-sm"><Phone className="size-3.5" />{phone.phone}</p>)}</div>)}</div>
@@ -590,9 +676,11 @@ export function Chat({
   const [showEmojis, setShowEmojis] = useState(false);
   const documentHeightRef = useRef(0);
   const menuRef = useRef<HTMLDivElement>(null);
+  const messageRefs = useRef(new Map<string, HTMLDivElement>());
   const realtimeConnectedRef = useRef(false);
   const isNearBottomRef = useRef(true);
   const [showScrollToLatest, setShowScrollToLatest] = useState(false);
+  const [flashedMessageKey, setFlashedMessageKey] = useState<string | null>(null);
 
   function updateScrollPosition() {
     const distanceFromBottom = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
@@ -826,6 +914,39 @@ export function Chat({
     }
   }
   const visibleMessages = allMessages.filter(isDisplayableMessage);
+
+  function buttonResponseTargetMessage(message: Message) {
+    const targetId = buttonResponseTargetId(message);
+    if (!targetId) return undefined;
+    return allMessages.find((candidate) => {
+      const payload = candidate.payload as Record<string, unknown> | undefined;
+      return (
+        String(candidate.id) === targetId ||
+        candidate.wa_message_id?.trim() === targetId ||
+        toIdString(payload?.id) === targetId ||
+        toIdString(payload?.wa_message_id) === targetId ||
+        toIdString(payload?.message_id) === targetId
+      );
+    });
+  }
+
+  function scrollToButtonResponseTarget(message: Message) {
+    const targetMessage = buttonResponseTargetMessage(message);
+    if (!targetMessage) {
+      toast.error("Message not loaded in the current window");
+      return;
+    }
+    const targetKey = targetMessage.wa_message_id?.trim() || String(targetMessage.id);
+    const targetElement = messageRefs.current.get(targetKey);
+    if (!targetElement) {
+      toast.error("Message not loaded in the current window");
+      return;
+    }
+    targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+    setFlashedMessageKey(targetKey);
+    window.setTimeout(() => setFlashedMessageKey(null), 1_000);
+  }
+
   const messageGroups = groupMessagesByDate(visibleMessages);
   const emojiPickerTheme = resolvedTheme === "dark" ? Theme.DARK : Theme.LIGHT;
 
@@ -851,7 +972,12 @@ export function Chat({
           {group.messages.map((message) => (
             <div
               key={message.id}
-              className={`mb-4 flex flex-col ${message.sending ? "items-end" : "items-start"}`}
+              ref={(element) => {
+                const messageKey = message.wa_message_id?.trim() || String(message.id);
+                if (element) messageRefs.current.set(messageKey, element);
+                else messageRefs.current.delete(messageKey);
+              }}
+              className={`mb-4 flex flex-col rounded-lg transition-colors ${message.sending ? "items-end" : "items-start"} ${flashedMessageKey === (message.wa_message_id?.trim() || String(message.id)) ? "bg-yellow-200/70 dark:bg-yellow-400/20" : ""}`}
             >
               <div
                 className={`flex w-fit max-w-[80%] flex-col ${
@@ -865,14 +991,24 @@ export function Chat({
                     setMenu({ message, x: event.clientX, y: event.clientY });
                   }}
                   className={
-                    message.type === "sticker" || message.type === "template"
+                    message.type === "message" || message.type === "sticker" || message.type === "template"
                       ? "relative mb-1 w-full text-base leading-[1.35]"
                       : message.sending
-                        ? "relative mb-1 min-w-0 w-full [overflow-wrap:anywhere] rounded-[7.5px] rounded-tr-none border border-[#edf0f1] bg-[#d9fdd3] px-2 py-1.5 text-base leading-[1.35] text-[#111b21] dark:border-[#087663] dark:bg-[#005c4b] dark:text-[#e9edef]"
-                        : "relative mb-1 min-w-0 w-full [overflow-wrap:anywhere] rounded-[7.5px] rounded-tl-none border border-[#edf0f1] bg-white px-2 py-1.5 text-base leading-[1.35] text-[#111b21] dark:border-[#314047] dark:bg-[#202c33] dark:text-[#e9edef]"
+                        ? "relative mb-1.5 min-w-0 w-full [overflow-wrap:anywhere] rounded-[7.5px] rounded-tr-none border border-[#edf0f1] bg-[#d9fdd3] px-1.5 py-1.5 text-base leading-[1.35] text-[#111b21] dark:border-[#087663] dark:bg-[#005c4b] dark:text-[#e9edef]"
+                        : "relative mb-1.5 min-w-0 w-full [overflow-wrap:anywhere] rounded-[7.5px] rounded-tl-none border border-[#edf0f1] bg-white px-1.5 py-1.5 text-base leading-[1.35] text-[#111b21] dark:border-[#314047] dark:bg-[#202c33] dark:text-[#e9edef]"
                   }
                 >
-                  <MessageContent message={message} />
+                  <MessageContent
+                    message={message}
+                    onButtonResponseClick={message.type === "button" ? () => scrollToButtonResponseTarget(message) : undefined}
+                    buttonResponseContext={(() => {
+                      const targetMessage = buttonResponseTargetMessage(message);
+                      if (!targetMessage) return undefined;
+                      const text = buttonResponseContextText(targetMessage);
+                      if (!text) return undefined;
+                      return text.length > 140 ? `${text.slice(0, 140)}...` : text;
+                    })()}
+                  />
                 </div>
                 {(() => {
                   const payloadId = toIdString((message.payload as Record<string, unknown> | undefined)?.id);

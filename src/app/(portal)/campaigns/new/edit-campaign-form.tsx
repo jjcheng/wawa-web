@@ -1,9 +1,10 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { Copy, CornerUpLeft, FileText, Globe, ImageIcon, Loader2, Phone, Video } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -14,7 +15,6 @@ import {
   type GoogleLocationSelection,
 } from "@/components/google-location-input";
 import { MediaDropzone } from "@/components/media-dropzone";
-import { TemplateRawPreview } from "@/components/template-raw-preview";
 import {
   TemplateVariableInput,
   type CustomerParameterSource,
@@ -38,6 +38,101 @@ import type {
 import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 
 const SCHEDULES = ["Send now", "Send later"] as const;
+const GOOGLE_STATIC_MAPS_URL = "https://maps.googleapis.com/maps/api/staticmap";
+
+function subscribeToLocationSnapshot() {
+  return () => {};
+}
+
+function isLocalhostSnapshot() {
+  return ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+}
+
+function serverIsLocalhostSnapshot() {
+  return false;
+}
+
+function highlightPreviewText(value: string, highlightedValue?: string) {
+  if (!highlightedValue) return value;
+  const index = value.indexOf(highlightedValue);
+  if (index < 0) return value;
+  return (
+    <>
+      {value.slice(0, index)}
+      <mark className="rounded bg-yellow-300 px-0.5 text-black ring-2 ring-yellow-400">
+        {highlightedValue}
+      </mark>
+      {value.slice(index + highlightedValue.length)}
+    </>
+  );
+}
+
+function previewText(value: string, highlightedValue?: string) {
+  const parts: ReactNode[] = [];
+  let remaining = value;
+  let key = 0;
+  while (remaining) {
+    if (highlightedValue && remaining.startsWith(highlightedValue)) {
+      parts.push(
+        <mark key={key++} className="rounded bg-yellow-300 px-0.5 text-black ring-2 ring-yellow-400">
+          {highlightedValue}
+        </mark>,
+      );
+      remaining = remaining.slice(highlightedValue.length);
+      continue;
+    }
+    const monospaceMarker = remaining.startsWith("```") ? "```" : remaining.startsWith("``") ? "``" : null;
+    if (monospaceMarker) {
+      const closingIndex = remaining.indexOf(monospaceMarker, monospaceMarker.length);
+      if (closingIndex >= 0) {
+        parts.push(
+          <code key={key++} className="rounded bg-black/10 px-1 font-mono text-[0.9em] dark:bg-white/10">
+            {highlightPreviewText(remaining.slice(monospaceMarker.length, closingIndex), highlightedValue)}
+          </code>,
+        );
+        remaining = remaining.slice(closingIndex + monospaceMarker.length);
+        continue;
+      }
+    }
+    const marker = remaining[0];
+    if (["*", "_", "~"].includes(marker)) {
+      const closingIndex = remaining.indexOf(marker, 1);
+      if (closingIndex > 1) {
+        const text = remaining.slice(1, closingIndex);
+        parts.push(
+          marker === "*" ? <strong key={key++}>{highlightPreviewText(text, highlightedValue)}</strong> : marker === "_" ? <em key={key++}>{highlightPreviewText(text, highlightedValue)}</em> : <del key={key++}>{highlightPreviewText(text, highlightedValue)}</del>,
+        );
+        remaining = remaining.slice(closingIndex + 1);
+        continue;
+      }
+    }
+    const nextMarker = remaining.search(/[\*_~`]/);
+    const length = nextMarker <= 0 ? 1 : nextMarker;
+    parts.push(
+      <span key={key++}>{highlightPreviewText(remaining.slice(0, length), highlightedValue)}</span>,
+    );
+    remaining = remaining.slice(length);
+  }
+  return parts;
+}
+
+function replacePreviewVariables(value: string, values: Record<string, string>) {
+  return value.replace(/{{\s*([^}]+?)\s*}}/g, (match, variable: string) => values[variable.trim()]?.trim() || match);
+}
+
+function locationPreviewImageUrl(location: GoogleLocationSelection | null) {
+  const latitude = location?.latitude ?? 1.32;
+  const longitude = location?.longitude ?? 103.85;
+  const url = new URL(GOOGLE_STATIC_MAPS_URL);
+  const coordinates = `${latitude},${longitude}`;
+  url.searchParams.set("center", coordinates);
+  url.searchParams.set("zoom", "17");
+  url.searchParams.set("size", "450x450");
+  url.searchParams.set("maptype", "roadmap");
+  url.searchParams.set("markers", `color:red|${coordinates}`);
+  url.searchParams.set("key", process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "");
+  return url.toString();
+}
 
 type EditCampaignInput = {
   name: string;
@@ -100,7 +195,7 @@ function buttonInputs(component?: Record<string, unknown>): TemplateButtonInput[
         buttonIndex: index,
         key: `button:${index}:${variable}`,
         label,
-        placeholder: `Enter ${variable}`,
+        placeholder: `Enter variable {{${variable}}}`,
         variable,
       }));
     }
@@ -283,6 +378,11 @@ export function EditCampaignForm({
   templates: Template[];
 }) {
   const router = useRouter();
+  const isLocalhost = useSyncExternalStore(
+    subscribeToLocationSnapshot,
+    isLocalhostSnapshot,
+    serverIsLocalhostSnapshot,
+  );
   const {
     register,
     handleSubmit,
@@ -300,6 +400,7 @@ export function EditCampaignForm({
       send_date: "",
     },
   });
+  const campaignName = useWatch({ control, name: "name" }) ?? "";
   const schedule = useWatch({ control, name: "schedule" });
   const sendDate = useWatch({ control, name: "send_date" });
   const selectedCustomerIds = useWatch({ control, name: "customer_ids" });
@@ -313,6 +414,9 @@ export function EditCampaignForm({
   );
   const buttonsComponent = selectedTemplate?.components?.find(
     (component) => String(component.type ?? "").toUpperCase() === "BUTTONS",
+  );
+  const footerComponent = selectedTemplate?.components?.find(
+    (component) => String(component.type ?? "").toUpperCase() === "FOOTER",
   );
   const headerFormat = String(headerComponent?.format ?? "TEXT").toUpperCase();
   const headerExampleHandle = (headerComponent?.example as { header_handle?: string[] } | undefined)
@@ -328,18 +432,36 @@ export function EditCampaignForm({
     Record<string, CustomerParameterSource>
   >({});
   const [headerFile, setHeaderFile] = useState<File | null>(null);
+  const [previewMediaUrl, setPreviewMediaUrl] = useState<string | null>(null);
   const [headerLocation, setHeaderLocation] = useState("");
   const [headerLocationDetails, setHeaderLocationDetails] =
     useState<GoogleLocationSelection | null>(null);
   const [validationAttempted, setValidationAttempted] = useState(false);
   const [highlightedVariable, setHighlightedVariable] = useState<{
     name: string;
+    component: "header" | "body";
     occurrenceIndexes: number[];
   } | null>(null);
   const [highlightedButton, setHighlightedButton] = useState<{
     index: number;
     label: string;
   } | null>(null);
+
+  useEffect(() => {
+    if (!headerFile) {
+      queueMicrotask(() => setPreviewMediaUrl(null));
+      return;
+    }
+    const url = URL.createObjectURL(headerFile);
+    let active = true;
+    queueMicrotask(() => {
+      if (active) setPreviewMediaUrl(url);
+    });
+    return () => {
+      active = false;
+      URL.revokeObjectURL(url);
+    };
+  }, [headerFile]);
   const selectedCustomers = customers.filter((customer) =>
     selectedCustomerIds.includes(customer.id),
   );
@@ -352,22 +474,52 @@ export function EditCampaignForm({
       ? (variableValues[key] ?? "")
       : customerParameterValue(previewCustomer, source);
   };
-  const previewVariableSubstitutions = [
-    ...headerVariables.map((variable) => ({
-      name: variable,
-      occurrenceIndexes: variableOccurrenceIndexes(
-        selectedTemplate,
-        headerComponent,
-        variable,
+  const headerPreviewValues = Object.fromEntries(
+    headerVariables.map((variable) => [variable, resolvedVariableValue(variable)]),
+  );
+  const bodyPreviewValues = Object.fromEntries(
+    bodyVariables.map((variable) => [variable, resolvedVariableValue(`body:${variable}`)]),
+  );
+  const previewValues = Object.fromEntries(
+    [...Object.entries(headerPreviewValues), ...Object.entries(bodyPreviewValues)],
+  );
+  const highlightedHeaderValue =
+    highlightedVariable?.component === "header"
+      ? headerPreviewValues[highlightedVariable.name]?.trim() || `{{${highlightedVariable.name}}}`
+      : undefined;
+  const highlightedBodyValue =
+    highlightedVariable?.component === "body"
+      ? bodyPreviewValues[highlightedVariable.name]?.trim() || `{{${highlightedVariable.name}}}`
+      : undefined;
+  const previewButtons = Array.isArray(buttonsComponent?.buttons)
+    ? buttonsComponent.buttons.flatMap((item) => {
+        if (!item || typeof item !== "object") return [];
+        const button = item as Record<string, unknown>;
+        const type = String(button.type ?? "").toUpperCase();
+        const text = typeof button.text === "string" ? button.text : "Copy offer code";
+        return [{ type, text: replacePreviewVariables(text, previewValues) }];
+      })
+    : [];
+  const previewJson = {
+    name: campaignName.trim(),
+    send_date: schedule === "Send later" && sendDate ? new Date(sendDate).toISOString() : null,
+    wa_template_id: selectedTemplateId,
+    send_template: {
+      components: buildSendComponents(
+        selectedTemplate?.send_components,
+        variableValues,
+        variableSources,
+        previewCustomer,
+        headerVariables,
+        bodyVariables,
+        buttons,
+        undefined,
+        headerLocationDetails,
       ),
-      value: resolvedVariableValue(variable),
-    })),
-    ...bodyVariables.map((variable) => ({
-      name: variable,
-      occurrenceIndexes: variableOccurrenceIndexes(selectedTemplate, bodyComponent, variable),
-      value: resolvedVariableValue(`body:${variable}`),
-    })),
-  ];
+    },
+    customer_ids: selectedCustomerIds,
+  };
+  const previewJsonText = JSON.stringify(previewJson, null, 2);
   const variableKeys = [
     ...headerVariables,
     ...bodyVariables.map((variable) => `body:${variable}`),
@@ -535,12 +687,21 @@ export function EditCampaignForm({
     }
   }
 
+  async function copyPreviewJson() {
+    try {
+      await navigator.clipboard.writeText(previewJsonText);
+      toast.success("JSON copied.");
+    } catch {
+      toast.error("Could not copy JSON.");
+    }
+  }
+
   return (
     <form
       onSubmit={handleSubmit(submitCampaign)}
-      className="space-y-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:space-y-0 lg:gap-x-6"
+      className="grid items-start gap-6 md:grid-cols-[minmax(0,28rem)_20rem] lg:grid-cols-[minmax(0,34rem)_22rem] xl:grid-cols-[minmax(0,40rem)_22rem] 2xl:grid-cols-[minmax(0,46rem)_22rem]"
     >
-      <div className="max-w-xl space-y-4">
+      <div className="max-w-md space-y-4 lg:max-w-[34rem] xl:max-w-[40rem] 2xl:max-w-[46rem]">
         <div className="space-y-2">
           <Label htmlFor="name">Campaign name</Label>
           <Input
@@ -653,17 +814,17 @@ export function EditCampaignForm({
           ) : null}
           {headerNeedsInput ? (
             <div className="space-y-3 pt-2">
-              <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
                 Header
               </p>
               {mediaHeader ? (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <Label>{headerFormat}</Label>
+                    <Label>{headerFormat[0]}{headerFormat.slice(1).toLowerCase()}</Label>
                     {headerExampleHandle ? (
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         size="xs"
                         onClick={async () => {
                           try {
@@ -775,6 +936,7 @@ export function EditCampaignForm({
                       onClick={() => {
                         setHighlightedVariable({
                           name: variable,
+                          component: "header",
                           occurrenceIndexes: variableOccurrenceIndexes(
                             selectedTemplate,
                             headerComponent,
@@ -812,7 +974,7 @@ export function EditCampaignForm({
                           [variable]: value,
                         }))
                       }
-                      placeholder={`Enter ${variable}`}
+                      placeholder={`Enter variable {{${variable}}}`}
                     />
                     {validationAttempted && missingVariableKeys.has(variable) ? (
                       <p className="text-destructive text-sm">
@@ -829,8 +991,8 @@ export function EditCampaignForm({
             </div>
           ) : null}
           {bodyVariables.length > 0 ? (
-            <div className="space-y-3 pt-2">
-              <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+            <div className="space-y-3 pt-5">
+              <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
                 Body
               </p>
               {bodyVariables.map((variable, index) => {
@@ -852,6 +1014,7 @@ export function EditCampaignForm({
                       onClick={() => {
                         setHighlightedVariable({
                           name: variable,
+                          component: "body",
                           occurrenceIndexes: variableOccurrenceIndexes(
                             selectedTemplate,
                             bodyComponent,
@@ -889,7 +1052,7 @@ export function EditCampaignForm({
                           [key]: value,
                         }))
                       }
-                      placeholder={`Enter ${variable}`}
+                      placeholder={`Enter variable {{${variable}}}`}
                     />
                     {validationAttempted && missingVariableKeys.has(key) ? (
                       <p className="text-destructive text-sm">
@@ -906,8 +1069,8 @@ export function EditCampaignForm({
             </div>
           ) : null}
           {buttons.length > 0 ? (
-            <div className="space-y-3 pt-2">
-              <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+            <div className="space-y-3 pt-5">
+              <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
                 Buttons
               </p>
               {buttons.map((button) => {
@@ -955,6 +1118,9 @@ export function EditCampaignForm({
                         variableSources[button.key] ?? "custom",
                       )}
                       maxLength={maxLen}
+                      alphanumericOnly={
+                        button.variable === "code" || param?.type.toLowerCase() === "coupon_code"
+                      }
                       onSourceChange={(source) =>
                         setVariableSources((currentSources) => ({
                           ...currentSources,
@@ -990,43 +1156,77 @@ export function EditCampaignForm({
           {campaignId ? "Save campaign" : "Start campaign"}
         </Button>
       </div>
-      {(selectedTemplate?.raw_html || selectedTemplate?.raw_dark_html) ? (
+      {selectedTemplate ? (
         <div className="min-w-0 self-start lg:col-start-2 lg:row-start-1">
-          <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
+          <p className="mb-1 text-sm font-medium tracking-wide">
             Preview
           </p>
-          {selectedTemplate.raw_html &&
-          selectedTemplate.raw_dark_html &&
-          selectedTemplate.raw_html !== selectedTemplate.raw_dark_html ? (
-            <>
-              <div className="dark:hidden">
-                <TemplateRawPreview
-                  html={selectedTemplate.raw_html}
-                  highlightedVariable={highlightedVariable}
-                  variableSubstitutions={previewVariableSubstitutions}
-                  highlightedButton={highlightedButton}
-                  location={headerLocationDetails}
+          <div className="border-border max-w-sm overflow-hidden rounded-[7.5px] border bg-white px-3 pt-2 text-sm text-[#111b21] shadow-sm dark:bg-[#202c33] dark:text-[#e9edef]">
+            {headerFormat === "IMAGE" && (previewMediaUrl || headerExampleHandle) ? (
+              <div className="-mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={previewMediaUrl || headerExampleHandle} alt="Template header" className="block h-auto max-h-56 w-full rounded-none object-contain" />
+              </div>
+            ) : headerFormat === "VIDEO" && (previewMediaUrl || headerExampleHandle) ? (
+              <div className="-mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)]">
+                <video
+                  src={previewMediaUrl || headerExampleHandle}
+                  controls
+                  preload="metadata"
+                  className="block h-auto max-h-56 w-full rounded-none object-contain"
                 />
               </div>
-              <div className="hidden dark:block">
-                <TemplateRawPreview
-                  html={selectedTemplate.raw_dark_html}
-                  highlightedVariable={highlightedVariable}
-                  variableSubstitutions={previewVariableSubstitutions}
-                  highlightedButton={highlightedButton}
-                  location={headerLocationDetails}
-                />
+            ) : headerFormat === "DOCUMENT" && (previewMediaUrl || headerExampleHandle) ? (
+              <div className="-mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)]">
+                <iframe src={previewMediaUrl || headerExampleHandle} title="Template header document" className="block h-56 w-full border-0" />
               </div>
-            </>
-          ) : (
-            <TemplateRawPreview
-              html={selectedTemplate.raw_html || selectedTemplate.raw_dark_html || ""}
-              highlightedVariable={highlightedVariable}
-              variableSubstitutions={previewVariableSubstitutions}
-              highlightedButton={highlightedButton}
-              location={headerLocationDetails}
-            />
-          )}
+            ) : headerFormat === "IMAGE" ? (
+              <div className="bg-muted/70 text-muted-foreground -mx-3 -mt-2 mb-2 flex min-h-24 w-[calc(100%+1.5rem)] items-center justify-center gap-3 rounded-none px-3 py-4 text-center text-sm dark:bg-white/10"><ImageIcon className="size-5 shrink-0" /><span>Sample image</span></div>
+            ) : headerFormat === "VIDEO" ? (
+              <div className="bg-muted/70 text-muted-foreground -mx-3 -mt-2 mb-2 flex min-h-24 w-[calc(100%+1.5rem)] items-center justify-center gap-3 rounded-none px-3 py-4 text-sm dark:bg-white/10"><Video className="size-5 shrink-0" /><span>Sample video</span></div>
+            ) : headerFormat === "DOCUMENT" ? (
+              <div className="bg-muted/70 text-muted-foreground -mx-3 -mt-2 mb-2 flex min-h-24 w-[calc(100%+1.5rem)] items-center justify-center gap-3 rounded-none px-3 py-4 text-sm dark:bg-white/10"><FileText className="size-5 shrink-0" /><span className="min-w-0 truncate">Sample document</span></div>
+            ) : headerFormat === "LOCATION" ? (
+              <div className="-mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)] overflow-hidden bg-muted/50 dark:bg-white/10">
+                <Image
+                  src={locationPreviewImageUrl(headerLocationDetails)}
+                  alt="Location map preview"
+                  width={450}
+                  height={450}
+                  unoptimized
+                  className="h-38 w-full object-cover"
+                />
+                <div className="space-y-0.5 px-3 py-2">
+                  <p className="font-medium">{headerLocationDetails?.name || "Location name"}</p>
+                  <p className="text-xs text-[#667781] dark:text-[#aebac1]">
+                    {headerLocationDetails?.address || "Location address"}
+                  </p>
+                </div>
+              </div>
+            ) : typeof headerComponent?.text === "string" ? (
+              <p className="mb-1.5 font-medium whitespace-pre-wrap break-words">{previewText(replacePreviewVariables(headerComponent.text, headerPreviewValues), highlightedHeaderValue)}</p>
+            ) : null}
+            <p className="whitespace-pre-wrap break-words">{previewText(replacePreviewVariables(typeof bodyComponent?.text === "string" ? bodyComponent.text : "", bodyPreviewValues), highlightedBodyValue)}</p>
+            {typeof footerComponent?.text === "string" ? <p className="mt-2 text-xs whitespace-pre-wrap text-[#667781] dark:text-[#aebac1]">{previewText(footerComponent.text)}</p> : null}
+            {previewButtons.length > 0 ? <div className="mt-2 -mx-3 divide-y divide-black/10 border-t border-black/10 text-[#008f72] dark:divide-white/10 dark:border-white/10 dark:text-[#53bdeb]">{previewButtons.map((button, index) => {
+              const Icon = button.type === "URL" ? Globe : button.type === "PHONE_NUMBER" ? Phone : button.type === "COPY_CODE" ? Copy : CornerUpLeft;
+              return <div key={`${button.type}-${index}`} className={`flex items-center justify-center gap-2 px-3 py-3 text-base font-medium ${highlightedButton?.index === index ? "bg-yellow-100 text-black ring-2 ring-yellow-400 ring-inset" : ""}`}><Icon className="size-4" />{button.text}</div>;
+            })}</div> : null}
+          </div>
+          {isLocalhost ? (
+            <div className="mt-2 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <Label>JSON</Label>
+                <Button type="button" variant="ghost" size="sm" onClick={copyPreviewJson}>
+                  <Copy className="size-4" />
+                  Copy
+                </Button>
+              </div>
+              <pre className="bg-muted/30 max-h-120 overflow-auto rounded-lg border p-3 text-xs whitespace-pre-wrap">
+                {previewJsonText}
+              </pre>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </form>

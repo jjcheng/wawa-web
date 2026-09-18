@@ -107,10 +107,14 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
     <>
       <PageHeader
         title="Templates"
-        description="WhatsApp message templates from your business account. Use WhatsApp Manager to create or edit."
+        description={
+          user.type === "MASTER"
+            ? "WhatsApp message templates from your business account. Use WhatsApp Manager to create or edit."
+            : "WhatsApp message templates from your business account."
+        }
         action={
           <div className="flex flex-wrap gap-2">
-            {managerUrl ? (
+            {user.type === "MASTER" && managerUrl ? (
               <Button asChild variant="outline" className={MEDIUM_BUTTON_HEIGHT}>
                 <a href={managerUrl} target="_blank" rel="noreferrer">
                   WhatsApp Manager
@@ -149,7 +153,7 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
           language={language}
           initialTemplates={templates}
           initialAfterCursor={afterCursor}
-          canDelete={user.type === "MASTER"}
+          isMaster={user.type === "MASTER"}
         />
       ) : null}
     </>

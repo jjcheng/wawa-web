@@ -9,7 +9,7 @@ export default async function PortalLayout({ children }: LayoutProps<"/">) {
   return (
     <NavigationProgressProvider>
       <div className="flex min-h-svh">
-        <aside className="bg-sidebar hidden w-52 shrink-0 border-r lg:block">
+        <aside className="bg-sidebar hidden w-52 shrink-0 border-r lg:block xl:w-60">
           <div className="sticky top-0">
             <SidebarNav user={user} />
           </div>

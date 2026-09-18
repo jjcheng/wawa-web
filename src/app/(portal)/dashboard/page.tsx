@@ -57,7 +57,7 @@ export default async function DashboardPage() {
         <Tabs defaultValue="business-account" className="space-y-4">
           <TabsList aria-label="Dashboard overview">
             <TabsTrigger value="business-account">Business Account</TabsTrigger>
-            <TabsTrigger value="my-number">My WhatsApp Number</TabsTrigger>
+            <TabsTrigger value="my-number">My Number</TabsTrigger>
           </TabsList>
           <TabsContent value="business-account">
             <DashboardSection dashboard={businessDashboard} businessAccount showUsageLinks />

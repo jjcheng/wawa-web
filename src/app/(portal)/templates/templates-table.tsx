@@ -9,7 +9,6 @@ import { LoadMoreButton } from "@/components/load-more-button";
 import { TableEmptyState } from "@/components/table-empty-state";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { TemplatePreviewButton } from "@/components/whatsapp/template-preview-button";
 import { ViewTemplateButton } from "@/components/whatsapp/view-template-button";
 import {
   Select,
@@ -57,7 +56,7 @@ export function TemplatesTable({
   language,
   initialTemplates,
   initialAfterCursor,
-  canDelete,
+  isMaster,
 }: {
   wabaId: string;
   limit: string;
@@ -68,7 +67,7 @@ export function TemplatesTable({
   language: string;
   initialTemplates: Template[];
   initialAfterCursor?: string;
-  canDelete: boolean;
+  isMaster: boolean;
 }) {
   const [templates, setTemplates] = useState(initialTemplates);
   const [afterCursor, setAfterCursor] = useState(initialAfterCursor);
@@ -286,9 +285,6 @@ export function TemplatesTable({
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-1">
                         <span className="min-w-0 break-all">{template.name || "—"}</span>
-                        <TemplatePreviewButton
-                          template={template}
-                        />
                       </div>
                     </TableCell>
                     <TableCell>{template.category || "—"}</TableCell>
@@ -298,7 +294,7 @@ export function TemplatesTable({
                     <TableCell className="text-right">
                       <ViewTemplateButton
                         template={template}
-                        canDelete={canDelete}
+                        isMaster={isMaster}
                         onDeleted={() =>
                           setTemplates((currentTemplates) =>
                             currentTemplates.filter((currentTemplate) => currentTemplate.id !== template.id),

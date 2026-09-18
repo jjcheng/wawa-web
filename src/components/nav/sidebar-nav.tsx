@@ -26,7 +26,7 @@ const SECTIONS = [
     ],
   },
   {
-    label: "Communication",
+    label: "MESSAGING",
     items: [
       { href: "/customers", label: "Customers", icon: Users },
       { href: "/campaigns", label: "Campaigns", icon: Megaphone },

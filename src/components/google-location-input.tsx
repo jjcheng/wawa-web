@@ -1,9 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useTheme } from "next-themes";
-
-import { Input } from "@/components/ui/input";
 
 type GoogleLegacyAutocomplete = {
   addListener: (event: string, handler: () => void) => void;
@@ -116,12 +114,11 @@ export function GoogleLocationInput({
 }) {
   const { resolvedTheme } = useTheme();
   const placeContainerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [usingPlaceElement, setUsingPlaceElement] = useState(false);
+  const placeAutocompleteRef = useRef<GooglePlaceAutocompleteElement | null>(null);
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   useEffect(() => {
-    if (!apiKey) return;
+    if (!apiKey || !placeContainerRef.current) return;
     const container = placeContainerRef.current;
     let cancelled = false;
 
@@ -141,114 +138,88 @@ export function GoogleLocationInput({
           return;
         }
       }
-      if (cancelled || !places) return;
+      if (cancelled || !places || !container) return;
 
-      if (places.PlaceAutocompleteElement && container) {
-        const placeAutocomplete = new places.PlaceAutocompleteElement();
-        placeAutocomplete.placeholder = "Search on Google Map";
-        Object.assign(placeAutocomplete.style, {
-          background: "transparent",
-          border: "0",
-          borderRadius: "inherit",
-          color: "inherit",
-          colorScheme: resolvedTheme === "dark" ? "dark" : "light",
-          display: "block",
-          font: "inherit",
-          height: "100%",
-          outline: "none",
-          width: "100%",
-        });
+      if (!places.PlaceAutocompleteElement) return;
 
-        placeAutocomplete.addEventListener("gmp-select", (event: Event) => {
-          const prediction = (event as GooglePlacePredictionSelectEvent).placePrediction;
-          if (!prediction) return;
+      if (placeAutocompleteRef.current) return;
 
-          const place = prediction.toPlace();
-          void place
-            .fetchFields({ fields: ["formattedAddress", "displayName", "location"] })
-            .then(() => {
-              const name = place.displayName || place.formattedAddress || "";
-              const address = place.formattedAddress || place.displayName || "";
-              if (address) onChange(address);
-              if (name && address) {
-                onPlaceSelect?.({
-                  name,
-                  address,
-                  latitude: place.location?.lat(),
-                  longitude: place.location?.lng(),
-                });
-              }
-            })
-            .catch(() => {
-              const name = place.displayName || place.formattedAddress || "";
-              const address = place.formattedAddress || place.displayName || "";
-              if (address) onChange(address);
-              if (name && address) onPlaceSelect?.({ name, address });
-            });
-        });
+      const placeAutocomplete = new places.PlaceAutocompleteElement();
+      placeAutocompleteRef.current = placeAutocomplete;
+      placeAutocomplete.placeholder = "Search for a location";
+      placeAutocomplete.value = value;
+      Object.assign(placeAutocomplete.style, {
+        background: "transparent",
+        border: "0",
+        borderRadius: "inherit",
+        color: "inherit",
+        colorScheme: resolvedTheme === "dark" ? "dark" : "light",
+        display: "block",
+        font: "inherit",
+        height: "100%",
+        outline: "none",
+        width: "100%",
+      });
 
-        placeAutocomplete.addEventListener("input", (event: Event) => {
-          const target = event.target as HTMLInputElement;
-          if (target && typeof target.value === "string") {
-            onChange(target.value);
-            onPlaceSelect?.(null);
-          }
-        });
+      placeAutocomplete.addEventListener("gmp-select", (event: Event) => {
+        const prediction = (event as GooglePlacePredictionSelectEvent).placePrediction;
+        if (!prediction) return;
 
-        container.replaceChildren(placeAutocomplete);
-        setUsingPlaceElement(true);
-      } else if (places.Autocomplete && inputRef.current) {
-        const autocomplete = new places.Autocomplete(inputRef.current, {
-          fields: ["formatted_address", "name", "geometry"],
-          types: ["establishment", "geocode"],
-        });
-        autocomplete.addListener("place_changed", () => {
-          const place = autocomplete.getPlace();
-          const name = place.name ?? place.formatted_address ?? "";
-          const address = place.formatted_address ?? place.name ?? inputRef.current?.value ?? "";
-          onChange(address);
-          if (name && address) {
-            onPlaceSelect?.({
-              name,
-              address,
-              latitude: place.geometry?.location?.lat(),
-              longitude: place.geometry?.location?.lng(),
-            });
-          }
-        });
-      }
+        const place = prediction.toPlace();
+        void place
+          .fetchFields({ fields: ["formattedAddress", "displayName", "location"] })
+          .then(() => {
+            const name = place.displayName || place.formattedAddress || "";
+            const address = place.formattedAddress || place.displayName || "";
+            if (address) onChange(address);
+            if (name && address) {
+              onPlaceSelect?.({
+                name,
+                address,
+                latitude: place.location?.lat(),
+                longitude: place.location?.lng(),
+              });
+            }
+          })
+          .catch(() => {
+            const name = place.displayName || place.formattedAddress || "";
+            const address = place.formattedAddress || place.displayName || "";
+            if (address) onChange(address);
+            if (name && address) onPlaceSelect?.({ name, address });
+          });
+      });
+
+      placeAutocomplete.addEventListener("input", (event: Event) => {
+        const target = event.target as HTMLInputElement;
+        if (target && typeof target.value === "string") {
+          onChange(target.value);
+          onPlaceSelect?.(null);
+        }
+      });
+
+      container.replaceChildren(placeAutocomplete);
     }
 
     void initialize();
 
     return () => {
       cancelled = true;
-      if (container) container.replaceChildren();
     };
   }, [apiKey, onChange, onPlaceSelect, resolvedTheme]);
 
+  useEffect(() => {
+    if (placeAutocompleteRef.current && placeAutocompleteRef.current.value !== value) {
+      placeAutocompleteRef.current.value = value;
+    }
+  }, [value]);
+
   return (
-    <div className="w-full">
+    <div className="w-full overflow-visible" style={{ overflow: "visible" }}>
       <div
         ref={placeContainerRef}
-        className={
-          usingPlaceElement
-            ? "border-input focus-within:border-ring focus-within:ring-ring/50 dark:bg-input/30 h-8 w-full rounded-lg border bg-transparent text-sm text-foreground transition-colors outline-none focus-within:ring-3"
-            : "hidden"
-        }
+        className="border-input focus-within:border-ring focus-within:ring-ring/50 dark:bg-input/30 h-11 w-full rounded-lg border bg-transparent text-sm text-foreground transition-colors outline-none focus-within:ring-3"
+        style={{ overflow: "visible", maxWidth: "100%" }}
       />
-      {!usingPlaceElement ? (
-        <Input
-          ref={inputRef}
-          value={value}
-          onChange={(event) => {
-            onChange(event.target.value);
-            onPlaceSelect?.(null);
-          }}
-          placeholder="Search for a location"
-          autoComplete="off"
-        />
-      ) : null}
     </div>
   );
 }

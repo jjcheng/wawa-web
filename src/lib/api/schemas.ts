@@ -78,6 +78,7 @@ export const TEMPLATE_NAME_MAX_LENGTH = 508;
 export const HEADER_TEXT_MAX_LENGTH = 60;
 export const BODY_TEXT_MAX_LENGTH = 1024;
 export const FOOTER_TEXT_MAX_LENGTH = 60;
+export const TEMPLATE_VARIABLE_MAX_LENGTH = 50;
 const WHATSAPP_DIRECT_LINK_PATTERN = /(?:https?:\/\/)?(?:www\.)?wa\.me\b/i;
 
 function countTemplateVariables(value: string) {

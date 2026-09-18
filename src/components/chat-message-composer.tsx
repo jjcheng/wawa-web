@@ -1,6 +1,7 @@
 "use client";
 
-import { ContactRound, FileText, ImageIcon, Library, MapPin, Music2, Paperclip, Reply, Send, Video, X } from "lucide-react";
+import EmojiPicker, { EmojiStyle, type EmojiClickData } from "emoji-picker-react";
+import { ContactRound, FileText, ImageIcon, MapPin, Music2, Paperclip, Reply, Send, SmilePlus, Video, X } from "lucide-react";
 import {
   autoUpdate,
   flip,
@@ -15,10 +16,11 @@ import {
   useRole,
 } from "@floating-ui/react";
 import Image from "next/image";
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useChatCompose } from "@/components/chat-compose-context";
 import {
   Dialog,
@@ -27,7 +29,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { popoverSurfaceClassName } from "@/components/ui/popover";
+import { GoogleLocationInput, type GoogleLocationSelection } from "@/components/google-location-input";
+import { Popover, PopoverContent, PopoverTrigger, popoverSurfaceClassName } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api/client";
@@ -57,6 +60,214 @@ type AttachedLocation = {
   address: string;
 };
 
+const IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024;
+const VIDEO_MAX_SIZE_BYTES = 16 * 1024 * 1024;
+const DOCUMENT_MAX_SIZE_BYTES = 100 * 1024 * 1024;
+
+const VIDEO_ALLOWED_TYPES = new Set(["video/mp4", "video/3gpp"]);
+const IMAGE_ALLOWED_TYPES = new Set(["image/jpeg", "image/png"]);
+const IMAGE_ALLOWED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png"]);
+const VIDEO_ALLOWED_EXTENSIONS = new Set([".mp4", ".3gp"]);
+const DOCUMENT_ALLOWED_EXTENSIONS = new Set([
+  ".pdf",
+  ".doc",
+  ".docx",
+  ".xls",
+  ".xlsx",
+  ".ppt",
+  ".pptx",
+  ".txt",
+  ".csv",
+]);
+
+function getFileExtension(name: string) {
+  const match = /\.[^./\\]+$/i.exec(name);
+  return match ? match[0].toLowerCase() : "";
+}
+
+function validateSelectedAttachment(file: File) {
+  const extension = getFileExtension(file.name);
+
+  if (file.type.startsWith("image/")) {
+    const normalizedType = file.type.toLowerCase();
+    if (!IMAGE_ALLOWED_TYPES.has(normalizedType) && !IMAGE_ALLOWED_EXTENSIONS.has(extension)) {
+      throw new Error("Images must be PNG, JPG, or JPEG.");
+    }
+    if (file.size > IMAGE_MAX_SIZE_BYTES) {
+      throw new Error(`Images must be ${formatBytes(IMAGE_MAX_SIZE_BYTES)} or smaller.`);
+    }
+    return;
+  }
+
+  if (file.type.startsWith("video/")) {
+    const normalizedType = file.type.toLowerCase();
+    if (!VIDEO_ALLOWED_TYPES.has(normalizedType) && !VIDEO_ALLOWED_EXTENSIONS.has(extension)) {
+      throw new Error("Videos must be MP4 or 3GP.");
+    }
+    if (file.size > VIDEO_MAX_SIZE_BYTES) {
+      throw new Error(`Videos must be ${formatBytes(VIDEO_MAX_SIZE_BYTES)} or smaller.`);
+    }
+    return;
+  }
+
+  if (file.type.startsWith("audio/")) {
+    return;
+  }
+
+  if (!DOCUMENT_ALLOWED_EXTENSIONS.has(extension)) {
+    throw new Error("Documents must be PDF, Office, text, or CSV files.");
+  }
+  if (file.size > DOCUMENT_MAX_SIZE_BYTES) {
+    throw new Error(`Documents must be ${formatBytes(DOCUMENT_MAX_SIZE_BYTES)} or smaller.`);
+  }
+}
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ["KB", "MB", "GB"];
+  let value = bytes / 1024;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[unitIndex]}`;
+}
+
+async function loadImage(url: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new globalThis.Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Could not read image."));
+    image.src = url;
+  });
+}
+
+async function compressImageFile(file: File): Promise<File> {
+  if (file.size <= IMAGE_MAX_SIZE_BYTES) return file;
+
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = await loadImage(objectUrl);
+    const maxDimension = 1600;
+    const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+    let width = Math.max(1, Math.round(image.width * scale));
+    let height = Math.max(1, Math.round(image.height * scale));
+    let quality = 0.82;
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d");
+
+      if (!context) return file;
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, "image/jpeg", quality);
+      });
+      if (!blob) return file;
+
+      const compressedFile = new File([blob], file.name.replace(/\.[^./]+$/, ".jpg"), {
+        type: "image/jpeg",
+      });
+
+      if (compressedFile.size <= IMAGE_MAX_SIZE_BYTES || attempt === 4) {
+        return compressedFile;
+      }
+
+      quality = Math.max(0.25, quality - 0.15);
+      width = Math.max(1, Math.round(width * 0.85));
+      height = Math.max(1, Math.round(height * 0.85));
+    }
+
+    return file;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+async function compressVideoFile(file: File): Promise<File> {
+  if (file.size <= VIDEO_MAX_SIZE_BYTES) return file;
+
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const video = document.createElement("video");
+    video.preload = "auto";
+    video.muted = true;
+    video.playsInline = true;
+    video.src = objectUrl;
+
+    await new Promise<void>((resolve, reject) => {
+      video.onloadedmetadata = () => resolve();
+      video.onerror = () => reject(new Error("Could not read video for compression."));
+    });
+
+    const maxDimension = 1280;
+    const scale = Math.min(1, maxDimension / Math.max(video.videoWidth, video.videoHeight));
+    const width = Math.max(1, Math.round(video.videoWidth * scale));
+    const height = Math.max(1, Math.round(video.videoHeight * scale));
+
+    if (typeof MediaRecorder === "undefined") return file;
+
+    const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
+      ? "video/webm;codecs=vp9"
+      : MediaRecorder.isTypeSupported("video/webm")
+        ? "video/webm"
+        : undefined;
+
+    if (!mimeType) return file;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (!context) return file;
+
+    const stream = canvas.captureStream(20);
+    const recorder = new MediaRecorder(stream, { mimeType });
+    const chunks: Blob[] = [];
+
+    await new Promise<void>((resolve, reject) => {
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunks.push(event.data);
+      };
+      recorder.onerror = () => reject(new Error("Failed to compress video."));
+      recorder.onstop = () => resolve();
+
+      video.currentTime = 0;
+      const durationLimit = Math.min(video.duration || 1, 5);
+      const renderFrame = () => {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        if (video.currentTime >= durationLimit || video.ended) {
+          recorder.stop();
+          return;
+        }
+        requestAnimationFrame(renderFrame);
+      };
+
+      video.play().then(() => {
+        recorder.start();
+        requestAnimationFrame(renderFrame);
+      }).catch(() => reject(new Error("Could not play video for compression.")));
+    });
+
+    const compressedBlob = new Blob(chunks, { type: mimeType });
+    const compressedFile = new File([compressedBlob], file.name.replace(/\.[^./]+$/, ".webm"), {
+      type: mimeType,
+    });
+    return compressedFile.size <= VIDEO_MAX_SIZE_BYTES ? compressedFile : file;
+  } catch {
+    return file;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 function parseVCard(value: string): WhatsAppContact | null {
   const lines = value.replace(/\r\n[ \t]/g, "").split(/\r?\n/);
   const field = (name: string) => lines.find((line) => line.toUpperCase().startsWith(`${name}:`))?.split(":").slice(1).join(":");
@@ -84,26 +295,27 @@ export function ChatMessageComposer({
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [attachmentOpen, setAttachmentOpen] = useState(false);
-  const [libraryOpen, setLibraryOpen] = useState(false);
   const [locationOpen, setLocationOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [isMultiline, setIsMultiline] = useState(false);
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
-  const [locationName, setLocationName] = useState("");
-  const [locationAddress, setLocationAddress] = useState("");
+  const [locationSearchValue, setLocationSearchValue] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState<GoogleLocationSelection | null>(null);
   const [contact, setContact] = useState<WhatsAppContact | null>(null);
   const [attachedContact, setAttachedContact] = useState<WhatsAppContact | null>(null);
   const [attachedLocation, setAttachedLocation] = useState<AttachedLocation | null>(null);
   const [attachment, setAttachment] = useState<SelectedAttachment | null>(null);
+  const [compressing, setCompressing] = useState(false);
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const vCardInputRef = useRef<HTMLInputElement>(null);
   const previewUrlRef = useRef<string | null>(null);
   const hasSendableContent = Boolean(message.trim() || attachedContact || attachedLocation || attachment);
-  const canSend = hasSendableContent && !sending;
-  const disabledReason = !hasSendableContent
-    ? "Enter a message or add an attachment"
-    : null;
+  const canSend = hasSendableContent && !sending && !compressing;
+  const disabledReason = compressing
+    ? "Compressing attachment..."
+    : !hasSendableContent
+      ? "Enter a message or add an attachment"
+      : null;
 
   useEffect(() => () => {
     if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
@@ -117,6 +329,7 @@ export function ChatMessageComposer({
     try {
       let payload: Record<string, unknown>;
       let attachmentUrl: string | undefined;
+      let sendCaptionAsText = false;
       if (attachment) {
         const media = await apiFetch<{ url: string }>("/v1/wa/media", {
           method: "POST",
@@ -139,9 +352,10 @@ export function ChatMessageComposer({
               : "document";
         const mediaObject = {
           link: media.url,
-          ...(body ? { caption: body } : {}),
+          ...(body && !attachment.file.type.startsWith("audio/") ? { caption: body } : {}),
           ...(type === "document" ? { filename: attachment.file.name } : {}),
         };
+        sendCaptionAsText = Boolean(body && type === "audio");
         payload = { type, [type]: mediaObject };
       } else if (attachedContact) {
         const contactPayload = {
@@ -151,6 +365,7 @@ export function ChatMessageComposer({
         };
         payload = { type: "contacts", contacts: [contactPayload] };
       } else if (attachedLocation) {
+        sendCaptionAsText = Boolean(body);
         payload = { type: "location", location: attachedLocation };
       } else {
         payload = { type: "text", text: { body } };
@@ -165,6 +380,17 @@ export function ChatMessageComposer({
           ...(replyTarget ? { context: { message_id: replyTarget.waMessageId } } : {}),
         },
       });
+      if (sendCaptionAsText) {
+        await apiFetch("/v1/wa/messages", {
+          method: "POST",
+          body: {
+            customer_id: Number(customerId),
+            type: "text",
+            text: { body },
+            ...(replyTarget ? { context: { message_id: replyTarget.waMessageId } } : {}),
+          },
+        });
+      }
       setMessage("");
       removeAttachment();
       setReplyTarget(null);
@@ -180,6 +406,21 @@ export function ChatMessageComposer({
     void sendMessage();
   }
 
+  const handleLocationChange = useCallback((value: string) => {
+    setLocationSearchValue(value);
+  }, []);
+
+  const handleLocationSelect = useCallback((location: GoogleLocationSelection | null) => {
+    setSelectedLocation(location);
+  }, []);
+
+  function updateSelectedLocationField(field: "name" | "address", value: string) {
+    setSelectedLocation((current) => {
+      if (!current) return current;
+      return { ...current, [field]: value };
+    });
+  }
+
   function handleMessageChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
     setMessage(event.target.value);
     setIsMultiline(event.target.scrollHeight > 40);
@@ -192,21 +433,24 @@ export function ChatMessageComposer({
     }
   }
 
+  function handleEmojiSelect(emojiData: EmojiClickData) {
+    setMessage((current) => `${current}${emojiData.emoji}`);
+  }
+
   function attachLocation() {
-    const latitudeValue = Number(latitude);
-    const longitudeValue = Number(longitude);
+    if (!selectedLocation) return;
+    const latitudeValue = Number(selectedLocation.latitude);
+    const longitudeValue = Number(selectedLocation.longitude);
     if (!Number.isFinite(latitudeValue) || !Number.isFinite(longitudeValue)) return;
     setAttachedLocation({
       latitude: latitudeValue,
       longitude: longitudeValue,
-      name: locationName.trim(),
-      address: locationAddress.trim(),
+      name: selectedLocation.name.trim() || selectedLocation.address.trim(),
+      address: selectedLocation.address.trim(),
     });
     setLocationOpen(false);
-    setLatitude("");
-    setLongitude("");
-    setLocationName("");
-    setLocationAddress("");
+    setLocationSearchValue("");
+    setSelectedLocation(null);
   }
 
   function chooseFile(accept: string) {
@@ -216,12 +460,35 @@ export function ChatMessageComposer({
     input.click();
   }
 
-  function selectAttachment(file: File) {
-    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-    const previewUrl = file.type.startsWith("image/") ? URL.createObjectURL(file) : null;
-    previewUrlRef.current = previewUrl;
-    setAttachment({ file, previewUrl });
-    setAttachmentOpen(false);
+  async function selectAttachment(file: File) {
+    setCompressing(true);
+    try {
+      validateSelectedAttachment(file);
+
+      let finalFile = file;
+
+      if (file.type.startsWith("image/")) {
+        finalFile = await compressImageFile(file);
+        if (finalFile.size > IMAGE_MAX_SIZE_BYTES) {
+          throw new Error(`Images must be ${formatBytes(IMAGE_MAX_SIZE_BYTES)} or smaller.`);
+        }
+      } else if (file.type.startsWith("video/")) {
+        finalFile = await compressVideoFile(file);
+        if (finalFile.size > VIDEO_MAX_SIZE_BYTES) {
+          throw new Error(`Videos must be ${formatBytes(VIDEO_MAX_SIZE_BYTES)} or smaller.`);
+        }
+      }
+
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+      const previewUrl = finalFile.type.startsWith("image/") ? URL.createObjectURL(finalFile) : null;
+      previewUrlRef.current = previewUrl;
+      setAttachment({ file: finalFile, previewUrl });
+      setAttachmentOpen(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not prepare attachment.");
+    } finally {
+      setCompressing(false);
+    }
   }
 
   function removeAttachment() {
@@ -251,25 +518,31 @@ export function ChatMessageComposer({
 
   return (
     <form
-      className="bg-background/80 fixed right-0 bottom-0 left-0 z-20 flex flex-col gap-2 px-3 py-2 backdrop-blur lg:left-64"
+      className="bg-background/80 fixed bottom-0 left-3 right-3 z-20 flex flex-col gap-2 pb-3 pt-3 pl-2 backdrop-blur lg:left-[13.5rem] lg:right-3 xl:left-[15rem]"
       onSubmit={handleSubmit}
     >
+      {compressing ? (
+        <div className="flex items-center gap-2 rounded-lg border border-[#d1fae5] bg-[#ecfdf5] px-2 py-1 text-xs font-medium text-[#065f46] dark:border-[#064e3b] dark:bg-[#022c22] dark:text-[#d1fae5]">
+          <span className="inline-block size-2 animate-pulse rounded-full bg-[#10b981]" />
+          Compressing attachment...
+        </div>
+      ) : null}
       {replyTarget || attachment || attachedContact || attachedLocation ? (
         <div className="flex max-w-full gap-2 overflow-x-auto pb-1">
           {replyTarget ? (
-            <div className="flex h-12 w-fit shrink-0 items-center gap-3 rounded-lg border border-[#edf0f1] bg-white p-1.5 dark:border-transparent dark:bg-[#202c33]">
-              <span className="flex size-9 items-center justify-center rounded-md bg-muted text-muted-foreground"><Reply className="size-4" /></span>
+            <div className="flex w-fit shrink-0 items-center gap-2">
+              <span className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground"><Reply className="size-4" /></span>
               <p className="max-w-52 truncate text-sm font-medium">{replyTarget.preview}</p>
               <Button type="button" variant="ghost" size="icon-sm" aria-label="Cancel reply" onClick={() => setReplyTarget(null)}><X className="size-4" /></Button>
             </div>
           ) : null}
           {attachment || attachedContact || attachedLocation ? (
-            <div className="bg-background/35 border-border flex h-12 w-fit shrink-0 items-center gap-3 rounded-lg border p-1.5 backdrop-blur">
+            <div className="flex w-fit shrink-0 items-center gap-2">
               {attachment?.previewUrl ? (
-                <Image src={attachment.previewUrl} alt="Selected attachment" width={36} height={36} unoptimized className="size-9 rounded-md object-cover" />
-              ) : (
-                <span className="flex size-9 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                  {attachedContact ? <ContactRound className="size-5" /> : attachedLocation ? <MapPin className="size-5" /> : attachment?.file.type.startsWith("video/") ? <Video className="size-5" /> : attachment?.file.type.startsWith("audio/") ? <Music2 className="size-5" /> : <FileText className="size-5" />}
+                <Image src={attachment.previewUrl} alt="Selected attachment" width={36} height={36} unoptimized className="size-8 rounded-md object-cover" />
+              ) : attachedLocation ? null : (
+                <span className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                  {attachedContact ? <ContactRound className="size-5" /> : attachment?.file.type.startsWith("video/") ? <Video className="size-5" /> : attachment?.file.type.startsWith("audio/") ? <Music2 className="size-5" /> : <FileText className="size-5" />}
                 </span>
               )}
               <p className="max-w-52 truncate text-sm font-medium">{attachedContact?.name.formatted_name || attachedLocation?.name || attachedLocation?.address || attachment?.file.name || "Location"}</p>
@@ -281,14 +554,46 @@ export function ChatMessageComposer({
         </div>
       ) : null}
       <div className="flex w-full items-center gap-2">
-      <div className={cn("bg-background/35 border-border flex min-h-12 flex-1 items-center border pl-4 pr-1 backdrop-blur", isMultiline ? "rounded-2xl" : "rounded-full")}>
+        <div className="flex min-h-12 flex-1 items-center rounded-full border border-input bg-[#f0f2f5] px-1 dark:bg-[#202c33]">
+        <Popover open={emojiPickerOpen} onOpenChange={setEmojiPickerOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-10 rounded-full text-[#54656f] hover:bg-muted/80 dark:text-[#aebac1]"
+              aria-label="Add emoji"
+            >
+              <SmilePlus className="size-5" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="start"
+            side="top"
+            sideOffset={8}
+            className="w-[320px] border border-[#edf0f1] bg-popover p-0 shadow-md dark:border-foreground/10"
+          >
+            <div className="overflow-hidden rounded-lg">
+              <EmojiPicker
+                className="!border-0 !shadow-none"
+                onEmojiClick={handleEmojiSelect}
+                emojiStyle={EmojiStyle.NATIVE}
+                width={300}
+                height={360}
+                lazyLoadEmojis
+                previewConfig={{ showPreview: false }}
+                searchPlaceHolder="Search emoji"
+              />
+            </div>
+          </PopoverContent>
+        </Popover>
         <textarea
           value={message}
           onChange={handleMessageChange}
           onKeyDown={handleKeyDown}
           placeholder="Type a message"
           rows={1}
-          className="field-sizing-content max-h-32 min-h-10 flex-1 resize-none border-0 bg-transparent py-2 text-base leading-5 text-[#111b21] outline-none placeholder:text-[#667781] focus-visible:ring-0 dark:text-[#e9edef] dark:placeholder:text-[#8696a0]"
+          className="field-sizing-content max-h-32 min-h-12 w-0 min-w-0 flex-1 resize-none border-0 bg-transparent pr-3 py-3.5 text-base leading-5 text-[#111b21] outline-none placeholder:text-[#667781] focus-visible:ring-0 dark:text-[#e9edef] dark:placeholder:text-[#8696a0]"
         />
         <AttachmentPopover
           open={attachmentOpen}
@@ -301,10 +606,6 @@ export function ChatMessageComposer({
           onChooseContact={() => {
             setAttachmentOpen(false);
             setContactOpen(true);
-          }}
-          onChooseLibrary={() => {
-            setAttachmentOpen(false);
-            setLibraryOpen(true);
           }}
           disabled={attachment !== null || attachedContact !== null || attachedLocation !== null}
         />
@@ -360,17 +661,47 @@ export function ChatMessageComposer({
         }}
       />
       <Dialog open={locationOpen} onOpenChange={setLocationOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent
+          className="!max-h-[85vh] h-[70vh] overflow-y-auto [&>[data-slot=dialog-header]~*:not([data-slot=dialog-footer]):not([data-slot=dialog-close])]:overflow-visible"
+          style={{ width: "min(90vw, 48rem)", maxWidth: "48rem" }}
+        >
           <DialogHeader>
             <DialogTitle>Attach location</DialogTitle>
-            <DialogDescription>Enter the location details.</DialogDescription>
+            <DialogDescription>Search for a place on Google Maps.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3">
-            <input value={locationName} onChange={(event) => setLocationName(event.target.value)} placeholder="Name" className="border-input h-9 rounded-md border bg-transparent px-3 text-sm" />
-            <input value={locationAddress} onChange={(event) => setLocationAddress(event.target.value)} placeholder="Address" className="border-input h-9 rounded-md border bg-transparent px-3 text-sm" />
-            <input value={latitude} onChange={(event) => setLatitude(event.target.value)} placeholder="Latitude" inputMode="decimal" className="border-input h-9 rounded-md border bg-transparent px-3 text-sm" />
-            <input value={longitude} onChange={(event) => setLongitude(event.target.value)} placeholder="Longitude" inputMode="decimal" className="border-input h-9 rounded-md border bg-transparent px-3 text-sm" />
-            <Button type="button" onClick={attachLocation} disabled={!latitude || !longitude}>Attach location</Button>
+          <div className="grid gap-3 overflow-visible pb-2" style={{ overflow: "visible" }}>
+            <GoogleLocationInput
+              value={locationSearchValue}
+              onChange={handleLocationChange}
+              onPlaceSelect={handleLocationSelect}
+            />
+            {selectedLocation ? (
+              <div className="grid gap-3 pt-1">
+                <div className="grid gap-1.5">
+                  <label className="text-sm font-medium">Location name</label>
+                  <Input
+                    value={selectedLocation.name}
+                    onChange={(event) => updateSelectedLocationField("name", event.target.value)}
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <label className="text-sm font-medium">Location address</label>
+                  <Input
+                    value={selectedLocation.address}
+                    onChange={(event) => updateSelectedLocationField("address", event.target.value)}
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <label className="text-sm font-medium">Latitude</label>
+                  <Input value={selectedLocation.latitude ?? ""} readOnly className="bg-muted/50 text-muted-foreground" />
+                </div>
+                <div className="grid gap-1.5">
+                  <label className="text-sm font-medium">Longitude</label>
+                  <Input value={selectedLocation.longitude ?? ""} readOnly className="bg-muted/50 text-muted-foreground" />
+                </div>
+              </div>
+            ) : null}
+            <Button type="button" onClick={attachLocation} disabled={!selectedLocation?.latitude || !selectedLocation?.longitude}>Attach location</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -392,15 +723,6 @@ export function ChatMessageComposer({
           </div>
         </DialogContent>
       </Dialog>
-      <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Media library</DialogTitle>
-            <DialogDescription>Your previously uploaded media will appear here.</DialogDescription>
-          </DialogHeader>
-          <p className="text-muted-foreground py-8 text-center text-sm">No media yet.</p>
-        </DialogContent>
-      </Dialog>
     </form>
   );
 }
@@ -415,7 +737,6 @@ function AttachmentPopover({
   onChooseFile,
   onChooseLocation,
   onChooseContact,
-  onChooseLibrary,
   disabled,
 }: {
   open: boolean;
@@ -423,7 +744,6 @@ function AttachmentPopover({
   onChooseFile: (accept: string) => void;
   onChooseLocation: () => void;
   onChooseContact: () => void;
-  onChooseLibrary: () => void;
   disabled: boolean;
 }) {
   const { refs, floatingStyles, context } = useFloating({
@@ -454,13 +774,12 @@ function AttachmentPopover({
             {/* eslint-disable-next-line react-hooks/refs */}
             <div ref={refs.setFloating} style={floatingStyles} className={cn("z-50 w-60 rounded-lg p-3", popoverSurfaceClassName)} {...getFloatingProps()}>
               <div className="relative grid grid-cols-3 gap-x-2 gap-y-3">
-                <AttachmentOption icon={<ImageIcon />} label="Images" onClick={() => onChooseFile("image/jpeg,image/png,image/webp")} />
+                <AttachmentOption icon={<ImageIcon />} label="Images" onClick={() => onChooseFile("image/jpeg,image/png")} />
                 <AttachmentOption icon={<Video />} label="Video" onClick={() => onChooseFile("video/mp4,video/3gpp")} />
                 <AttachmentOption icon={<Music2 />} label="Audio" onClick={() => onChooseFile("audio/aac,audio/amr,audio/mpeg,audio/mp4,audio/ogg,audio/opus")} />
                 <AttachmentOption icon={<FileText />} label="Document" onClick={() => onChooseFile("text/plain,text/csv,application/pdf,application/msword,application/vnd.ms-excel,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation")} />
                 <AttachmentOption icon={<MapPin />} label="Location" onClick={onChooseLocation} />
                 <AttachmentOption icon={<ContactRound />} label="Contact" onClick={onChooseContact} />
-                <AttachmentOption icon={<Library />} label="Library" onClick={onChooseLibrary} />
               </div>
             </div>
           </FloatingFocusManager>

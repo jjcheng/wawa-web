@@ -1,6 +1,7 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
+import { TEMPLATE_VARIABLE_MAX_LENGTH } from "@/lib/api/schemas";
 import {
   Select,
   SelectContent,
@@ -24,6 +25,7 @@ export function TemplateVariableInput({
   mappedValue,
   placeholder,
   maxLength,
+  alphanumericOnly = false,
   onSourceChange,
   onValueChange,
 }: {
@@ -33,9 +35,12 @@ export function TemplateVariableInput({
   mappedValue: string;
   placeholder: string;
   maxLength?: number;
+  alphanumericOnly?: boolean;
   onSourceChange: (source: CustomerParameterSource) => void;
   onValueChange: (value: string) => void;
 }) {
+  const inputMaxLength = Math.min(maxLength ?? TEMPLATE_VARIABLE_MAX_LENGTH, TEMPLATE_VARIABLE_MAX_LENGTH);
+
   return (
     <div className="grid gap-2 sm:grid-cols-[11rem_minmax(0,1fr)]">
       <Select
@@ -53,15 +58,26 @@ export function TemplateVariableInput({
           ))}
         </SelectContent>
       </Select>
-      <Input
-        id={id}
-        value={source === "custom" ? value : mappedValue}
-        onChange={(event) => onValueChange(event.target.value)}
-        placeholder={source === "custom" ? placeholder : "Resolved per customer"}
-        readOnly={source !== "custom"}
-        maxLength={maxLength}
-        className={source !== "custom" ? "bg-muted/50" : undefined}
-      />
+      <div className="relative">
+        <Input
+          id={id}
+          value={source === "custom" ? value : mappedValue}
+          onKeyDown={(event) => {
+            if (!alphanumericOnly || event.metaKey || event.ctrlKey || event.altKey || event.key.length !== 1) return;
+            if (!/[a-zA-Z0-9]/.test(event.key)) event.preventDefault();
+          }}
+          onChange={(event) =>
+            onValueChange(alphanumericOnly ? event.target.value.replace(/[^a-zA-Z0-9]/g, "") : event.target.value)
+          }
+          placeholder={source === "custom" ? placeholder : "Resolved per customer"}
+          readOnly={source !== "custom"}
+          maxLength={inputMaxLength}
+          className={source !== "custom" ? "bg-muted/50 pr-12" : "pr-12"}
+        />
+        <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
+          {(source === "custom" ? value : mappedValue).length}/{inputMaxLength}
+        </span>
+      </div>
     </div>
   );
 }
