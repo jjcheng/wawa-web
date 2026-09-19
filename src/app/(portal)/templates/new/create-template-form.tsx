@@ -909,9 +909,9 @@ export function CreateTemplateForm({
   return (
     <form
       onSubmit={handleSubmit((values) => mutation.mutate(values))}
-      className="grid items-start gap-6 md:grid-cols-[minmax(0,28rem)_20rem] lg:grid-cols-[minmax(0,34rem)_22rem] xl:grid-cols-[minmax(0,40rem)_22rem] 2xl:grid-cols-[minmax(0,46rem)_22rem]"
+      className="grid min-w-0 max-w-full items-start gap-6 md:grid-cols-[minmax(0,28rem)_20rem] lg:grid-cols-[minmax(0,34rem)_22rem] xl:grid-cols-[minmax(0,40rem)_22rem] 2xl:grid-cols-[minmax(0,46rem)_22rem]"
     >
-      <div className="max-w-md space-y-4 lg:max-w-[34rem] xl:max-w-[40rem] 2xl:max-w-[46rem]">
+      <div className="min-w-0 max-w-md space-y-4 lg:max-w-[34rem] xl:max-w-[40rem] 2xl:max-w-[46rem]">
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="name">Name</Label>
@@ -1645,7 +1645,7 @@ export function CreateTemplateForm({
               {previewButtons.map((button, index) => (
                 <div
                   key={`${button.type}-${button.text}-${index}`}
-                  className="flex items-center justify-center gap-2 px-3 py-3 text-base font-medium"
+                  className="flex min-w-0 items-center justify-center gap-2 px-3 py-3 text-base font-medium"
                 >
                   {button.type === "VISIT_WEBSITE" ? (
                     <Globe className="size-4" />
@@ -1656,7 +1656,7 @@ export function CreateTemplateForm({
                   ) : (
                     <CornerUpLeft className="size-4" />
                   )}
-                  {button.text}
+                  <span className="min-w-0 break-words">{button.text}</span>
                 </div>
               ))}
             </div>

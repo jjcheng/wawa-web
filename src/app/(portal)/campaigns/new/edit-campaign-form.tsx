@@ -40,6 +40,15 @@ import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 const SCHEDULES = ["Send now", "Send later"] as const;
 const GOOGLE_STATIC_MAPS_URL = "https://maps.googleapis.com/maps/api/staticmap";
 
+function localDateTimeValue(date: Date) {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function minimumScheduledDate() {
+  return new Date(Date.now() + 5 * 60 * 1000);
+}
+
 function subscribeToLocationSnapshot() {
   return () => {};
 }
@@ -392,6 +401,7 @@ export function EditCampaignForm({
     setValue,
     formState: { errors },
   } = useForm<EditCampaignInput>({
+    mode: "onChange",
     defaultValues: {
       name: "",
       customer_ids: customers.map((customer) => customer.id),
@@ -647,6 +657,9 @@ export function EditCampaignForm({
       if (!values.send_date) {
         setError("send_date", { message: "Select a date and time." });
         invalid = true;
+      } else if (new Date(values.send_date).getTime() < minimumScheduledDate().getTime()) {
+        setError("send_date", { message: "Schedule the campaign at least 5 minutes from now." });
+        invalid = true;
       }
     }
     if (
@@ -765,9 +778,16 @@ export function EditCampaignForm({
               <Input
                 id="send-date"
                 type="datetime-local"
-                min={new Date().toISOString().slice(0, 16)}
+                min={localDateTimeValue(minimumScheduledDate())}
                 value={sendDate}
-                {...register("send_date")}
+                {...register("send_date", {
+                  validate: (value) => {
+                    if (schedule !== "Send later" || !value) return true;
+                    return new Date(value).getTime() >= minimumScheduledDate().getTime()
+                      ? true
+                      : "Schedule the campaign at least 5 minutes from now.";
+                  },
+                })}
               />
               {errors.send_date ? (
                 <p className="text-destructive text-sm">{errors.send_date.message}</p>
