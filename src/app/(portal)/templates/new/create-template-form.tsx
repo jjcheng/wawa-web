@@ -169,6 +169,7 @@ function templateVariableNames(text: string) {
     const name = match[1];
     if (!names.includes(name)) names.push(name);
   }
+
   return names;
 }
 
@@ -1068,15 +1069,30 @@ export function CreateTemplateForm({
     }
   }
 
+  function submitTemplate(values: CreateTemplateInput) {
+    if (
+      hasEmptyButtonText ||
+      hasDuplicateButtonText ||
+      hasInvalidWebsiteButtonUrl ||
+      hasEmptyDynamicUrlPath ||
+      hasOverlongWebsiteUrl ||
+      hasEmptyPhoneButtonNumber ||
+      hasEmptyCopyCodeButtonOfferCode
+    ) {
+      return;
+    }
+    mutation.mutate(values);
+  }
+
   const bodyTextField = register("body_text");
   const headerTextField = register("header_text");
 
   return (
     <form
-      onSubmit={handleSubmit((values) => mutation.mutate(values))}
-      className="grid max-w-full min-w-0 items-start gap-6 min-[769px]:grid-cols-[minmax(0,28rem)_20rem] lg:grid-cols-[minmax(0,34rem)_22rem] xl:grid-cols-[minmax(0,40rem)_22rem] 2xl:grid-cols-[minmax(0,46rem)_22rem]"
+      onSubmit={handleSubmit(submitTemplate)}
+      className="grid w-full max-w-full min-w-0 items-start gap-6 min-[769px]:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]"
     >
-      <div className="w-full min-w-0 space-y-4 min-[769px]:max-w-md lg:max-w-[34rem] xl:max-w-[40rem] 2xl:max-w-[46rem]">
+      <div className="w-full min-w-0 space-y-4">
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="name">Name</Label>
@@ -1533,107 +1549,116 @@ export function CreateTemplateForm({
           {templateButtons.length > 0 ? (
             <div className="space-y-2">
               {templateButtons.map((button, index) => (
-                <div
-                  key={index}
-                  className="border-border mb-4 space-y-2 border-t pt-3 first:border-t-0 first:pt-0 sm:border-t-0 sm:pt-0"
-                >
-                  <p className="text-foreground flex items-center gap-2 text-sm font-medium">
-                    {button.type === "VISIT_WEBSITE" ? (
-                      <Globe className="size-4" />
-                    ) : button.type === "CALL_PHONE" ? (
-                      <Phone className="size-4" />
-                    ) : button.type === "COPY_CODE" ? (
-                      <Copy className="size-4" />
-                    ) : (
-                      <CornerUpLeft className="size-4" />
-                    )}
-                    {button.type === "VISIT_WEBSITE" ? (
-                      <>
-                        <span>Visit website</span>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              className="text-muted-foreground hover:text-foreground inline-flex size-4 items-center justify-center"
-                              aria-label="Learn about website URL types"
-                            >
-                              <Info className="size-3.5" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" sideOffset={6}>
-                            Static keeps the URL fixed when the message is sent.
-                            <br />
-                            Dynamic fills in the URL path when the message is sent.
-                          </TooltipContent>
-                        </Tooltip>
-                      </>
-                    ) : button.type === "CALL_PHONE" ? (
-                      <>
-                        <span>Call phone number</span>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              className="text-muted-foreground hover:text-foreground inline-flex size-4 items-center justify-center"
-                              aria-label="Learn about phone number buttons"
-                            >
-                              <Info className="size-3.5" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" sideOffset={6}>
-                            The phone number cannot be changed when the message is sent. Please
-                            iclude the country code prefix, only numbers are allowed.
-                          </TooltipContent>
-                        </Tooltip>
-                      </>
-                    ) : button.type === "COPY_CODE" ? (
-                      <>
-                        <span>Copy offer code</span>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              className="text-muted-foreground hover:text-foreground inline-flex size-4 items-center justify-center"
-                              aria-label="Learn about offer codes"
-                            >
-                              <Info className="size-3.5" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" sideOffset={6}>
-                            Offer code is set when the message is sent.
-                          </TooltipContent>
-                        </Tooltip>
-                      </>
-                    ) : (
-                      <>
-                        <span>Custom</span>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              className="text-muted-foreground hover:text-foreground inline-flex size-4 items-center justify-center"
-                              aria-label="Learn about custom buttons"
-                            >
-                              <Info className="size-3.5" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" sideOffset={6}>
-                            Button text cannot be changed when the message is sent. When the
-                            user clicks the button, they will reply with this text.
-                          </TooltipContent>
-                        </Tooltip>
-                      </>
-                    )}
-                  </p>
+                <div key={index} className="mb-4 w-full space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-foreground flex items-center gap-2 text-sm font-medium">
+                      {button.type === "VISIT_WEBSITE" ? (
+                        <Globe className="size-4" />
+                      ) : button.type === "CALL_PHONE" ? (
+                        <Phone className="size-4" />
+                      ) : button.type === "COPY_CODE" ? (
+                        <Copy className="size-4" />
+                      ) : (
+                        <CornerUpLeft className="size-4" />
+                      )}
+                      {button.type === "VISIT_WEBSITE" ? (
+                        <>
+                          <span>Visit website</span>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                className="text-muted-foreground hover:text-foreground inline-flex size-4 items-center justify-center"
+                                aria-label="Learn about website URL types"
+                              >
+                                <Info className="size-3.5" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" sideOffset={6}>
+                              Static keeps the URL fixed when the message is sent.
+                              <br />
+                              Dynamic fills in the URL path when the message is sent.
+                            </TooltipContent>
+                          </Tooltip>
+                        </>
+                      ) : button.type === "CALL_PHONE" ? (
+                        <>
+                          <span>Call phone number</span>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                className="text-muted-foreground hover:text-foreground inline-flex size-4 items-center justify-center"
+                                aria-label="Learn about phone number buttons"
+                              >
+                                <Info className="size-3.5" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" sideOffset={6}>
+                              The phone number cannot be changed when the message is sent.
+                              Please iclude the country code prefix, only numbers are allowed.
+                            </TooltipContent>
+                          </Tooltip>
+                        </>
+                      ) : button.type === "COPY_CODE" ? (
+                        <>
+                          <span>Copy offer code</span>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                className="text-muted-foreground hover:text-foreground inline-flex size-4 items-center justify-center"
+                                aria-label="Learn about offer codes"
+                              >
+                                <Info className="size-3.5" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" sideOffset={6}>
+                              Offer code is set when the message is sent.
+                            </TooltipContent>
+                          </Tooltip>
+                        </>
+                      ) : (
+                        <>
+                          <span>Custom</span>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                className="text-muted-foreground hover:text-foreground inline-flex size-4 items-center justify-center"
+                                aria-label="Learn about custom buttons"
+                              >
+                                <Info className="size-3.5" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" sideOffset={6}>
+                              Button text cannot be changed when the message is sent. When the
+                              user clicks the button, they will reply with this text.
+                            </TooltipContent>
+                          </Tooltip>
+                        </>
+                      )}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-lg"
+                      className="shrink-0"
+                      aria-label={`Delete button ${index + 1}`}
+                      onClick={() => removeTemplateButton(index)}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
                   <div
                     className={
                       button.type === "VISIT_WEBSITE"
-                        ? "grid gap-2 lg:grid-cols-[12rem_minmax(0,1fr)_auto]"
+                        ? "grid w-full gap-2 min-[1025px]:grid-cols-[12rem_minmax(0,1fr)_auto]"
                         : button.type === "CALL_PHONE"
-                          ? "grid gap-2 lg:grid-cols-[12rem_minmax(0,1fr)_auto]"
+                          ? "grid gap-2 min-[1025px]:grid-cols-[12rem_minmax(0,1fr)_auto]"
                           : button.type === "COPY_CODE"
-                            ? "grid gap-2 lg:grid-cols-[12rem_minmax(0,1fr)_auto]"
-                            : "grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
+                            ? "grid gap-2 min-[1025px]:grid-cols-[12rem_minmax(0,1fr)_auto]"
+                            : "grid gap-2 min-[1025px]:grid-cols-[minmax(0,1fr)_auto]"
                     }
                   >
                     {button.type === "COPY_CODE" ? (
@@ -1671,7 +1696,7 @@ export function CreateTemplateForm({
                       </div>
                     )}
                     {button.type === "VISIT_WEBSITE" ? (
-                      <div className="space-y-2">
+                      <div className="space-y-2 min-[1025px]:col-span-2 min-[1025px]:col-start-1 min-[1025px]:row-start-2">
                         <div className="flex min-w-0">
                           <Select
                             value={button.urlType}
@@ -1711,7 +1736,7 @@ export function CreateTemplateForm({
                               aria-label={`Button ${index + 1} dynamic URL path`}
                               placeholder="/"
                               required
-                              className="w-12 shrink-0 rounded-none"
+                              className="w-18 shrink-0 rounded-none"
                               onChange={(event) =>
                                 updateTemplateButtonUrlPath(index, event.target.value)
                               }
@@ -1822,15 +1847,6 @@ export function CreateTemplateForm({
                         ) : null}
                       </div>
                     ) : null}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-lg"
-                      aria-label={`Delete button ${index + 1}`}
-                      onClick={() => removeTemplateButton(index)}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
                   </div>
                 </div>
               ))}
@@ -1838,20 +1854,7 @@ export function CreateTemplateForm({
           ) : null}
         </div>
 
-        <Button
-          type="submit"
-          className={MEDIUM_BUTTON_HEIGHT}
-          disabled={
-            mutation.isPending ||
-            hasEmptyButtonText ||
-            hasDuplicateButtonText ||
-            hasInvalidWebsiteButtonUrl ||
-            hasEmptyDynamicUrlPath ||
-            hasOverlongWebsiteUrl ||
-            hasEmptyPhoneButtonNumber ||
-            hasEmptyCopyCodeButtonOfferCode
-          }
-        >
+        <Button type="submit" className={MEDIUM_BUTTON_HEIGHT} disabled={mutation.isPending}>
           {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
           {isEditing ? "Edit template" : "Create template"}
         </Button>
@@ -1884,7 +1887,7 @@ export function CreateTemplateForm({
         <Label>Preview</Label>
         <div
           className={cn(
-            "border-border max-w-sm overflow-hidden rounded-[7.5px] border bg-white px-3 pt-2 text-sm text-[#111b21] shadow-sm dark:bg-[#202c33] dark:text-[#e9edef]",
+            "border-border w-full max-w-[425px] overflow-hidden rounded-[7.5px] border bg-white px-3 pt-2 text-sm text-[#111b21] dark:bg-[#202c33] dark:text-[#e9edef]",
             previewButtons.length > 0 ? "pb-0" : "pb-2",
           )}
         >

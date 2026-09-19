@@ -6,6 +6,7 @@ import { CampaignNameFilter } from "./campaign-name-filter";
 import { CampaignCancelButton } from "./campaign-cancel-button";
 import { CampaignDeleteButton } from "./campaign-delete-button";
 import { CampaignViewButton } from "./campaign-view-button";
+import { NewCampaignButton } from "./new-campaign-button";
 import { PageHeader } from "@/components/page-header";
 import { TableEmptyState } from "@/components/table-empty-state";
 import { Card, CardContent } from "@/components/ui/card";
@@ -43,17 +44,29 @@ function displayStatus(status: string) {
   return normalized.charAt(0) + normalized.slice(1).toLowerCase();
 }
 
-function CampaignTable({ rows, status, name }: { rows: Campaign[]; status: string; name: string }) {
+function CampaignTable({
+  rows,
+  status,
+  name,
+}: {
+  rows: Campaign[];
+  status: string;
+  name: string;
+}) {
   return (
     <Card className="rounded-md py-0">
       <CardContent className="overflow-x-auto p-0">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead><CampaignNameFilter value={name} /></TableHead>
+              <TableHead>
+                <CampaignNameFilter value={name} />
+              </TableHead>
               <TableHead>Audience</TableHead>
               <TableHead>Send date</TableHead>
-              <TableHead><CampaignStatusFilter value={status} /></TableHead>
+              <TableHead>
+                <CampaignStatusFilter value={status} />
+              </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -63,10 +76,10 @@ function CampaignTable({ rows, status, name }: { rows: Campaign[]; status: strin
             ) : (
               rows.map((campaign) => (
                 <TableRow key={campaign.id}>
-                  <TableCell className="font-medium">
-                    {campaign.name}
+                  <TableCell className="font-medium">{campaign.name}</TableCell>
+                  <TableCell>
+                    {campaign.recipient_count ?? campaign.customer_ids?.length ?? 0}
                   </TableCell>
-                  <TableCell>{campaign.recipient_count ?? campaign.customer_ids?.length ?? 0}</TableCell>
                   <TableCell>{formatDateTime(campaign.send_date)}</TableCell>
                   <TableCell>{displayStatus(campaign.status)}</TableCell>
                   <TableCell className="text-right whitespace-nowrap">
@@ -99,7 +112,12 @@ export default async function CampaignsPage({ searchParams }: PageProps<"/campai
   let campaigns: Campaign[] = [];
   try {
     const response = await serverFetch<CampaignListResponse>("/v1/campaigns", {
-      query: { page: "1", page_size: "100", status: status === "ALL" ? undefined : status, name },
+      query: {
+        page: "1",
+        page_size: "100",
+        status: status === "ALL" ? undefined : status,
+        name,
+      },
     });
     campaigns = response.items;
   } catch (error) {
@@ -118,6 +136,7 @@ export default async function CampaignsPage({ searchParams }: PageProps<"/campai
             page.
           </>
         }
+        action={<NewCampaignButton />}
       />
 
       <CampaignTable rows={campaigns} status={status} name={name} />

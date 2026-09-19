@@ -71,12 +71,12 @@ export function ViewTemplateButton({
 
         <div className="min-h-0 flex-1 space-y-4 !overflow-y-auto overscroll-contain pr-1">
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-          {details.map((detail) => (
-            <div key={detail.label} className="contents">
-              <dt className="text-muted-foreground">{detail.label}</dt>
-              <dd className="break-all">{detail.value}</dd>
-            </div>
-          ))}
+            {details.map((detail) => (
+              <div key={detail.label} className="contents">
+                <dt className="text-muted-foreground">{detail.label}</dt>
+                <dd className="break-all">{detail.value}</dd>
+              </div>
+            ))}
           </dl>
 
           {qualityReasons.length > 0 ? (
@@ -100,13 +100,14 @@ export function ViewTemplateButton({
               <TemplatePreviewHtml
                 lightHtml={template.preview_html}
                 darkHtml={template.preview_dark_html}
+                className="overflow-hidden rounded-lg"
               />
             ) : components.length === 0 ? (
               <p className="text-muted-foreground text-sm">
                 Meta did not return any components for this template.
               </p>
             ) : (
-              <div className="min-w-0 overflow-hidden">
+              <div className="min-w-0 overflow-hidden rounded-lg">
                 {components.map((component, index) => {
                   const text = componentText(component);
                   if (!text) return null;

@@ -206,7 +206,7 @@ async function compressVideoFile(file: File): Promise<File> {
       video.onerror = () => reject(new Error("Could not read video for compression."));
     });
 
-    const maxDimension = 1280;
+    const maxDimension = 1440;
     const scale = Math.min(1, maxDimension / Math.max(video.videoWidth, video.videoHeight));
     const width = Math.max(1, Math.round(video.videoWidth * scale));
     const height = Math.max(1, Math.round(video.videoHeight * scale));

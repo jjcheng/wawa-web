@@ -762,9 +762,9 @@ export function EditCampaignForm({
   return (
     <form
       onSubmit={handleSubmit(submitCampaign)}
-      className="grid max-w-full min-w-0 items-start gap-6 min-[769px]:grid-cols-[minmax(0,28rem)_20rem] lg:grid-cols-[minmax(0,34rem)_22rem] xl:grid-cols-[minmax(0,40rem)_22rem] 2xl:grid-cols-[minmax(0,46rem)_22rem]"
+      className="grid w-full max-w-full min-w-0 items-start gap-6 min-[769px]:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]"
     >
-      <div className="w-full min-w-0 space-y-4 min-[769px]:max-w-md lg:max-w-[34rem] xl:max-w-[40rem] 2xl:max-w-[46rem]">
+      <div className="w-full min-w-0 space-y-4">
         <div className="space-y-2">
           <Label htmlFor="name">Campaign name</Label>
           <Input
@@ -1263,7 +1263,7 @@ export function EditCampaignForm({
       {selectedTemplate ? (
         <div className="min-w-0 self-start lg:col-start-2 lg:row-start-1">
           <p className="mb-1 text-sm font-medium tracking-wide">Preview</p>
-          <div className="border-border max-w-sm overflow-hidden rounded-[7.5px] border bg-white px-3 pt-2 text-sm text-[#111b21] shadow-sm dark:bg-[#202c33] dark:text-[#e9edef]">
+          <div className="border-border w-full max-w-[425px] overflow-hidden rounded-[7.5px] border bg-white px-3 pt-2 text-sm text-[#111b21] shadow-sm dark:bg-[#202c33] dark:text-[#e9edef]">
             {headerFormat === "IMAGE" && (previewMediaUrl || headerExampleHandle) ? (
               <div className="-mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
