@@ -6,11 +6,7 @@ import { AnalyticsViewTabs } from "@/components/whatsapp/analytics-view-tabs";
 import { PhoneNumberListTable } from "@/components/whatsapp/phone-number-list-table";
 import { TemplateUsageTable } from "@/components/whatsapp/template-usage-table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -19,19 +15,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  flattenMessagePoints,
-  formatCount,
-  loadAnalytics,
-} from "@/lib/analytics";
+import { flattenMessagePoints, formatCount, loadAnalytics } from "@/lib/analytics";
 import { resolveAnalyticsContext } from "@/lib/analytics-context";
 import { resolveAnalyticsView } from "@/lib/analytics-view";
 import { templateAnalyticsStart } from "@/lib/analytics-range";
-import type {
-  MessageAnalytics,
-  PhoneNumber,
-  TemplateListResponse,
-} from "@/lib/api/types";
+import type { MessageAnalytics, PhoneNumber, TemplateListResponse } from "@/lib/api/types";
 import { requireUser } from "@/lib/auth/session";
 import { formatDateTime } from "@/lib/format";
 
@@ -58,24 +46,31 @@ export default async function UsagePage({ searchParams }: PageProps<"/usage">) {
     normalizedParams.set("granularity", "DAY");
     redirect(`/usage?${normalizedParams.toString()}`);
   }
-  const context = await resolveAnalyticsContext(params, view !== "template", view !== "template");
+  const context = await resolveAnalyticsContext(
+    params,
+    view !== "template",
+    view !== "template",
+  );
 
-  const account = view === "overall" && context.selected
-    ? await loadAnalytics<MessageAnalytics>("/v1/wa/business-accounts/usage", context.query)
-    : { data: null, error: null };
-  const phoneNumbers = view === "phone" && context.selected
-    ? await loadAnalytics<PhoneNumberListResponse>("/v1/wa/user-phone-numbers", {
-        page: "1",
-        page_size: "10",
-      })
-    : { data: null, error: null };
+  const account =
+    view === "overall" && context.selected
+      ? await loadAnalytics<MessageAnalytics>("/v1/wa/business-accounts/usage", context.query)
+      : { data: null, error: null };
+  const phoneNumbers =
+    view === "phone" && context.selected
+      ? await loadAnalytics<PhoneNumberListResponse>("/v1/wa/user-phone-numbers", {
+          page: "1",
+          page_size: "10",
+        })
+      : { data: null, error: null };
 
-  const templateList = view === "template" && context.selected
-    ? await loadAnalytics<TemplateListResponse>("/v1/wa/templates", {
-        waba_id: context.selected,
-        limit: "10",
-      })
-    : { data: null, error: null };
+  const templateList =
+    view === "template" && context.selected
+      ? await loadAnalytics<TemplateListResponse>("/v1/wa/templates", {
+          waba_id: context.selected,
+          limit: "10",
+        })
+      : { data: null, error: null };
 
   const accountPoints = flattenMessagePoints(account.data);
   const templateStart = templateAnalyticsStart(context.start, context.end);
@@ -119,8 +114,10 @@ export default async function UsagePage({ searchParams }: PageProps<"/usage">) {
               granularity={context.granularity}
               initialTemplates={templateList.data.items}
               initialAfterCursor={
-                (templateList.data?.additional_data as { after?: string; next?: string } | undefined)
-                  ?.next
+                (
+                  templateList.data?.additional_data as
+                    { after?: string; next?: string } | undefined
+                )?.next
                   ? (templateList.data?.additional_data as { after?: string }).after
                   : undefined
               }
@@ -149,44 +146,46 @@ export default async function UsagePage({ searchParams }: PageProps<"/usage">) {
         </div>
       ) : null}
 
-      {view === "overall" ? <Card className="mt-6 rounded-md py-0">
-        <CardContent className="overflow-x-auto p-0">
-          {accountPoints.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              Meta reported no message usage for this account in the selected period.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Period start</TableHead>
-                  <TableHead>Period end</TableHead>
-                  <TableHead className="text-right">Sent</TableHead>
-                  <TableHead className="text-right">Delivered</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {accountPoints.map((point) => (
-                  <TableRow key={`${point.start}-${point.end}`}>
-                    <TableCell className="text-xs">
-                      {formatDateTime(new Date(point.start * 1000))}
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {formatDateTime(new Date(point.end * 1000))}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatCount(point.sent ?? 0)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatCount(point.delivered ?? 0)}
-                    </TableCell>
+      {view === "overall" ? (
+        <Card className="mt-6 rounded-md py-0">
+          <CardContent className="overflow-x-auto p-0">
+            {accountPoints.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                Meta reported no message usage for this account in the selected period.
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Period start</TableHead>
+                    <TableHead>Period end</TableHead>
+                    <TableHead className="text-right">Sent</TableHead>
+                    <TableHead className="text-right">Delivered</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card> : null}
+                </TableHeader>
+                <TableBody>
+                  {accountPoints.map((point) => (
+                    <TableRow key={`${point.start}-${point.end}`}>
+                      <TableCell className="text-xs font-medium">
+                        {formatDateTime(new Date(point.start * 1000))}
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        {formatDateTime(new Date(point.end * 1000))}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCount(point.sent ?? 0)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCount(point.delivered ?? 0)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
 
       {view === "phone" ? (
         <div className="mt-6">

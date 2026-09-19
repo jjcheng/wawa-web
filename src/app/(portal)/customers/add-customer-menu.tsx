@@ -63,7 +63,11 @@ function decodeVCardValue(value: string, quotedPrintable: boolean) {
   if (quotedPrintable) {
     const bytes: number[] = [];
     for (let index = 0; index < decoded.length; index += 1) {
-      if (decoded[index] === "=" && decoded.slice(index + 1, index + 3).length === 2 && !Number.isNaN(Number.parseInt(decoded.slice(index + 1, index + 3), 16))) {
+      if (
+        decoded[index] === "=" &&
+        decoded.slice(index + 1, index + 3).length === 2 &&
+        !Number.isNaN(Number.parseInt(decoded.slice(index + 1, index + 3), 16))
+      ) {
         bytes.push(Number.parseInt(decoded.slice(index + 1, index + 3), 16));
         index += 2;
       } else {
@@ -72,7 +76,9 @@ function decodeVCardValue(value: string, quotedPrintable: boolean) {
     }
     decoded = new TextDecoder("utf-8").decode(new Uint8Array(bytes));
   }
-  return decoded.replace(/\\([\\;,nN])/g, (_, character: string) => character.toLowerCase() === "n" ? "\n" : character);
+  return decoded.replace(/\\([\\;,nN])/g, (_, character: string) =>
+    character.toLowerCase() === "n" ? "\n" : character,
+  );
 }
 
 function parseVCardContacts(value: string): ImportedContact[] {
@@ -90,10 +96,14 @@ function parseVCardContacts(value: string): ImportedContact[] {
         if (!line) return undefined;
         const separatorIndex = line.indexOf(":");
         const parameters = line.slice(0, separatorIndex).toUpperCase();
-        return decodeVCardValue(line.slice(separatorIndex + 1).trim(), parameters.includes("ENCODING=QUOTED-PRINTABLE"));
+        return decodeVCardValue(
+          line.slice(separatorIndex + 1).trim(),
+          parameters.includes("ENCODING=QUOTED-PRINTABLE"),
+        );
       };
       const nameParts = field("N")?.split(";") ?? [];
-      const displayName = field("FN") || [nameParts[1], nameParts[0]].filter(Boolean).join(" ");
+      const displayName =
+        field("FN") || [nameParts[1], nameParts[0]].filter(Boolean).join(" ");
       const phoneNumber = field("TEL") ?? "";
       const email = field("EMAIL");
       const jobTitle = field("TITLE");
@@ -144,29 +154,30 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
   const [importResult, setImportResult] = useState<CustomerImportResult | null>(null);
   const importMutation = useMutation({
-    mutationFn: () => apiFetch<CustomerImportResult>("v1/customers/import", {
-      method: "POST",
-      body: {
-        contacts: importedContacts
-          .filter((contact) => selectedContacts.has(contact.id))
-          .map((contact) => ({
-            display_name: contact.displayName,
-            phone_number: contact.phoneNumber,
-            email: contact.email,
-            address: contact.address,
-            organization: contact.organization,
-            job_title: contact.jobTitle,
-            birthday: contact.birthday,
-            anniversary: contact.anniversary,
-            gender: contact.gender,
-            time_zone: contact.timeZone,
-            categories: contact.categories,
-            note: contact.note,
-            photo: contact.photo,
-            url: contact.url,
-          })),
-      },
-    }),
+    mutationFn: () =>
+      apiFetch<CustomerImportResult>("v1/customers/import", {
+        method: "POST",
+        body: {
+          contacts: importedContacts
+            .filter((contact) => selectedContacts.has(contact.id))
+            .map((contact) => ({
+              display_name: contact.displayName,
+              phone_number: contact.phoneNumber,
+              email: contact.email,
+              address: contact.address,
+              organization: contact.organization,
+              job_title: contact.jobTitle,
+              birthday: contact.birthday,
+              anniversary: contact.anniversary,
+              gender: contact.gender,
+              time_zone: contact.timeZone,
+              categories: contact.categories,
+              note: contact.note,
+              photo: contact.photo,
+              url: contact.url,
+            })),
+        },
+      }),
     onSuccess: (result) => {
       if (result.message.trim()) toast.success(result.message);
       setImportResult(result);
@@ -175,17 +186,23 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
     },
     onError: (error) => toast.error(toApiError(error).message),
   });
-  const allContactsSelected = importedContacts.length > 0 && importedContacts.every((contact) => selectedContacts.has(contact.id));
+  const allContactsSelected =
+    importedContacts.length > 0 &&
+    importedContacts.every((contact) => selectedContacts.has(contact.id));
 
   function toggleAllContacts(checked: boolean) {
-    setSelectedContacts(checked ? new Set(importedContacts.map((contact) => contact.id)) : new Set());
+    setSelectedContacts(
+      checked ? new Set(importedContacts.map((contact) => contact.id)) : new Set(),
+    );
   }
   const importInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (importOpen) {
       const handleResize = () => {
-        const content = document.querySelector('[data-slot="dialog-content"]') as HTMLElement | null;
+        const content = document.querySelector(
+          '[data-slot="dialog-content"]',
+        ) as HTMLElement | null;
         if (content) {
           if (window.innerWidth >= 640) {
             content.style.width = "70vw";
@@ -372,67 +389,81 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
               All contacts imported
             </div>
           ) : null}
-          {!importResult ? <div className="max-h-[60vh] overflow-auto">
-            <Table containerClassName="overflow-visible">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="bg-background sticky top-0 left-0 z-30 w-10">
-                    <Checkbox
-                      checked={allContactsSelected}
-                      onChange={(event) => toggleAllContacts(event.target.checked)}
-                      aria-label="Select all contacts"
-                    />
-                  </TableHead>
-                  <TableHead className="bg-background sticky top-0 z-20">Name</TableHead>
-                  <TableHead className="bg-background sticky top-0 z-20">Phone</TableHead>
-                  <TableHead className="bg-background sticky top-0 z-20">Organization</TableHead>
-                  <TableHead className="bg-background sticky top-0 z-20">Job Title</TableHead>
-                  <TableHead className="bg-background sticky top-0 z-20">Email</TableHead>
-                  <TableHead className="bg-background sticky top-0 z-20">Birthday</TableHead>
-                  <TableHead className="bg-background sticky top-0 z-20">Address</TableHead>
-                  <TableHead className="bg-background sticky top-0 z-20">Gender</TableHead>
-                  <TableHead className="bg-background sticky top-0 z-20">Anniversary</TableHead>
-                  <TableHead className="bg-background sticky top-0 z-20">Time Zone</TableHead>
-                  <TableHead className="bg-background sticky top-0 z-20">Categories</TableHead>
-                  <TableHead className="bg-background sticky top-0 z-20">Note</TableHead>
-                  <TableHead className="bg-background sticky top-0 z-20">URL</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {importedContacts.map((contact) => (
-                  <TableRow key={contact.id}>
-                    <TableCell className="bg-background sticky left-0 z-10">
+          {!importResult ? (
+            <div className="max-h-[60vh] overflow-auto">
+              <Table containerClassName="overflow-visible">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="bg-background sticky top-0 left-0 z-30 w-10">
                       <Checkbox
-                        checked={selectedContacts.has(contact.id)}
-                        onChange={(event) => {
-                          setSelectedContacts((current) => {
-                            const next = new Set(current);
-                            if (event.target.checked) next.add(contact.id);
-                            else next.delete(contact.id);
-                            return next;
-                          });
-                        }}
-                        aria-label={`Select ${contact.displayName}`}
+                        checked={allContactsSelected}
+                        onChange={(event) => toggleAllContacts(event.target.checked)}
+                        aria-label="Select all contacts"
                       />
-                    </TableCell>
-                    <TableCell className="font-medium">{contact.displayName}</TableCell>
-                    <TableCell>{contact.phoneNumber}</TableCell>
-                    <TableCell>{contact.organization || "—"}</TableCell>
-                    <TableCell>{contact.jobTitle || "—"}</TableCell>
-                    <TableCell>{contact.email || "—"}</TableCell>
-                    <TableCell>{contact.birthday || "—"}</TableCell>
-                    <TableCell>{contact.address || "—"}</TableCell>
-                    <TableCell>{contact.gender || "—"}</TableCell>
-                    <TableCell>{contact.anniversary || "—"}</TableCell>
-                    <TableCell>{contact.timeZone || "—"}</TableCell>
-                    <TableCell>{contact.categories || "—"}</TableCell>
-                    <TableCell className="whitespace-pre-wrap">{contact.note || "—"}</TableCell>
-                    <TableCell>{contact.url || "—"}</TableCell>
+                    </TableHead>
+                    <TableHead className="bg-background sticky top-0 z-20">Name</TableHead>
+                    <TableHead className="bg-background sticky top-0 z-20">Phone</TableHead>
+                    <TableHead className="bg-background sticky top-0 z-20">
+                      Organization
+                    </TableHead>
+                    <TableHead className="bg-background sticky top-0 z-20">
+                      Job Title
+                    </TableHead>
+                    <TableHead className="bg-background sticky top-0 z-20">Email</TableHead>
+                    <TableHead className="bg-background sticky top-0 z-20">Birthday</TableHead>
+                    <TableHead className="bg-background sticky top-0 z-20">Address</TableHead>
+                    <TableHead className="bg-background sticky top-0 z-20">Gender</TableHead>
+                    <TableHead className="bg-background sticky top-0 z-20">
+                      Anniversary
+                    </TableHead>
+                    <TableHead className="bg-background sticky top-0 z-20">
+                      Time Zone
+                    </TableHead>
+                    <TableHead className="bg-background sticky top-0 z-20">
+                      Categories
+                    </TableHead>
+                    <TableHead className="bg-background sticky top-0 z-20">Note</TableHead>
+                    <TableHead className="bg-background sticky top-0 z-20">URL</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div> : null}
+                </TableHeader>
+                <TableBody>
+                  {importedContacts.map((contact) => (
+                    <TableRow key={contact.id}>
+                      <TableCell className="bg-background sticky left-0 z-10">
+                        <Checkbox
+                          checked={selectedContacts.has(contact.id)}
+                          onChange={(event) => {
+                            setSelectedContacts((current) => {
+                              const next = new Set(current);
+                              if (event.target.checked) next.add(contact.id);
+                              else next.delete(contact.id);
+                              return next;
+                            });
+                          }}
+                          aria-label={`Select ${contact.displayName}`}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">{contact.displayName}</TableCell>
+                      <TableCell>{contact.phoneNumber}</TableCell>
+                      <TableCell>{contact.organization || "—"}</TableCell>
+                      <TableCell>{contact.jobTitle || "—"}</TableCell>
+                      <TableCell>{contact.email || "—"}</TableCell>
+                      <TableCell>{contact.birthday || "—"}</TableCell>
+                      <TableCell>{contact.address || "—"}</TableCell>
+                      <TableCell>{contact.gender || "—"}</TableCell>
+                      <TableCell>{contact.anniversary || "—"}</TableCell>
+                      <TableCell>{contact.timeZone || "—"}</TableCell>
+                      <TableCell>{contact.categories || "—"}</TableCell>
+                      <TableCell className="whitespace-pre-wrap">
+                        {contact.note || "—"}
+                      </TableCell>
+                      <TableCell>{contact.url || "—"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : null}
           {importResult?.skipped.length ? (
             <div className="max-h-[30vh] overflow-auto">
               <h3 className="mb-2 text-sm font-medium">Skipped contacts</h3>
@@ -441,13 +472,17 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
                   <TableRow>
                     <TableHead className="bg-background sticky top-0 z-20">Name</TableHead>
                     <TableHead className="bg-background sticky top-0 z-20">Phone</TableHead>
-                    <TableHead className="bg-background sticky top-0 z-20">Skip reason</TableHead>
+                    <TableHead className="bg-background sticky top-0 z-20">
+                      Skip reason
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {importResult.skipped.map((contact, index) => (
                     <TableRow key={`${contact.display_name}-${contact.phone_number}-${index}`}>
-                      <TableCell>{contact.display_name || "—"}</TableCell>
+                      <TableCell className="font-medium">
+                        {contact.display_name || "—"}
+                      </TableCell>
                       <TableCell>{contact.phone_number || "—"}</TableCell>
                       <TableCell>{contact.skip_reason || "—"}</TableCell>
                     </TableRow>
@@ -461,7 +496,9 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
               <Button onClick={() => setImportOpen(false)}>Done</Button>
             ) : (
               <>
-                <Button variant="outline" onClick={() => setImportOpen(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => setImportOpen(false)}>
+                  Cancel
+                </Button>
                 <Button
                   onClick={() => importMutation.mutate()}
                   disabled={selectedContacts.size === 0 || importMutation.isPending}

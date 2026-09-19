@@ -10,6 +10,7 @@ import {
   FileText,
   Globe,
   ImageIcon,
+  Info,
   Loader2,
   MapPin,
   Phone,
@@ -38,6 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api/client";
 import { ApiError, toApiError } from "@/lib/api/errors";
@@ -107,7 +109,14 @@ const TEMPLATE_BUTTON_OPTIONS = [
 
 type TemplateButton =
   | { type: "CUSTOM"; text: string }
-  | { type: "VISIT_WEBSITE"; text: string; url: string }
+  | {
+      type: "VISIT_WEBSITE";
+      text: string;
+      url: string;
+      urlType: "STATIC" | "DYNAMIC";
+      urlPath: string;
+      urlSuffix: string;
+    }
   | { type: "CALL_PHONE"; text: string; phoneNumber: string }
   | { type: "COPY_CODE"; text: string; offerCode: string };
 
@@ -123,13 +132,18 @@ const TEMPLATE_BUTTON_TEXT_MAX_LENGTH = 25;
 const TEMPLATE_BUTTON_URL_MAX_LENGTH = 2000;
 const TEMPLATE_BUTTON_PHONE_MAX_LENGTH = 20;
 const TEMPLATE_BUTTON_OFFER_CODE_MAX_LENGTH = 20;
-const LOCATION_HEADER_PREVIEW_IMAGE_URL = new URL("https://maps.googleapis.com/maps/api/staticmap");
+const LOCATION_HEADER_PREVIEW_IMAGE_URL = new URL(
+  "https://maps.googleapis.com/maps/api/staticmap",
+);
 LOCATION_HEADER_PREVIEW_IMAGE_URL.searchParams.set("center", "1.32,103.85");
 LOCATION_HEADER_PREVIEW_IMAGE_URL.searchParams.set("zoom", "17");
 LOCATION_HEADER_PREVIEW_IMAGE_URL.searchParams.set("size", "450x450");
 LOCATION_HEADER_PREVIEW_IMAGE_URL.searchParams.set("maptype", "roadmap");
 LOCATION_HEADER_PREVIEW_IMAGE_URL.searchParams.set("markers", "color:red|1.32,103.85");
-LOCATION_HEADER_PREVIEW_IMAGE_URL.searchParams.set("key", process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "");
+LOCATION_HEADER_PREVIEW_IMAGE_URL.searchParams.set(
+  "key",
+  process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
+);
 const HEADER_VARIABLE = "{{1}}";
 const TEMPLATE_VARIABLE_PATTERN = /\{\{\s*\d+\s*\}\}/g;
 const TEMPLATE_NAME_CHARACTER_PATTERN = /^[a-z0-9_]$/;
@@ -140,7 +154,9 @@ function withHeaderVariable(text: string) {
   if (!text || /\s$/.test(text)) return `${text}${HEADER_VARIABLE}`;
 
   const withSeparator = `${text} ${HEADER_VARIABLE}`;
-  return withSeparator.length <= HEADER_TEXT_MAX_LENGTH ? withSeparator : `${text}${HEADER_VARIABLE}`;
+  return withSeparator.length <= HEADER_TEXT_MAX_LENGTH
+    ? withSeparator
+    : `${text}${HEADER_VARIABLE}`;
 }
 
 function templateVariableCount(text: string) {
@@ -181,7 +197,11 @@ function formatPreviewText(value: string) {
   let key = 0;
 
   while (remaining.length > 0) {
-    const monospaceMarker = remaining.startsWith("```") ? "```" : remaining.startsWith("``") ? "``" : null;
+    const monospaceMarker = remaining.startsWith("```")
+      ? "```"
+      : remaining.startsWith("``")
+        ? "``"
+        : null;
     if (monospaceMarker) {
       const closingIndex = remaining.indexOf(monospaceMarker, monospaceMarker.length);
       if (closingIndex >= 0) {
@@ -220,7 +240,8 @@ function formatPreviewText(value: string) {
     }
 
     const nextSpecial = remaining.search(/[\*_~`]/);
-    const textLength = nextSpecial < 0 ? remaining.length : nextSpecial === 0 ? 1 : nextSpecial;
+    const textLength =
+      nextSpecial < 0 ? remaining.length : nextSpecial === 0 ? 1 : nextSpecial;
     parts.push(remaining.slice(0, textLength));
     remaining = remaining.slice(textLength);
   }
@@ -253,7 +274,7 @@ function emptyTemplateButtonTextIndexes(buttons: TemplateButton[]) {
 
 function isValidWebsiteUrl(value: string) {
   try {
-    const url = new URL(value);
+    const url = new URL(value.replace(/\{\{1\}\}$/, ""));
     const hostnameParts = url.hostname.split(".");
     return (
       ["http:", "https:"].includes(url.protocol) &&
@@ -269,7 +290,43 @@ function isValidWebsiteUrl(value: string) {
 function invalidWebsiteButtonUrlIndexes(buttons: TemplateButton[]) {
   const indexes = new Set<number>();
   buttons.forEach((button, index) => {
-    if (button.type === "VISIT_WEBSITE" && !isValidWebsiteUrl(button.url.trim())) {
+    const value =
+      button.type === "VISIT_WEBSITE" && button.urlType === "DYNAMIC"
+        ? `${button.url}${button.urlPath}{{1}}`
+        : button.type === "VISIT_WEBSITE"
+          ? button.url
+          : "";
+    if (button.type === "VISIT_WEBSITE" && !isValidWebsiteUrl(value.trim())) {
+      indexes.add(index);
+    }
+  });
+  return indexes;
+}
+
+function emptyDynamicUrlPathIndexes(buttons: TemplateButton[]) {
+  const indexes = new Set<number>();
+  buttons.forEach((button, index) => {
+    if (
+      button.type === "VISIT_WEBSITE" &&
+      button.urlType === "DYNAMIC" &&
+      !button.urlPath.trim()
+    ) {
+      indexes.add(index);
+    }
+  });
+  return indexes;
+}
+
+function overlongWebsiteUrlIndexes(buttons: TemplateButton[]) {
+  const indexes = new Set<number>();
+  buttons.forEach((button, index) => {
+    const value =
+      button.type === "VISIT_WEBSITE" && button.urlType === "DYNAMIC"
+        ? `${button.url}${button.urlPath}{{1}}`
+        : button.type === "VISIT_WEBSITE"
+          ? button.url
+          : "";
+    if (button.type === "VISIT_WEBSITE" && value.length > TEMPLATE_BUTTON_URL_MAX_LENGTH) {
       indexes.add(index);
     }
   });
@@ -292,7 +349,10 @@ function emptyCopyCodeButtonOfferCodeIndexes(buttons: TemplateButton[]) {
   return indexes;
 }
 
-function hasSingleUseButton(buttons: TemplateButton[], type: Exclude<TemplateButtonType, "CUSTOM">) {
+function hasSingleUseButton(
+  buttons: TemplateButton[],
+  type: Exclude<TemplateButtonType, "CUSTOM">,
+) {
   return buttons.some((button) => button.type === type);
 }
 
@@ -315,7 +375,16 @@ function templateButtonsComponent(buttons: TemplateButton[]) {
     type: "BUTTONS",
     buttons: buttons.map((button) => {
       if (button.type === "VISIT_WEBSITE") {
-        return { type: "URL", text: button.text, url: button.url };
+        const url =
+          button.urlType === "DYNAMIC" ? `${button.url}${button.urlPath}{{1}}` : button.url;
+        return {
+          type: "URL",
+          text: button.text,
+          url,
+          ...(button.urlType === "DYNAMIC"
+            ? { example: [url.replace("{{1}}", "example")] }
+            : {}),
+        };
       }
       if (button.type === "CALL_PHONE") {
         return {
@@ -334,13 +403,13 @@ function templateButtonsComponent(buttons: TemplateButton[]) {
 
 function templateComponents(values: CreateTemplateInput, buttons: TemplateButton[]) {
   const buttonComponent = templateButtonsComponent(buttons);
-  return [
-    ...toTemplateComponents(values),
-    ...(buttonComponent ? [buttonComponent] : []),
-  ];
+  return [...toTemplateComponents(values), ...(buttonComponent ? [buttonComponent] : [])];
 }
 
-function metaTemplateComponentsPreview(values: CreateTemplateInput, buttons: TemplateButton[]) {
+function metaTemplateComponentsPreview(
+  values: CreateTemplateInput,
+  buttons: TemplateButton[],
+) {
   return templateComponents(values, buttons).map((component) => {
     const componentRecord = component as Record<string, unknown>;
     if (
@@ -404,6 +473,24 @@ function templateCategory(value: string | undefined): CreateTemplateInput["categ
   return TEMPLATE_CATEGORIES.find((option) => option === normalizedValue) ?? "MARKETING";
 }
 
+function splitDynamicWebsiteUrl(value: string) {
+  const markerIndex = value.indexOf("{{1}}");
+  if (markerIndex < 0) return { url: value, urlPath: "", urlType: "STATIC" as const };
+
+  const prefix = value.slice(0, markerIndex);
+  try {
+    const parsedUrl = new URL(prefix);
+    const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
+    return {
+      url: baseUrl,
+      urlPath: prefix.slice(baseUrl.length) || "/",
+      urlType: "DYNAMIC" as const,
+    };
+  } catch {
+    return { url: prefix, urlPath: "", urlType: "DYNAMIC" as const };
+  }
+}
+
 function templateButtonsFromTemplate(template: Template): TemplateButton[] {
   const component = template.components?.find(
     (item) => String(item.type ?? "").toUpperCase() === "BUTTONS",
@@ -417,7 +504,18 @@ function templateButtonsFromTemplate(template: Template): TemplateButton[] {
     const type = String(button.type ?? "").toUpperCase();
     const text = typeof button.text === "string" ? button.text : "";
     if (type === "URL") {
-      buttons.push({ type: "VISIT_WEBSITE", text, url: String(button.url ?? "") });
+      const parsedUrl = splitDynamicWebsiteUrl(String(button.url ?? ""));
+      const isLegacyDynamic = String(button.url_type ?? "").toUpperCase() === "DYNAMIC";
+      buttons.push({
+        type: "VISIT_WEBSITE",
+        text,
+        url: parsedUrl.url,
+        urlType: isLegacyDynamic || parsedUrl.urlType === "DYNAMIC" ? "DYNAMIC" : "STATIC",
+        urlPath: isLegacyDynamic
+          ? String(button.url_path ?? parsedUrl.urlPath ?? "/")
+          : parsedUrl.urlPath,
+        urlSuffix: isLegacyDynamic || parsedUrl.urlType === "DYNAMIC" ? "{{1}}" : "",
+      });
       continue;
     }
     if (type === "PHONE_NUMBER") {
@@ -430,7 +528,11 @@ function templateButtonsFromTemplate(template: Template): TemplateButton[] {
       continue;
     }
     if (type === "COPY_CODE") {
-      buttons.push({ type: "COPY_CODE", text: "Copy offer code", offerCode: String(button.example ?? "") });
+      buttons.push({
+        type: "COPY_CODE",
+        text: "Copy offer code",
+        offerCode: String(button.example ?? ""),
+      });
       continue;
     }
     if (type === "QUICK_REPLY") buttons.push({ type: "CUSTOM", text });
@@ -447,7 +549,8 @@ function templateFormValues(template: Template, wabaId: string): CreateTemplateI
     ? (headerFormat as CreateTemplateInput["media_sample"])
     : "NONE";
   const category = templateCategory(template.category);
-  const language = TEMPLATE_LANGUAGES.find((option) => option.code === template.language)?.code ?? "en";
+  const language =
+    TEMPLATE_LANGUAGES.find((option) => option.code === template.language)?.code ?? "en";
   const bodySamples = templateExampleValues(body, "body_text");
 
   return {
@@ -459,7 +562,9 @@ function templateFormValues(template: Template, wabaId: string): CreateTemplateI
     header_text: mediaSample === "NONE" ? templateText(header) : "",
     header_variable_samples: templateExampleValues(header, "header_text"),
     body_text: templateText(body),
-    body_variable_samples: Array.isArray(bodySamples[0]) ? bodySamples[0].map(String) : bodySamples,
+    body_variable_samples: Array.isArray(bodySamples[0])
+      ? bodySamples[0].map(String)
+      : bodySamples,
     footer_text: templateText(footer),
   };
 }
@@ -482,10 +587,14 @@ export function CreateTemplateForm({
   const selectedSample = useSelectedSampleTemplate();
   const [mediaSampleFile, setMediaSampleFile] = useState<File | null>(null);
   const [existingHeaderHandle, setExistingHeaderHandle] = useState<string | null>(() =>
-    initialTemplate ? templateHeaderHandle(templateComponent(initialTemplate, "HEADER")) : null,
+    initialTemplate
+      ? templateHeaderHandle(templateComponent(initialTemplate, "HEADER"))
+      : null,
   );
   const [existingHeaderUrl, setExistingHeaderUrl] = useState<string | null>(() =>
-    initialTemplate ? templateHeaderHandle(templateComponent(initialTemplate, "HEADER")) : null,
+    initialTemplate
+      ? templateHeaderHandle(templateComponent(initialTemplate, "HEADER"))
+      : null,
   );
   const [headerTypeOpen, setHeaderTypeOpen] = useState(false);
   const [buttonOptionsOpen, setButtonOptionsOpen] = useState(false);
@@ -592,7 +701,10 @@ export function CreateTemplateForm({
       let components = templateComponents(values, templateButtons);
       if (MEDIA_FILE_SAMPLE_TYPES.includes(values.media_sample)) {
         if (!mediaSampleFile && !existingHeaderHandle) {
-          throw new ApiError(`Upload a ${MEDIA_SAMPLE_LABELS[values.media_sample].toLowerCase()} file.`, 0);
+          throw new ApiError(
+            `Upload a ${MEDIA_SAMPLE_LABELS[values.media_sample].toLowerCase()} file.`,
+            0,
+          );
         }
         let headerHandle = existingHeaderHandle;
         if (mediaSampleFile) {
@@ -602,17 +714,21 @@ export function CreateTemplateForm({
             contentType: mediaSampleFile.type,
             size: mediaSampleFile.size,
           });
-          const media = await apiFetch<MediaHeaderUploadResponse>("v1/wa/templates/upload-example", {
-            method: "POST",
-            rawBody: mediaSampleFile,
-            contentType: mediaSampleFile.type,
-            query: {
-              filename: mediaSampleFile.name,
+          const media = await apiFetch<MediaHeaderUploadResponse>(
+            "v1/wa/templates/upload-example",
+            {
+              method: "POST",
+              rawBody: mediaSampleFile,
+              contentType: mediaSampleFile.type,
+              query: {
+                filename: mediaSampleFile.name,
+              },
             },
-          });
+          );
           headerHandle = media.h ?? media.id ?? media.header_handle ?? media.handle ?? null;
         }
-        if (!headerHandle) throw new ApiError("Media upload did not return a header handle.", 0);
+        if (!headerHandle)
+          throw new ApiError("Media upload did not return a header handle.", 0);
         components = templateComponentsWithHeaderHandle(values, templateButtons, headerHandle);
       }
 
@@ -664,9 +780,11 @@ export function CreateTemplateForm({
   const bodyText = useWatch({ control, name: "body_text" }) ?? "";
   const bodyVariableSamples = useWatch({ control, name: "body_variable_samples" }) ?? [];
   const footerText = useWatch({ control, name: "footer_text" }) ?? "";
-  const languageLabel = TEMPLATE_LANGUAGES.find((option) => option.code === language)?.label ?? language;
+  const languageLabel =
+    TEMPLATE_LANGUAGES.find((option) => option.code === language)?.label ?? language;
   const selectedHeaderType =
-    HEADER_TYPE_OPTIONS.find((option) => option.value === mediaSample) ?? HEADER_TYPE_OPTIONS[0];
+    HEADER_TYPE_OPTIONS.find((option) => option.value === mediaSample) ??
+    HEADER_TYPE_OPTIONS[0];
   const mediaSampleNeedsFile = MEDIA_FILE_SAMPLE_TYPES.includes(mediaSample);
   const showHeaderText = mediaSample === "NONE";
   const headerVariables = templateVariableNames(headerText);
@@ -683,9 +801,14 @@ export function CreateTemplateForm({
   const hasEmptyButtonText = emptyButtonTextIndexes.size > 0;
   const invalidWebsiteButtonUrlIndexesSet = invalidWebsiteButtonUrlIndexes(templateButtons);
   const hasInvalidWebsiteButtonUrl = invalidWebsiteButtonUrlIndexesSet.size > 0;
+  const emptyDynamicUrlPathIndexesSet = emptyDynamicUrlPathIndexes(templateButtons);
+  const hasEmptyDynamicUrlPath = emptyDynamicUrlPathIndexesSet.size > 0;
+  const overlongWebsiteUrlIndexesSet = overlongWebsiteUrlIndexes(templateButtons);
+  const hasOverlongWebsiteUrl = overlongWebsiteUrlIndexesSet.size > 0;
   const emptyPhoneButtonNumberIndexesSet = emptyPhoneButtonNumberIndexes(templateButtons);
   const hasEmptyPhoneButtonNumber = emptyPhoneButtonNumberIndexesSet.size > 0;
-  const emptyCopyCodeButtonOfferCodeIndexesSet = emptyCopyCodeButtonOfferCodeIndexes(templateButtons);
+  const emptyCopyCodeButtonOfferCodeIndexesSet =
+    emptyCopyCodeButtonOfferCodeIndexes(templateButtons);
   const hasEmptyCopyCodeButtonOfferCode = emptyCopyCodeButtonOfferCodeIndexesSet.size > 0;
   const hasWebsiteButton = hasSingleUseButton(templateButtons, "VISIT_WEBSITE");
   const hasPhoneButton = hasSingleUseButton(templateButtons, "CALL_PHONE");
@@ -695,7 +818,8 @@ export function CreateTemplateForm({
   const previewBodyText = textWithVariableSamples(bodyText, bodyVariableSamples);
   const previewButtons = templateButtons.map((button) => ({
     type: button.type,
-    text: button.type === "COPY_CODE" ? "Copy offer code" : button.text.trim() || "Button text",
+    text:
+      button.type === "COPY_CODE" ? "Copy offer code" : button.text.trim() || "Button text",
   }));
   const previewJson = {
     ...(initialTemplate ? { id: initialTemplate.id } : {}),
@@ -734,7 +858,8 @@ export function CreateTemplateForm({
 
     setValue("header_text", nextHeaderValue, { shouldDirty: true, shouldValidate: true });
     requestAnimationFrame(() => {
-      const nextCursorPosition = cursorPosition + prefix.length + HEADER_VARIABLE.length + suffix.length;
+      const nextCursorPosition =
+        cursorPosition + prefix.length + HEADER_VARIABLE.length + suffix.length;
       input?.focus();
       input?.setSelectionRange(nextCursorPosition, nextCursorPosition);
     });
@@ -759,7 +884,11 @@ export function CreateTemplateForm({
     setValue("body_text", nextBodyValue, { shouldDirty: true, shouldValidate: true });
     requestAnimationFrame(() => {
       const nextCursorPosition =
-        cursorPosition + prefix.length + templateVariableCount(bodyText).toString().length + 4 + suffix.length;
+        cursorPosition +
+        prefix.length +
+        templateVariableCount(bodyText).toString().length +
+        4 +
+        suffix.length;
       textarea?.focus();
       textarea?.setSelectionRange(nextCursorPosition, nextCursorPosition);
     });
@@ -817,7 +946,14 @@ export function CreateTemplateForm({
     if (hasWebsiteButton) return;
     setTemplateButtons((currentButtons) => [
       ...currentButtons,
-      { type: "VISIT_WEBSITE", text: "Visit website", url: "" },
+      {
+        type: "VISIT_WEBSITE",
+        text: "Visit website",
+        url: "",
+        urlType: "STATIC",
+        urlPath: "/",
+        urlSuffix: "",
+      },
     ]);
     setButtonOptionsOpen(false);
   }
@@ -858,7 +994,9 @@ export function CreateTemplateForm({
         buttonIndex === index && button.type === "CALL_PHONE"
           ? {
               ...button,
-              phoneNumber: phoneNumber.replace(/\D/g, "").slice(0, TEMPLATE_BUTTON_PHONE_MAX_LENGTH),
+              phoneNumber: phoneNumber
+                .replace(/\D/g, "")
+                .slice(0, TEMPLATE_BUTTON_PHONE_MAX_LENGTH),
             }
           : button,
       ),
@@ -875,13 +1013,40 @@ export function CreateTemplateForm({
     );
   }
 
+  function updateTemplateButtonUrlType(index: number, urlType: "STATIC" | "DYNAMIC") {
+    setTemplateButtons((currentButtons) =>
+      currentButtons.map((button, buttonIndex) =>
+        buttonIndex === index && button.type === "VISIT_WEBSITE"
+          ? {
+              ...button,
+              urlType,
+              urlPath: urlType === "DYNAMIC" ? button.urlPath || "/" : "",
+              urlSuffix: urlType === "DYNAMIC" ? button.urlSuffix || "{{1}}" : "",
+            }
+          : button,
+      ),
+    );
+  }
+
+  function updateTemplateButtonUrlPath(index: number, urlPath: string) {
+    setTemplateButtons((currentButtons) =>
+      currentButtons.map((button, buttonIndex) =>
+        buttonIndex === index && button.type === "VISIT_WEBSITE"
+          ? { ...button, urlPath }
+          : button,
+      ),
+    );
+  }
+
   function updateTemplateButtonOfferCode(index: number, offerCode: string) {
     setTemplateButtons((currentButtons) =>
       currentButtons.map((button, buttonIndex) =>
         buttonIndex === index && button.type === "COPY_CODE"
           ? {
               ...button,
-              offerCode: offerCode.replace(/[^a-zA-Z0-9]/g, "").slice(0, TEMPLATE_BUTTON_OFFER_CODE_MAX_LENGTH),
+              offerCode: offerCode
+                .replace(/[^a-zA-Z0-9]/g, "")
+                .slice(0, TEMPLATE_BUTTON_OFFER_CODE_MAX_LENGTH),
             }
           : button,
       ),
@@ -909,342 +1074,368 @@ export function CreateTemplateForm({
   return (
     <form
       onSubmit={handleSubmit((values) => mutation.mutate(values))}
-      className="grid min-w-0 max-w-full items-start gap-6 md:grid-cols-[minmax(0,28rem)_20rem] lg:grid-cols-[minmax(0,34rem)_22rem] xl:grid-cols-[minmax(0,40rem)_22rem] 2xl:grid-cols-[minmax(0,46rem)_22rem]"
+      className="grid max-w-full min-w-0 items-start gap-6 min-[769px]:grid-cols-[minmax(0,28rem)_20rem] lg:grid-cols-[minmax(0,34rem)_22rem] xl:grid-cols-[minmax(0,40rem)_22rem] 2xl:grid-cols-[minmax(0,46rem)_22rem]"
     >
-      <div className="min-w-0 max-w-md space-y-4 lg:max-w-[34rem] xl:max-w-[40rem] 2xl:max-w-[46rem]">
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="name">Name</Label>
-          <div className="relative">
-            <Input
-              id="name"
-              placeholder="order_confirmation"
-              maxLength={TEMPLATE_NAME_MAX_LENGTH}
-              disabled={isEditing}
-              className="pr-16"
-              onKeyDown={(event) => {
-                if (event.metaKey || event.ctrlKey || event.altKey || event.key.length !== 1) {
-                  return;
-                }
-                if (event.key === " ") return;
-                if (!TEMPLATE_NAME_CHARACTER_PATTERN.test(event.key)) event.preventDefault();
-              }}
-              {...register("name", {
-                onChange: (event) => {
-                  event.target.value = event.target.value
-                    .replaceAll(" ", "_")
-                    .replace(TEMPLATE_NAME_INVALID_CHARACTER_PATTERN, "");
-                },
-              })}
-            />
-            <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
-              {templateName.length}/{TEMPLATE_NAME_MAX_LENGTH}
-            </span>
+      <div className="w-full min-w-0 space-y-4 min-[769px]:max-w-md lg:max-w-[34rem] xl:max-w-[40rem] 2xl:max-w-[46rem]">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="name">Name</Label>
+            <div className="relative">
+              <Input
+                id="name"
+                placeholder="order_confirmation"
+                maxLength={TEMPLATE_NAME_MAX_LENGTH}
+                disabled={isEditing}
+                className="pr-16"
+                onKeyDown={(event) => {
+                  if (
+                    event.metaKey ||
+                    event.ctrlKey ||
+                    event.altKey ||
+                    event.key.length !== 1
+                  ) {
+                    return;
+                  }
+                  if (event.key === " ") return;
+                  if (!TEMPLATE_NAME_CHARACTER_PATTERN.test(event.key)) event.preventDefault();
+                }}
+                {...register("name", {
+                  onChange: (event) => {
+                    event.target.value = event.target.value
+                      .replaceAll(" ", "_")
+                      .replace(TEMPLATE_NAME_INVALID_CHARACTER_PATTERN, "");
+                  },
+                })}
+              />
+              <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
+                {templateName.length}/{TEMPLATE_NAME_MAX_LENGTH}
+              </span>
+            </div>
+            {errors.name ? (
+              <p className="text-destructive text-sm">{errors.name.message}</p>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                Lowercase letters, numbers and underscores.
+              </p>
+            )}
           </div>
-          {errors.name ? (
-            <p className="text-destructive text-sm">{errors.name.message}</p>
-          ) : (
-            <p className="text-muted-foreground text-sm">
-              Lowercase letters, numbers and underscores.
-            </p>
-          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="language">Language</Label>
+            <Controller
+              control={control}
+              name="language"
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  disabled={isEditing}
+                >
+                  <SelectTrigger id="language" className="w-full">
+                    <SelectValue placeholder="Select a language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TEMPLATE_LANGUAGES.map((language) => (
+                      <SelectItem key={language.code} value={language.code}>
+                        {language.label} ({language.code})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.language ? (
+              <p className="text-destructive text-sm">{errors.language.message}</p>
+            ) : null}
+          </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="language">Language</Label>
+          <Label htmlFor="category">Category</Label>
           <Controller
             control={control}
-            name="language"
+            name="category"
             render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange} disabled={isEditing}>
-                <SelectTrigger id="language" className="w-full">
-                  <SelectValue placeholder="Select a language" />
+              <Select
+                value={field.value ?? "MARKETING"}
+                onValueChange={(value) => field.onChange(templateCategory(value))}
+              >
+                <SelectTrigger id="category" className="w-full">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TEMPLATE_LANGUAGES.map((language) => (
-                    <SelectItem key={language.code} value={language.code}>
-                      {language.label} ({language.code})
+                  {TEMPLATE_CATEGORIES.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             )}
           />
-          {errors.language ? (
-            <p className="text-destructive text-sm">{errors.language.message}</p>
+          {errors.category ? (
+            <p className="text-destructive text-sm">{errors.category.message}</p>
           ) : null}
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="category">Category</Label>
-        <Controller
-          control={control}
-          name="category"
-          render={({ field }) => (
-            <Select
-              value={field.value ?? "MARKETING"}
-              onValueChange={(value) => field.onChange(templateCategory(value))}
-            >
-              <SelectTrigger id="category" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TEMPLATE_CATEGORIES.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        {errors.category ? (
-          <p className="text-destructive text-sm">{errors.category.message}</p>
-        ) : null}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="media_sample" className="text-sm font-medium tracking-wide text-muted-foreground uppercase">Header</Label>
-        <Controller
-          control={control}
-          name="media_sample"
-          render={({ field }) => (
-            <Popover open={headerTypeOpen} onOpenChange={setHeaderTypeOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  id="media_sample"
-                  type="button"
-                  variant="outline"
-                  className="min-w-40 justify-between font-normal"
-                >
-                  <span className="flex items-center gap-2">
-                    <selectedHeaderType.Icon className="size-4" />
-                    {selectedHeaderType.label}
-                  </span>
-                  <ChevronDown className="size-4 opacity-60" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-56 p-1">
-                {HEADER_TYPE_OPTIONS.map(({ value, label, Icon }) => (
+        <div className="space-y-2">
+          <Label
+            htmlFor="media_sample"
+            className="text-muted-foreground text-sm font-medium tracking-wide uppercase"
+          >
+            Header
+          </Label>
+          <Controller
+            control={control}
+            name="media_sample"
+            render={({ field }) => (
+              <Popover open={headerTypeOpen} onOpenChange={setHeaderTypeOpen}>
+                <PopoverTrigger asChild>
                   <Button
-                    key={value}
+                    id="media_sample"
                     type="button"
-                    variant="ghost"
-                    className="h-auto w-full justify-start py-2 font-normal"
-                    onClick={() => {
-                      field.onChange(value);
-                      setHeaderTypeOpen(false);
-                      setMediaSampleFile(null);
-                      setExistingHeaderUrl(null);
-                      setExistingHeaderHandle(null);
-                      if (value !== "NONE") {
-                        setValue("header_text", "", { shouldDirty: true, shouldValidate: true });
-                        setValue("header_variable_samples", [], {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        });
-                      }
-                    }}
+                    variant="outline"
+                    className="min-w-40 justify-between font-normal"
                   >
-                    <Icon className="size-4" />
-                    {label}
+                    <span className="flex items-center gap-2">
+                      <selectedHeaderType.Icon className="size-4" />
+                      {selectedHeaderType.label}
+                    </span>
+                    <ChevronDown className="size-4 opacity-60" />
                   </Button>
-                ))}
-              </PopoverContent>
-            </Popover>
-          )}
-        />
-        {errors.media_sample ? (
-          <p className="text-destructive text-sm">{errors.media_sample.message}</p>
-        ) : null}
-      </div>
-
-      {mediaSampleNeedsFile ? (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <Label>{MEDIA_SAMPLE_LABELS[mediaSample]} sample</Label>
-          </div>
-          <MediaDropzone
-            key={`${mediaSample}-${mediaSampleFile?.name ?? "empty"}`}
-            format={mediaSample}
-            file={mediaSampleFile}
-            onChange={(file) => {
-              setMediaSampleFile(file);
-              if (file) {
-                setExistingHeaderHandle(null);
-                setExistingHeaderUrl(null);
-              }
-            }}
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-56 p-1">
+                  {HEADER_TYPE_OPTIONS.map(({ value, label, Icon }) => (
+                    <Button
+                      key={value}
+                      type="button"
+                      variant="ghost"
+                      className="h-auto w-full justify-start py-2 font-normal"
+                      onClick={() => {
+                        field.onChange(value);
+                        setHeaderTypeOpen(false);
+                        setMediaSampleFile(null);
+                        setExistingHeaderUrl(null);
+                        setExistingHeaderHandle(null);
+                        if (value !== "NONE") {
+                          setValue("header_text", "", {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          });
+                          setValue("header_variable_samples", [], {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          });
+                        }
+                      }}
+                    >
+                      <Icon className="size-4" />
+                      {label}
+                    </Button>
+                  ))}
+                </PopoverContent>
+              </Popover>
+            )}
           />
+          {errors.media_sample ? (
+            <p className="text-destructive text-sm">{errors.media_sample.message}</p>
+          ) : null}
         </div>
-      ) : null}
 
-      {showHeaderText ? (
-        <div className="space-y-2">
-          <Label htmlFor="header_text">Header (optional)</Label>
-          <div className="relative">
-            <Input
-              id="header_text"
-              placeholder={`Add a short line of text to the header of your message in ${languageLabel}`}
-              maxLength={HEADER_TEXT_MAX_LENGTH}
-              className="pr-14"
-              {...headerTextField}
-              ref={(element) => {
-                headerTextField.ref(element);
-                headerInputRef.current = element;
+        {mediaSampleNeedsFile ? (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <Label>{MEDIA_SAMPLE_LABELS[mediaSample]} sample</Label>
+            </div>
+            <MediaDropzone
+              key={`${mediaSample}-${mediaSampleFile?.name ?? "empty"}`}
+              format={mediaSample}
+              file={mediaSampleFile}
+              onChange={(file) => {
+                setMediaSampleFile(file);
+                if (file) {
+                  setExistingHeaderHandle(null);
+                  setExistingHeaderUrl(null);
+                }
               }}
             />
-            <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
-              {headerText.length}/{HEADER_TEXT_MAX_LENGTH}
-            </span>
           </div>
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              variant="ghost"
-              size="lg"
-              onClick={addHeaderVariable}
-              disabled={!canAddHeaderVariable}
-            >
-              + Add variable
-            </Button>
-          </div>
-          {errors.header_text ? (
-            <p className="text-destructive text-sm">{errors.header_text.message}</p>
-          ) : null}
-          {headerVariables.length > 0 ? (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Header variable sample</p>
-              {headerVariables.map((variable, index) => (
-                <div key={variable} className="grid gap-2 sm:grid-cols-[6.5rem_minmax(0,1fr)]">
-                  <Input
-                    value={`{{${variable}}}`}
-                    readOnly
-                    tabIndex={-1}
-                    aria-label={`Header variable ${variable}`}
-                    className="bg-muted/50"
-                  />
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <Input
-                        id={`header-variable-sample-${variable}`}
-                        aria-label={`Sample text for header variable ${variable}`}
-                        placeholder="Sample text"
-                        maxLength={TEMPLATE_VARIABLE_MAX_LENGTH}
-                        className="pr-12"
-                        {...register(`header_variable_samples.${index}`)}
-                      />
-                      <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
-                        {headerVariableSamples[index]?.length ?? 0}/{TEMPLATE_VARIABLE_MAX_LENGTH}
-                      </span>
-                    </div>
-                    {errors.header_variable_samples?.[index] ? (
-                      <p className="text-destructive text-sm">
-                        {errors.header_variable_samples[index]?.message}
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      ) : null}
+        ) : null}
 
-      <div className="space-y-2 pt-3">
-        <Label htmlFor="body_text" className="text-sm font-medium tracking-wide text-muted-foreground uppercase">Body</Label>
-        <div className="relative">
-          <Textarea
-            id="body_text"
-            rows={10}
-            placeholder={`Enter text in ${languageLabel}`}
-            maxLength={BODY_TEXT_MAX_LENGTH}
-            className="min-h-[100px] pr-20"
-            {...bodyTextField}
-            ref={(element) => {
-              bodyTextField.ref(element);
-              bodyTextareaRef.current = element;
-            }}
-          />
-          <span className="text-muted-foreground pointer-events-none absolute top-2 right-3 text-sm">
-            {bodyText.length}/{BODY_TEXT_MAX_LENGTH}
-          </span>
-        </div>
-        {errors.body_text ? (
-          <p className="text-destructive text-sm">{errors.body_text.message}</p>
-        ) : (
-          <p className="text-muted-foreground text-sm">{""}</p>
-        )}
-        <div className="flex items-center justify-end gap-0.5">
-          <Popover>
-            <PopoverTrigger asChild>
+        {showHeaderText ? (
+          <div className="space-y-2">
+            <Label htmlFor="header_text">Header (optional)</Label>
+            <div className="relative">
+              <Input
+                id="header_text"
+                placeholder={`Add a short line of text to the header of your message in ${languageLabel}`}
+                maxLength={HEADER_TEXT_MAX_LENGTH}
+                className="pr-14"
+                {...headerTextField}
+                ref={(element) => {
+                  headerTextField.ref(element);
+                  headerInputRef.current = element;
+                }}
+              />
+              <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
+                {headerText.length}/{HEADER_TEXT_MAX_LENGTH}
+              </span>
+            </div>
+            <div className="flex justify-end">
               <Button
                 type="button"
                 variant="ghost"
                 size="lg"
-                aria-label="Add emoji"
-                title="Add emoji"
+                onClick={addHeaderVariable}
+                disabled={!canAddHeaderVariable}
               >
-                <Smile />
+                + Add variable
               </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-auto p-0">
-              <EmojiPicker
-                onEmojiClick={handleBodyEmojiClick}
-                emojiStyle={EmojiStyle.NATIVE}
-                theme={emojiPickerTheme}
-                width={320}
-                height={360}
-                lazyLoadEmojis
-                previewConfig={{ showPreview: false }}
-                searchPlaceHolder="Search emoji"
-              />
-            </PopoverContent>
-          </Popover>
-          {BODY_FORMAT_CONTROLS.map((control) => (
+            </div>
+            {errors.header_text ? (
+              <p className="text-destructive text-sm">{errors.header_text.message}</p>
+            ) : null}
+            {headerVariables.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Header variable sample</p>
+                {headerVariables.map((variable, index) => (
+                  <div key={variable} className="grid gap-2 sm:grid-cols-[4rem_minmax(0,1fr)]">
+                    <Input
+                      value={`{{${variable}}}`}
+                      readOnly
+                      tabIndex={-1}
+                      aria-label={`Header variable ${variable}`}
+                      className="bg-muted/50"
+                    />
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Input
+                          id={`header-variable-sample-${variable}`}
+                          aria-label={`Sample text for header variable ${variable}`}
+                          placeholder="Sample text"
+                          maxLength={TEMPLATE_VARIABLE_MAX_LENGTH}
+                          className="pr-12"
+                          {...register(`header_variable_samples.${index}`)}
+                        />
+                        <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
+                          {headerVariableSamples[index]?.length ?? 0}/
+                          {TEMPLATE_VARIABLE_MAX_LENGTH}
+                        </span>
+                      </div>
+                      {errors.header_variable_samples?.[index] ? (
+                        <p className="text-destructive text-sm">
+                          {errors.header_variable_samples[index]?.message}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        <div className="space-y-2 pt-3">
+          <Label
+            htmlFor="body_text"
+            className="text-muted-foreground text-sm font-medium tracking-wide uppercase"
+          >
+            Body
+          </Label>
+          <div className="relative">
+            <Textarea
+              id="body_text"
+              rows={10}
+              placeholder={`Enter text in ${languageLabel}`}
+              maxLength={BODY_TEXT_MAX_LENGTH}
+              className="min-h-[100px] pr-20"
+              {...bodyTextField}
+              ref={(element) => {
+                bodyTextField.ref(element);
+                bodyTextareaRef.current = element;
+              }}
+            />
+            <span className="text-muted-foreground pointer-events-none absolute top-2 right-3 text-sm">
+              {bodyText.length}/{BODY_TEXT_MAX_LENGTH}
+            </span>
+          </div>
+          {errors.body_text ? (
+            <p className="text-destructive text-sm">{errors.body_text.message}</p>
+          ) : (
+            <p className="text-muted-foreground text-sm">{""}</p>
+          )}
+          <div className="flex items-center justify-end gap-0.5">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="lg"
+                  aria-label="Add emoji"
+                  title="Add emoji"
+                >
+                  <Smile />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-auto p-0">
+                <EmojiPicker
+                  onEmojiClick={handleBodyEmojiClick}
+                  emojiStyle={EmojiStyle.NATIVE}
+                  theme={emojiPickerTheme}
+                  width={320}
+                  height={360}
+                  lazyLoadEmojis
+                  previewConfig={{ showPreview: false }}
+                  searchPlaceHolder="Search emoji"
+                />
+              </PopoverContent>
+            </Popover>
+            {BODY_FORMAT_CONTROLS.map((control) => (
+              <Button
+                key={control.ariaLabel}
+                type="button"
+                variant="ghost"
+                size="lg"
+                aria-label={control.ariaLabel}
+                title={control.ariaLabel}
+                className={cn("text-lg", control.className)}
+                onClick={() => formatBodyText(control.start, control.end)}
+                disabled={
+                  bodyText.length + control.start.length + control.end.length >
+                  BODY_TEXT_MAX_LENGTH
+                }
+              >
+                {control.label}
+              </Button>
+            ))}
             <Button
-              key={control.ariaLabel}
               type="button"
               variant="ghost"
               size="lg"
-              aria-label={control.ariaLabel}
-              title={control.ariaLabel}
-              className={cn("text-lg", control.className)}
-              onClick={() => formatBodyText(control.start, control.end)}
-              disabled={bodyText.length + control.start.length + control.end.length > BODY_TEXT_MAX_LENGTH}
+              onClick={addBodyVariable}
+              disabled={!canAddBodyVariable}
             >
-              {control.label}
+              + Add variable
             </Button>
-          ))}
-          <Button
-            type="button"
-            variant="ghost"
-            size="lg"
-            onClick={addBodyVariable}
-            disabled={!canAddBodyVariable}
-          >
-            + Add variable
-          </Button>
-        </div>
-        {bodyVariableTextAttempted ? (
-          <p className="text-destructive text-sm">
-            Add at least 15 characters of text before adding a variable.
-          </p>
-        ) : null}
-        {bodyVariables.length > 0 ? (
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Body variable examples</p>
-            {bodyVariables.map((variable, index) => (
-              <div key={variable} className="grid gap-2 sm:grid-cols-[6.5rem_minmax(0,1fr)]">
-                <Input
-                  value={`{{${variable}}}`}
-                  readOnly
-                  tabIndex={-1}
-                  aria-label={`Body variable ${variable}`}
-                  className="bg-muted/50"
-                />
-                <div className="space-y-2">
+          </div>
+          {bodyVariableTextAttempted ? (
+            <p className="text-destructive text-sm">
+              Add at least 15 characters of text before adding a variable.
+            </p>
+          ) : null}
+          {bodyVariables.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Body variable examples</p>
+              {bodyVariables.map((variable, index) => (
+                <div key={variable} className="grid gap-2 sm:grid-cols-[4rem_minmax(0,1fr)]">
+                  <Input
+                    value={`{{${variable}}}`}
+                    readOnly
+                    tabIndex={-1}
+                    aria-label={`Body variable ${variable}`}
+                    className="bg-muted/50"
+                  />
+                  <div className="space-y-2">
                     <div className="relative">
                       <Input
                         id={`body-variable-sample-${variable}`}
@@ -1255,272 +1446,438 @@ export function CreateTemplateForm({
                         {...register(`body_variable_samples.${index}`)}
                       />
                       <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
-                        {bodyVariableSamples[index]?.length ?? 0}/{TEMPLATE_VARIABLE_MAX_LENGTH}
+                        {bodyVariableSamples[index]?.length ?? 0}/
+                        {TEMPLATE_VARIABLE_MAX_LENGTH}
                       </span>
                     </div>
-                  {errors.body_variable_samples?.[index] ? (
-                    <p className="text-destructive text-sm">
-                      {errors.body_variable_samples[index]?.message}
-                    </p>
-                  ) : null}
+                    {errors.body_variable_samples?.[index] ? (
+                      <p className="text-destructive text-sm">
+                        {errors.body_variable_samples[index]?.message}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : null}
-      </div>
-
-      <div className="space-y-2 pt-3">
-        <Label htmlFor="footer_text" className="text-sm font-medium tracking-wide text-muted-foreground uppercase">Footer (optional)</Label>
-        <div className="relative">
-          <Input
-            id="footer_text"
-            placeholder={`Add a short line of text to the bottom of your message in ${languageLabel}`}
-            maxLength={FOOTER_TEXT_MAX_LENGTH}
-            className="pr-14"
-            {...register("footer_text")}
-          />
-          <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
-            {footerText.length}/{FOOTER_TEXT_MAX_LENGTH}
-          </span>
+              ))}
+            </div>
+          ) : null}
         </div>
-        {errors.footer_text ? (
-          <p className="text-destructive text-sm">{errors.footer_text.message}</p>
-        ) : null}
-      </div>
 
-      <div className="pt-3 space-y-2">
-        <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">Buttons</p>
-        <p className="text-muted-foreground text-sm">
-          Create buttons that let customers respond to your message or take action. You can add up
-          to ten buttons. If you add more than three buttons, they will appear in a list.
-        </p>
-        <Popover open={buttonOptionsOpen} onOpenChange={setButtonOptionsOpen}>
-          <PopoverTrigger asChild>
-            <Button type="button" variant="outline" size="lg" className="mb-5">
-              + Add Button
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-56 p-1">
-            {TEMPLATE_BUTTON_OPTIONS.map(({ type, label, Icon }) => (
-              <Button
-                key={label}
-                type="button"
-                variant="ghost"
-                className="h-auto w-full justify-start py-2 font-normal"
-                onClick={
-                  type === "CUSTOM"
-                    ? addCustomButton
-                    : type === "VISIT_WEBSITE"
-                      ? addWebsiteButton
-                      : type === "CALL_PHONE"
-                        ? addPhoneButton
-                        : addCopyCodeButton
-                }
-                disabled={
-                  templateButtons.length >= 10 ||
-                  (type === "VISIT_WEBSITE" && hasWebsiteButton) ||
-                  (type === "CALL_PHONE" && hasPhoneButton) ||
-                  (type === "COPY_CODE" && hasCopyCodeButton)
-                }
-              >
-                <Icon className="size-4" />
-                {label}
+        <div className="space-y-2 pt-3">
+          <Label
+            htmlFor="footer_text"
+            className="text-muted-foreground text-sm font-medium tracking-wide uppercase"
+          >
+            Footer (optional)
+          </Label>
+          <div className="relative">
+            <Input
+              id="footer_text"
+              placeholder={`Add a short line of text to the bottom of your message in ${languageLabel}`}
+              maxLength={FOOTER_TEXT_MAX_LENGTH}
+              className="pr-14"
+              {...register("footer_text")}
+            />
+            <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
+              {footerText.length}/{FOOTER_TEXT_MAX_LENGTH}
+            </span>
+          </div>
+          {errors.footer_text ? (
+            <p className="text-destructive text-sm">{errors.footer_text.message}</p>
+          ) : null}
+        </div>
+
+        <div className="space-y-2 pt-3">
+          <p className="text-muted-foreground text-sm font-medium tracking-wide uppercase">
+            Buttons
+          </p>
+          <p className="text-muted-foreground text-sm">
+            Create buttons that let customers respond to your message or take action. You can
+            add up to ten buttons. If you add more than three buttons, they will appear in a
+            list.
+          </p>
+          <Popover open={buttonOptionsOpen} onOpenChange={setButtonOptionsOpen}>
+            <PopoverTrigger asChild>
+              <Button type="button" variant="outline" size="lg" className="mb-5">
+                + Add Button
               </Button>
-            ))}
-          </PopoverContent>
-        </Popover>
-        {templateButtons.length > 0 ? (
-          <div className="space-y-2">
-            {templateButtons.map((button, index) => (
-              <div key={index} className="space-y-2">
-                <p className="text-foreground flex items-center gap-2 text-sm font-medium">
-                  {button.type === "VISIT_WEBSITE" ? (
-                    <Globe className="size-4" />
-                  ) : button.type === "CALL_PHONE" ? (
-                    <Phone className="size-4" />
-                  ) : button.type === "COPY_CODE" ? (
-                    <Copy className="size-4" />
-                  ) : (
-                    <CornerUpLeft className="size-4" />
-                  )}
-                  {button.type === "VISIT_WEBSITE"
-                    ? "Visit website"
-                    : button.type === "CALL_PHONE"
-                      ? "Call phone number"
-                      : button.type === "COPY_CODE"
-                        ? "Copy offer code"
-                      : "Custom"}
-                </p>
-                <div
-                  className={
-                    button.type === "VISIT_WEBSITE"
-                      ? "grid gap-2 lg:grid-cols-[12rem_minmax(0,1fr)_auto]"
-                      : button.type === "CALL_PHONE"
-                        ? "grid gap-2 lg:grid-cols-[12rem_minmax(0,1fr)_auto]"
-                        : button.type === "COPY_CODE"
-                          ? "grid gap-2 lg:grid-cols-[12rem_minmax(0,1fr)_auto]"
-                        : "grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-56 p-1">
+              {TEMPLATE_BUTTON_OPTIONS.map(({ type, label, Icon }) => (
+                <Button
+                  key={label}
+                  type="button"
+                  variant="ghost"
+                  className="h-auto w-full justify-start py-2 font-normal"
+                  onClick={
+                    type === "CUSTOM"
+                      ? addCustomButton
+                      : type === "VISIT_WEBSITE"
+                        ? addWebsiteButton
+                        : type === "CALL_PHONE"
+                          ? addPhoneButton
+                          : addCopyCodeButton
+                  }
+                  disabled={
+                    templateButtons.length >= 10 ||
+                    (type === "VISIT_WEBSITE" && hasWebsiteButton) ||
+                    (type === "CALL_PHONE" && hasPhoneButton) ||
+                    (type === "COPY_CODE" && hasCopyCodeButton)
                   }
                 >
-                  {button.type === "COPY_CODE" ? (
-                    <Input
-                      value="Copy offer code"
-                      readOnly
-                      tabIndex={-1}
-                      aria-label={`Button ${index + 1} text`}
-                      className="bg-muted/50"
-                    />
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="relative">
-                        <Input
-                          value={button.text}
-                          maxLength={TEMPLATE_BUTTON_TEXT_MAX_LENGTH}
-                          className="pr-12"
-                          aria-label={`Button ${index + 1} text`}
-                          placeholder="Enter button text"
-                          onChange={(event) => updateTemplateButtonText(index, event.target.value)}
-                        />
-                        <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
-                          {button.text.length}/{TEMPLATE_BUTTON_TEXT_MAX_LENGTH}
-                        </span>
-                      </div>
-                      {emptyButtonTextIndexes.has(index) ? (
-                        <p className="text-destructive text-sm">Button text is required.</p>
-                      ) : duplicateButtonTextIndexes.has(index) ? (
-                        <p className="text-destructive text-sm">Button text must be unique.</p>
-                      ) : null}
-                    </div>
-                  )}
-                  {button.type === "VISIT_WEBSITE" ? (
-                    <div className="space-y-2">
-                      <div className="relative">
-                        <Input
-                          value={button.url}
-                          maxLength={TEMPLATE_BUTTON_URL_MAX_LENGTH}
-                          className="pr-20"
-                          aria-label={`Button ${index + 1} website URL`}
-                          placeholder="Enter website URL"
-                          onChange={(event) => updateTemplateButtonUrl(index, event.target.value)}
-                        />
-                        <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
-                          {button.url.length}/{TEMPLATE_BUTTON_URL_MAX_LENGTH}
-                        </span>
-                      </div>
-                      {invalidWebsiteButtonUrlIndexesSet.has(index) ? (
-                        <p className="text-destructive text-sm">Enter a valid website URL.</p>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {button.type === "CALL_PHONE" ? (
-                    <div className="space-y-2">
-                      <div className="relative">
-                        <Input
-                          value={button.phoneNumber}
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          maxLength={TEMPLATE_BUTTON_PHONE_MAX_LENGTH}
-                          className="pr-12"
-                          aria-label={`Button ${index + 1} phone number`}
-                          placeholder="6591234567"
-                          onKeyDown={(event) => {
-                            if (event.metaKey || event.ctrlKey || event.altKey || event.key.length !== 1) return;
-                            if (!/\d/.test(event.key)) event.preventDefault();
-                          }}
-                          onChange={(event) =>
-                            updateTemplateButtonPhoneNumber(index, event.target.value)
-                          }
-                        />
-                        <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
-                          {button.phoneNumber.length}/{TEMPLATE_BUTTON_PHONE_MAX_LENGTH}
-                        </span>
-                      </div>
-                      {emptyPhoneButtonNumberIndexesSet.has(index) ? (
-                        <p className="text-destructive text-sm">Phone number is required.</p>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {button.type === "COPY_CODE" ? (
-                    <div className="space-y-2">
-                      <div className="relative">
-                        <Input
-                          value={button.offerCode}
-                          maxLength={TEMPLATE_BUTTON_OFFER_CODE_MAX_LENGTH}
-                          className="pr-12"
-                          aria-label={`Button ${index + 1} offer code`}
-                          placeholder="Enter offer code"
-                          onKeyDown={(event) => {
-                            if (event.metaKey || event.ctrlKey || event.altKey || event.key.length !== 1) return;
-                            if (!/[a-zA-Z0-9]/.test(event.key)) event.preventDefault();
-                          }}
-                          onChange={(event) =>
-                            updateTemplateButtonOfferCode(index, event.target.value)
-                          }
-                        />
-                        <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
-                          {button.offerCode.length}/{TEMPLATE_BUTTON_OFFER_CODE_MAX_LENGTH}
-                        </span>
-                      </div>
-                      {emptyCopyCodeButtonOfferCodeIndexesSet.has(index) ? (
-                        <p className="text-destructive text-sm">Offer code is required.</p>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-lg"
-                    aria-label={`Delete button ${index + 1}`}
-                    onClick={() => removeTemplateButton(index)}
+                  <Icon className="size-4" />
+                  {label}
+                </Button>
+              ))}
+            </PopoverContent>
+          </Popover>
+          {templateButtons.length > 0 ? (
+            <div className="space-y-2">
+              {templateButtons.map((button, index) => (
+                <div
+                  key={index}
+                  className="border-border mb-4 space-y-2 border-t pt-3 first:border-t-0 first:pt-0 sm:border-t-0 sm:pt-0"
+                >
+                  <p className="text-foreground flex items-center gap-2 text-sm font-medium">
+                    {button.type === "VISIT_WEBSITE" ? (
+                      <Globe className="size-4" />
+                    ) : button.type === "CALL_PHONE" ? (
+                      <Phone className="size-4" />
+                    ) : button.type === "COPY_CODE" ? (
+                      <Copy className="size-4" />
+                    ) : (
+                      <CornerUpLeft className="size-4" />
+                    )}
+                    {button.type === "VISIT_WEBSITE" ? (
+                      <>
+                        <span>Visit website</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              className="text-muted-foreground hover:text-foreground inline-flex size-4 items-center justify-center"
+                              aria-label="Learn about website URL types"
+                            >
+                              <Info className="size-3.5" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" sideOffset={6}>
+                            Static keeps the URL fixed when the message is sent.
+                            <br />
+                            Dynamic fills in the URL path when the message is sent.
+                          </TooltipContent>
+                        </Tooltip>
+                      </>
+                    ) : button.type === "CALL_PHONE" ? (
+                      <>
+                        <span>Call phone number</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              className="text-muted-foreground hover:text-foreground inline-flex size-4 items-center justify-center"
+                              aria-label="Learn about phone number buttons"
+                            >
+                              <Info className="size-3.5" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" sideOffset={6}>
+                            The phone number cannot be changed when the message is sent. Please
+                            iclude the country code prefix, only numbers are allowed.
+                          </TooltipContent>
+                        </Tooltip>
+                      </>
+                    ) : button.type === "COPY_CODE" ? (
+                      <>
+                        <span>Copy offer code</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              className="text-muted-foreground hover:text-foreground inline-flex size-4 items-center justify-center"
+                              aria-label="Learn about offer codes"
+                            >
+                              <Info className="size-3.5" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" sideOffset={6}>
+                            Offer code is set when the message is sent.
+                          </TooltipContent>
+                        </Tooltip>
+                      </>
+                    ) : (
+                      <>
+                        <span>Custom</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              className="text-muted-foreground hover:text-foreground inline-flex size-4 items-center justify-center"
+                              aria-label="Learn about custom buttons"
+                            >
+                              <Info className="size-3.5" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" sideOffset={6}>
+                            Button text cannot be changed when the message is sent. When the
+                            user clicks the button, they will reply with this text.
+                          </TooltipContent>
+                        </Tooltip>
+                      </>
+                    )}
+                  </p>
+                  <div
+                    className={
+                      button.type === "VISIT_WEBSITE"
+                        ? "grid gap-2 lg:grid-cols-[12rem_minmax(0,1fr)_auto]"
+                        : button.type === "CALL_PHONE"
+                          ? "grid gap-2 lg:grid-cols-[12rem_minmax(0,1fr)_auto]"
+                          : button.type === "COPY_CODE"
+                            ? "grid gap-2 lg:grid-cols-[12rem_minmax(0,1fr)_auto]"
+                            : "grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
+                    }
                   >
-                    <Trash2 className="size-4" />
-                  </Button>
+                    {button.type === "COPY_CODE" ? (
+                      <Input
+                        value="Copy offer code"
+                        readOnly
+                        tabIndex={-1}
+                        aria-label={`Button ${index + 1} text`}
+                        className="bg-muted/50"
+                      />
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="relative">
+                          <Input
+                            value={button.text}
+                            maxLength={TEMPLATE_BUTTON_TEXT_MAX_LENGTH}
+                            className="pr-12"
+                            aria-label={`Button ${index + 1} text`}
+                            placeholder="Enter button text"
+                            onChange={(event) =>
+                              updateTemplateButtonText(index, event.target.value)
+                            }
+                          />
+                          <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
+                            {button.text.length}/{TEMPLATE_BUTTON_TEXT_MAX_LENGTH}
+                          </span>
+                        </div>
+                        {emptyButtonTextIndexes.has(index) ? (
+                          <p className="text-destructive text-sm">Button text is required.</p>
+                        ) : duplicateButtonTextIndexes.has(index) ? (
+                          <p className="text-destructive text-sm">
+                            Button text must be unique.
+                          </p>
+                        ) : null}
+                      </div>
+                    )}
+                    {button.type === "VISIT_WEBSITE" ? (
+                      <div className="space-y-2">
+                        <div className="flex min-w-0">
+                          <Select
+                            value={button.urlType}
+                            onValueChange={(value) =>
+                              updateTemplateButtonUrlType(index, value as "STATIC" | "DYNAMIC")
+                            }
+                          >
+                            <SelectTrigger
+                              aria-label={`Button ${index + 1} website URL type`}
+                              className="w-24 shrink-0 rounded-r-none"
+                            >
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="STATIC">Static</SelectItem>
+                              <SelectItem value="DYNAMIC">Dynamic</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <div className="relative min-w-0 flex-1">
+                            <Input
+                              value={button.url}
+                              maxLength={TEMPLATE_BUTTON_URL_MAX_LENGTH}
+                              className={`min-w-0 pr-20 ${button.urlType === "DYNAMIC" ? "rounded-none" : "rounded-l-none"}`}
+                              aria-label={`Button ${index + 1} website URL`}
+                              placeholder="Enter website URL"
+                              onChange={(event) =>
+                                updateTemplateButtonUrl(index, event.target.value)
+                              }
+                            />
+                            <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
+                              {button.url.length}/{TEMPLATE_BUTTON_URL_MAX_LENGTH}
+                            </span>
+                          </div>
+                          {button.urlType === "DYNAMIC" ? (
+                            <Input
+                              value={button.urlPath}
+                              aria-label={`Button ${index + 1} dynamic URL path`}
+                              placeholder="/"
+                              required
+                              className="w-12 shrink-0 rounded-none"
+                              onChange={(event) =>
+                                updateTemplateButtonUrlPath(index, event.target.value)
+                              }
+                            />
+                          ) : null}
+                          {button.urlType === "DYNAMIC" ? (
+                            <Input
+                              value="{{1}}"
+                              readOnly
+                              aria-label={`Button ${index + 1} dynamic URL suffix`}
+                              className="w-12 shrink-0 rounded-l-none"
+                            />
+                          ) : null}
+                        </div>
+                        {button.urlType === "DYNAMIC" ? (
+                          <p
+                            className={cn(
+                              "truncate text-sm",
+                              invalidWebsiteButtonUrlIndexesSet.has(index) ||
+                                overlongWebsiteUrlIndexesSet.has(index)
+                                ? "text-destructive"
+                                : "text-muted-foreground",
+                            )}
+                          >
+                            Full URL: {button.url}
+                            {button.urlPath}
+                            12345
+                          </p>
+                        ) : null}
+                        {emptyDynamicUrlPathIndexesSet.has(index) ? (
+                          <p className="text-destructive text-sm">URL path is required.</p>
+                        ) : null}
+                        {invalidWebsiteButtonUrlIndexesSet.has(index) ? (
+                          <p className="text-destructive text-sm">
+                            Enter a valid website URL.
+                          </p>
+                        ) : null}
+                        {overlongWebsiteUrlIndexesSet.has(index) ? (
+                          <p className="text-destructive text-sm">
+                            The full URL must be 2000 characters or fewer.
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {button.type === "CALL_PHONE" ? (
+                      <div className="space-y-2">
+                        <div className="relative">
+                          <Input
+                            value={button.phoneNumber}
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            maxLength={TEMPLATE_BUTTON_PHONE_MAX_LENGTH}
+                            className="pr-12"
+                            aria-label={`Button ${index + 1} phone number`}
+                            placeholder="6591234567 (include country code)"
+                            onKeyDown={(event) => {
+                              if (
+                                event.metaKey ||
+                                event.ctrlKey ||
+                                event.altKey ||
+                                event.key.length !== 1
+                              )
+                                return;
+                              if (!/\d/.test(event.key)) event.preventDefault();
+                            }}
+                            onChange={(event) =>
+                              updateTemplateButtonPhoneNumber(index, event.target.value)
+                            }
+                          />
+                          <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
+                            {button.phoneNumber.length}/{TEMPLATE_BUTTON_PHONE_MAX_LENGTH}
+                          </span>
+                        </div>
+                        {emptyPhoneButtonNumberIndexesSet.has(index) ? (
+                          <p className="text-destructive text-sm">Phone number is required.</p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {button.type === "COPY_CODE" ? (
+                      <div className="space-y-2">
+                        <div className="relative">
+                          <Input
+                            value={button.offerCode}
+                            maxLength={TEMPLATE_BUTTON_OFFER_CODE_MAX_LENGTH}
+                            className="pr-12"
+                            aria-label={`Button ${index + 1} offer code`}
+                            placeholder="Enter example offer code"
+                            onKeyDown={(event) => {
+                              if (
+                                event.metaKey ||
+                                event.ctrlKey ||
+                                event.altKey ||
+                                event.key.length !== 1
+                              )
+                                return;
+                              if (!/[a-zA-Z0-9]/.test(event.key)) event.preventDefault();
+                            }}
+                            onChange={(event) =>
+                              updateTemplateButtonOfferCode(index, event.target.value)
+                            }
+                          />
+                          <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
+                            {button.offerCode.length}/{TEMPLATE_BUTTON_OFFER_CODE_MAX_LENGTH}
+                          </span>
+                        </div>
+                        {emptyCopyCodeButtonOfferCodeIndexesSet.has(index) ? (
+                          <p className="text-destructive text-sm">Offer code is required.</p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-lg"
+                      aria-label={`Delete button ${index + 1}`}
+                      onClick={() => removeTemplateButton(index)}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        <Button
+          type="submit"
+          className={MEDIUM_BUTTON_HEIGHT}
+          disabled={
+            mutation.isPending ||
+            hasEmptyButtonText ||
+            hasDuplicateButtonText ||
+            hasInvalidWebsiteButtonUrl ||
+            hasEmptyDynamicUrlPath ||
+            hasOverlongWebsiteUrl ||
+            hasEmptyPhoneButtonNumber ||
+            hasEmptyCopyCodeButtonOfferCode
+          }
+        >
+          {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+          {isEditing ? "Edit template" : "Create template"}
+        </Button>
+        {submitError ? (
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-destructive text-sm">
+              {submitError.split("\n").map((line, index) => (
+                <span key={`${line}-${index}`}>
+                  {index > 0 ? <br /> : null}
+                  {line}
+                </span>
+              ))}
+            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="text-destructive shrink-0"
+              aria-label="Dismiss error"
+              title="Dismiss error"
+              onClick={() => setSubmitError(null)}
+            >
+              <X />
+            </Button>
           </div>
         ) : null}
-      </div>
-
-      <Button
-        type="submit"
-        className={MEDIUM_BUTTON_HEIGHT}
-        disabled={
-          mutation.isPending ||
-          hasEmptyButtonText ||
-          hasDuplicateButtonText ||
-          hasInvalidWebsiteButtonUrl ||
-          hasEmptyPhoneButtonNumber ||
-          hasEmptyCopyCodeButtonOfferCode
-        }
-      >
-        {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-        {isEditing ? "Edit template" : "Create template"}
-      </Button>
-      {submitError ? (
-        <div className="flex items-start justify-between gap-2">
-          <p className="text-destructive text-sm">
-            {submitError.split("\n").map((line, index) => (
-              <span key={`${line}-${index}`}>
-                {index > 0 ? <br /> : null}
-                {line}
-              </span>
-            ))}
-          </p>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="text-destructive shrink-0"
-            aria-label="Dismiss error"
-            title="Dismiss error"
-            onClick={() => setSubmitError(null)}
-          >
-            <X />
-          </Button>
-        </div>
-      ) : null}
       </div>
 
       <aside className="min-w-0 space-y-2 md:sticky md:top-0 md:h-fit">
@@ -1587,7 +1944,7 @@ export function CreateTemplateForm({
                 />
               </div>
             ) : mediaSample === "LOCATION" ? (
-              <div className="-mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)] overflow-hidden bg-muted/50 dark:bg-white/10">
+              <div className="bg-muted/50 -mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)] overflow-hidden dark:bg-white/10">
                 <Image
                   src={LOCATION_HEADER_PREVIEW_IMAGE_URL.toString()}
                   alt="Location map preview"
@@ -1598,7 +1955,9 @@ export function CreateTemplateForm({
                 />
                 <div className="space-y-0.5 px-3 py-2">
                   <p className="font-medium">Location name</p>
-                  <p className="text-xs text-[#667781] dark:text-[#aebac1]">Location address</p>
+                  <p className="text-xs text-[#667781] dark:text-[#aebac1]">
+                    Location address
+                  </p>
                 </div>
               </div>
             ) : mediaSample === "DOCUMENT" ? (
@@ -1628,11 +1987,11 @@ export function CreateTemplateForm({
               </div>
             )
           ) : previewHeaderText ? (
-            <p className="mb-1.5 font-medium whitespace-pre-wrap break-words">
+            <p className="mb-1.5 font-medium break-words whitespace-pre-wrap">
               {formatPreviewText(previewHeaderText)}
             </p>
           ) : null}
-          <p className="whitespace-pre-wrap break-words">
+          <p className="break-words whitespace-pre-wrap">
             {formatPreviewText(previewBodyText || `Enter text in ${languageLabel}`)}
           </p>
           {footerText ? (
@@ -1641,7 +2000,7 @@ export function CreateTemplateForm({
             </p>
           ) : null}
           {previewButtons.length > 0 ? (
-            <div className="mt-2 -mx-3 divide-y divide-black/10 border-t border-black/10 text-[#008f72] dark:divide-white/10 dark:border-white/10 dark:text-[#53bdeb]">
+            <div className="-mx-3 mt-2 divide-y divide-black/10 border-t border-black/10 text-[#008f72] dark:divide-white/10 dark:border-white/10 dark:text-[#53bdeb]">
               {previewButtons.map((button, index) => (
                 <div
                   key={`${button.type}-${button.text}-${index}`}
@@ -1666,12 +2025,7 @@ export function CreateTemplateForm({
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <Label>JSON</Label>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={copyPreviewJson}
-              >
+              <Button type="button" variant="ghost" size="sm" onClick={copyPreviewJson}>
                 <Copy className="size-4" />
                 Copy
               </Button>

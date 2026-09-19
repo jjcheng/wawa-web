@@ -11,12 +11,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import type { User, UserStatus, UserType } from "@/lib/api/types";
 import { formatPhoneNumber } from "@/lib/format";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { TableEmptyState } from "@/components/table-empty-state";
 
 const USER_TYPES: UserType[] = ["OPERATOR", "MASTER"];
@@ -46,7 +59,8 @@ function UserRow({ user, currentUserId }: { user: User; currentUserId: number })
 
   function updateStatus(nextStatus: string) {
     const previousStatus = status;
-    if (!USER_STATUSES.includes(nextStatus as UserStatus) || nextStatus === previousStatus) return;
+    if (!USER_STATUSES.includes(nextStatus as UserStatus) || nextStatus === previousStatus)
+      return;
     setPendingChange({ field: "status", value: nextStatus as UserStatus });
   }
 
@@ -81,62 +95,64 @@ function UserRow({ user, currentUserId }: { user: User; currentUserId: number })
   return (
     <>
       <TableRow>
-      <TableCell>{user.name || "—"}</TableCell>
-      <TableCell>{formatPhoneNumber(user.phone_number, user.country_code) || "—"}</TableCell>
-      <TableCell>{user.email || "—"}</TableCell>
-      <TableCell>
-        {editing ? (
-          <Select value={type} onValueChange={updateType} disabled={saving !== null}>
-            <SelectTrigger className="w-32" aria-label={`Type for ${user.name || "user"}`}>
-              <SelectValue placeholder="Type" />
-            </SelectTrigger>
-            <SelectContent>
-              {USER_TYPES.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          type || "—"
-        )}
-        {errors.type ? <p className="mt-1 text-xs text-destructive">{errors.type}</p> : null}
-      </TableCell>
-      <TableCell>
-        {editing ? (
-          <Select value={status} onValueChange={updateStatus} disabled={saving !== null}>
-            <SelectTrigger className="w-32" aria-label={`Status for ${user.name || "user"}`}>
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              {USER_STATUSES.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          status || "—"
-        )}
-        {errors.status ? <p className="mt-1 text-xs text-destructive">{errors.status}</p> : null}
-      </TableCell>
-      <TableCell className="text-right">
-        {isCurrentUser ? (
-          "Myself"
-        ) : !isMaster ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setEditing((current) => !current)}
-            disabled={saving !== null}
-          >
-            {editing ? "Done" : "Edit"}
-          </Button>
-        ) : null}
-      </TableCell>
+        <TableCell className="font-medium">{user.name || "—"}</TableCell>
+        <TableCell>{formatPhoneNumber(user.phone_number, user.country_code) || "—"}</TableCell>
+        <TableCell>{user.email || "—"}</TableCell>
+        <TableCell>
+          {editing ? (
+            <Select value={type} onValueChange={updateType} disabled={saving !== null}>
+              <SelectTrigger className="w-32" aria-label={`Type for ${user.name || "user"}`}>
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                {USER_TYPES.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            type || "—"
+          )}
+          {errors.type ? <p className="text-destructive mt-1 text-xs">{errors.type}</p> : null}
+        </TableCell>
+        <TableCell>
+          {editing ? (
+            <Select value={status} onValueChange={updateStatus} disabled={saving !== null}>
+              <SelectTrigger className="w-32" aria-label={`Status for ${user.name || "user"}`}>
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                {USER_STATUSES.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            status || "—"
+          )}
+          {errors.status ? (
+            <p className="text-destructive mt-1 text-xs">{errors.status}</p>
+          ) : null}
+        </TableCell>
+        <TableCell className="text-right">
+          {isCurrentUser ? (
+            "Myself"
+          ) : !isMaster ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setEditing((current) => !current)}
+              disabled={saving !== null}
+            >
+              {editing ? "Done" : "Edit"}
+            </Button>
+          ) : null}
+        </TableCell>
       </TableRow>
       <Dialog
         open={pendingChange !== null}
@@ -161,7 +177,11 @@ function UserRow({ user, currentUserId }: { user: User; currentUserId: number })
             >
               Cancel
             </Button>
-            <Button type="button" onClick={() => void confirmChange()} disabled={saving !== null}>
+            <Button
+              type="button"
+              onClick={() => void confirmChange()}
+              disabled={saving !== null}
+            >
               Confirm
             </Button>
           </DialogFooter>

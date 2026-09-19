@@ -41,8 +41,13 @@ export function PreviewPage({
             <TableBody>
               {rows.map((row, index) => (
                 <TableRow key={index}>
-                  {columns.map((column) => (
-                    <TableCell key={column}>{row[column]}</TableCell>
+                  {columns.map((column, columnIndex) => (
+                    <TableCell
+                      key={column}
+                      className={columnIndex === 0 ? "font-medium" : undefined}
+                    >
+                      {row[column]}
+                    </TableCell>
                   ))}
                 </TableRow>
               ))}

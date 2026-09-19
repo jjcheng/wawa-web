@@ -110,7 +110,9 @@ export function TemplateUsageTable({
   const [error, setError] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [detailPoints, setDetailPoints] = useState<NonNullable<TemplateUsageResponse["data_points"]>>([]);
+  const [detailPoints, setDetailPoints] = useState<
+    NonNullable<TemplateUsageResponse["data_points"]>
+  >([]);
   const usageRequestsRef = useRef(new Set<string>());
   const activeUsageRequestsRef = useRef(0);
 
@@ -122,23 +124,28 @@ export function TemplateUsageTable({
     activeUsageRequestsRef.current += 1;
     setUsageLoading(true);
     try {
-      const response = await apiFetch<TemplateUsageResponse | TemplateUsageResponse[]>("/v1/wa/templates/usage", {
-        query: {
-          waba_id: wabaId,
-          start: usageStart,
-          end: usageEnd,
-          granularity,
-          template_ids: templateId,
+      const response = await apiFetch<TemplateUsageResponse | TemplateUsageResponse[]>(
+        "/v1/wa/templates/usage",
+        {
+          query: {
+            waba_id: wabaId,
+            start: usageStart,
+            end: usageEnd,
+            granularity,
+            template_ids: templateId,
+          },
         },
-      });
+      );
       const result = firstUsageResult(response);
       setError(null);
-      setUsage((current) => new Map(current).set(templateId, {
-        sent: result?.total_sent ?? 0,
-        delivered: result?.total_delivered ?? 0,
-        read: result?.total_read ?? 0,
-        clicks: parseClicks(result?.total_clicked ?? result?.total_clicks),
-      }));
+      setUsage((current) =>
+        new Map(current).set(templateId, {
+          sent: result?.total_sent ?? 0,
+          delivered: result?.total_delivered ?? 0,
+          read: result?.total_read ?? 0,
+          clicks: parseClicks(result?.total_clicked ?? result?.total_clicks),
+        }),
+      );
     } catch (usageError) {
       usageRequestsRef.current.delete(requestKey);
       setError(toApiError(usageError).message);
@@ -153,15 +160,18 @@ export function TemplateUsageTable({
     setDetailPoints([]);
     setDetailLoading(true);
     try {
-      const response = await apiFetch<TemplateUsageResponse | TemplateUsageResponse[]>("/v1/wa/templates/usage", {
-        query: {
-          waba_id: wabaId,
-          start: usageStart,
-          end: usageEnd,
-          granularity,
-          template_ids: template.id,
+      const response = await apiFetch<TemplateUsageResponse | TemplateUsageResponse[]>(
+        "/v1/wa/templates/usage",
+        {
+          query: {
+            waba_id: wabaId,
+            start: usageStart,
+            end: usageEnd,
+            granularity,
+            template_ids: template.id,
+          },
         },
-      });
+      );
       const result = firstUsageResult(response);
       setDetailPoints(result?.data_points ?? []);
     } catch (usageError) {
@@ -198,7 +208,9 @@ export function TemplateUsageTable({
       for (const template of nextTemplates) {
         await loadUsage(template);
       }
-      setAfterCursor(response.additional_data?.next ? response.additional_data.after : undefined);
+      setAfterCursor(
+        response.additional_data?.next ? response.additional_data.after : undefined,
+      );
       setHasMore(Boolean(response.additional_data?.next));
     } catch (loadMoreError) {
       setError(toApiError(loadMoreError).message);
@@ -218,16 +230,26 @@ export function TemplateUsageTable({
                 <TableHead>Category</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">
-                  <span className="inline-flex items-center gap-1">Sent {usageLoading ? <Loader2 className="size-3.5 animate-spin" /> : null}</span>
+                  <span className="inline-flex items-center gap-1">
+                    Sent {usageLoading ? <Loader2 className="size-3.5 animate-spin" /> : null}
+                  </span>
                 </TableHead>
                 <TableHead className="text-right">
-                  <span className="inline-flex items-center gap-1">Delivered {usageLoading ? <Loader2 className="size-3.5 animate-spin" /> : null}</span>
+                  <span className="inline-flex items-center gap-1">
+                    Delivered{" "}
+                    {usageLoading ? <Loader2 className="size-3.5 animate-spin" /> : null}
+                  </span>
                 </TableHead>
                 <TableHead className="text-right">
-                  <span className="inline-flex items-center gap-1">Read {usageLoading ? <Loader2 className="size-3.5 animate-spin" /> : null}</span>
+                  <span className="inline-flex items-center gap-1">
+                    Read {usageLoading ? <Loader2 className="size-3.5 animate-spin" /> : null}
+                  </span>
                 </TableHead>
                 <TableHead className="text-right">
-                  <span className="inline-flex items-center gap-1">Clicks {usageLoading ? <Loader2 className="size-3.5 animate-spin" /> : null}</span>
+                  <span className="inline-flex items-center gap-1">
+                    Clicks{" "}
+                    {usageLoading ? <Loader2 className="size-3.5 animate-spin" /> : null}
+                  </span>
                 </TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
@@ -238,12 +260,25 @@ export function TemplateUsageTable({
                   <TableCell className="font-medium">{template.name || template.id}</TableCell>
                   <TableCell>{template.category || "-"}</TableCell>
                   <TableCell>{template.status || "-"}</TableCell>
-                  <TableCell className="text-right">{usage.get(template.id)?.sent.toLocaleString("en-US") ?? "-"}</TableCell>
-                  <TableCell className="text-right">{usage.get(template.id)?.delivered.toLocaleString("en-US") ?? "-"}</TableCell>
-                  <TableCell className="text-right">{usage.get(template.id)?.read.toLocaleString("en-US") ?? "-"}</TableCell>
-                  <TableCell className="text-right">{usage.get(template.id)?.clicks.toLocaleString("en-US") ?? "-"}</TableCell>
                   <TableCell className="text-right">
-                    <Button type="button" variant="outline" size="sm" onClick={() => void viewUsage(template)}>
+                    {usage.get(template.id)?.sent.toLocaleString("en-US") ?? "-"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {usage.get(template.id)?.delivered.toLocaleString("en-US") ?? "-"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {usage.get(template.id)?.read.toLocaleString("en-US") ?? "-"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {usage.get(template.id)?.clicks.toLocaleString("en-US") ?? "-"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void viewUsage(template)}
+                    >
                       View
                     </Button>
                   </TableCell>
@@ -257,13 +292,15 @@ export function TemplateUsageTable({
       {hasMore ? (
         <LoadMoreButton loading={loading} onClick={loadMore} withTopMargin={false} />
       ) : null}
-      <Dialog open={selectedTemplate !== null} onOpenChange={(open) => !open && setSelectedTemplate(null)}>
-        <DialogContent
-          className="max-h-[90vh]"
-          style={{ width: "60vw", maxWidth: "60vw" }}
-        >
+      <Dialog
+        open={selectedTemplate !== null}
+        onOpenChange={(open) => !open && setSelectedTemplate(null)}
+      >
+        <DialogContent className="max-h-[90vh]" style={{ width: "60vw", maxWidth: "60vw" }}>
           <DialogHeader>
-            <DialogTitle>{selectedTemplate?.name || selectedTemplate?.id || "Template"}</DialogTitle>
+            <DialogTitle>
+              {selectedTemplate?.name || selectedTemplate?.id || "Template"}
+            </DialogTitle>
             <DialogDescription>Template usage breakdown</DialogDescription>
           </DialogHeader>
           {detailLoading ? (
@@ -294,18 +331,32 @@ export function TemplateUsageTable({
 
                       return (
                         <TableRow key={`${point.start}-${point.end}`}>
-                          <TableCell className="text-xs">{formatDateTime(new Date(point.start * 1000))}</TableCell>
-                          <TableCell className="text-xs">{formatDateTime(new Date(point.end * 1000))}</TableCell>
-                          <TableCell className="text-right">{(point.sent ?? 0).toLocaleString("en-US")}</TableCell>
-                          <TableCell className="text-right">{(point.delivered ?? 0).toLocaleString("en-US")}</TableCell>
-                          <TableCell className="text-right">{(point.read ?? 0).toLocaleString("en-US")}</TableCell>
+                          <TableCell className="text-xs font-medium">
+                            {formatDateTime(new Date(point.start * 1000))}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {formatDateTime(new Date(point.end * 1000))}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {(point.sent ?? 0).toLocaleString("en-US")}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {(point.delivered ?? 0).toLocaleString("en-US")}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {(point.read ?? 0).toLocaleString("en-US")}
+                          </TableCell>
                           <TableCell className="text-right">
                             {clickArray && clickArray.length > 0 ? (
                               <div className="flex flex-col items-end gap-1">
                                 {clickArray.map((detail, index) => {
                                   if (typeof detail === "object" && detail !== null) {
-                                    const label = detail.button_content || detail.type || `Button ${index + 1}`;
-                                    const count = typeof detail.count === "number" ? detail.count : 0;
+                                    const label =
+                                      detail.button_content ||
+                                      detail.type ||
+                                      `Button ${index + 1}`;
+                                    const count =
+                                      typeof detail.count === "number" ? detail.count : 0;
                                     return (
                                       <span key={index} className="text-sm">
                                         {label}: {count.toLocaleString("en-US")}
@@ -320,7 +371,9 @@ export function TemplateUsageTable({
                                 })}
                               </div>
                             ) : (
-                              <span className="text-sm">{totalClicks.toLocaleString("en-US")}</span>
+                              <span className="text-sm">
+                                {totalClicks.toLocaleString("en-US")}
+                              </span>
                             )}
                           </TableCell>
                         </TableRow>

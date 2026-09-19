@@ -78,8 +78,8 @@ export function CustomerList({
     filteredRows.length > 0 && filteredRows.every((row) => selectedRows.has(row.id));
 
   useEffect(() => {
-    queueMicrotask(
-      () => setSelectedTags(new Set(initialTags.map((tag) => (tag === "" ? NO_TAGS_OPTION : tag)))),
+    queueMicrotask(() =>
+      setSelectedTags(new Set(initialTags.map((tag) => (tag === "" ? NO_TAGS_OPTION : tag)))),
     );
   }, [initialTags]);
 
@@ -164,7 +164,9 @@ export function CustomerList({
         method: "PATCH",
         body: { ids: selectedCustomers.map((customer) => customer.id), status: nextStatus },
       });
-      selectedCustomers.forEach((customer) => onUpdated?.({ ...customer, status: nextStatus }));
+      selectedCustomers.forEach((customer) =>
+        onUpdated?.({ ...customer, status: nextStatus }),
+      );
       setSelectedRows(new Set());
       router.refresh();
     } catch (error) {
@@ -205,21 +207,23 @@ export function CustomerList({
           <div className="flex flex-wrap justify-end gap-2">
             {selectedRows.size > 0 ? (
               <>
-            <Button
-              variant="outline"
-              onClick={() => updateSelectedStatus(status === "ACTIVE" ? "INACTIVE" : "ACTIVE")}
-              disabled={bulkActionPending}
-            >
-              {bulkActionPending ? <Loader2 className="size-4 animate-spin" /> : null}
-              {status === "ACTIVE" ? "Archive" : "Activate"}
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => setDeleteConfirmOpen(true)}
-              disabled={bulkActionPending}
-            >
-              Delete
-            </Button>
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    updateSelectedStatus(status === "ACTIVE" ? "INACTIVE" : "ACTIVE")
+                  }
+                  disabled={bulkActionPending}
+                >
+                  {bulkActionPending ? <Loader2 className="size-4 animate-spin" /> : null}
+                  {status === "ACTIVE" ? "Archive" : "Activate"}
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => setDeleteConfirmOpen(true)}
+                  disabled={bulkActionPending}
+                >
+                  Delete
+                </Button>
               </>
             ) : null}
             <Button
@@ -295,7 +299,7 @@ export function CustomerList({
                     label="Tags"
                     options={tagOptions}
                     selectedValues={selectedTags}
-                        onSelectedValuesChange={setTagsFilter}
+                    onSelectedValuesChange={setTagsFilter}
                     separatorAfter={NO_TAGS_OPTION}
                     emptyMessage={tagError ?? "No tags available."}
                   />
@@ -320,14 +324,16 @@ export function CustomerList({
                         aria-label={`Select ${row.display_name}`}
                       />
                     </TableCell>
-                    <TableCell>{row.display_name}</TableCell>
+                    <TableCell className="font-medium">{row.display_name}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <span>{formatPhoneNumber(row.phone_number, row.country_code)}</span>
                         {!row.wa_id ? (
                           <Popover
                             open={invalidPhonePopoverId === row.id}
-                            onOpenChange={(open) => setInvalidPhonePopoverId(open ? row.id : null)}
+                            onOpenChange={(open) =>
+                              setInvalidPhonePopoverId(open ? row.id : null)
+                            }
                           >
                             <PopoverTrigger asChild>
                               <Button
@@ -384,7 +390,8 @@ export function CustomerList({
           <DialogHeader>
             <DialogTitle>Delete selected customers?</DialogTitle>
             <DialogDescription>
-              {selectedRows.size} customer{selectedRows.size === 1 ? "" : "s"} will be permanently removed.
+              {selectedRows.size} customer{selectedRows.size === 1 ? "" : "s"} will be
+              permanently removed.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

@@ -1,7 +1,16 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { Copy, CornerUpLeft, FileText, Globe, ImageIcon, Loader2, Phone, Video } from "lucide-react";
+import {
+  Copy,
+  CornerUpLeft,
+  FileText,
+  Globe,
+  ImageIcon,
+  Loader2,
+  Phone,
+  Video,
+} from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
@@ -30,11 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type {
-  Customer,
-  SendTemplateParameter,
-  Template,
-} from "@/lib/api/types";
+import type { Customer, SendTemplateParameter, Template } from "@/lib/api/types";
 import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 
 const SCHEDULES = ["Send now", "Send later"] as const;
@@ -83,20 +88,33 @@ function previewText(value: string, highlightedValue?: string) {
   while (remaining) {
     if (highlightedValue && remaining.startsWith(highlightedValue)) {
       parts.push(
-        <mark key={key++} className="rounded bg-yellow-300 px-0.5 text-black ring-2 ring-yellow-400">
+        <mark
+          key={key++}
+          className="rounded bg-yellow-300 px-0.5 text-black ring-2 ring-yellow-400"
+        >
           {highlightedValue}
         </mark>,
       );
       remaining = remaining.slice(highlightedValue.length);
       continue;
     }
-    const monospaceMarker = remaining.startsWith("```") ? "```" : remaining.startsWith("``") ? "``" : null;
+    const monospaceMarker = remaining.startsWith("```")
+      ? "```"
+      : remaining.startsWith("``")
+        ? "``"
+        : null;
     if (monospaceMarker) {
       const closingIndex = remaining.indexOf(monospaceMarker, monospaceMarker.length);
       if (closingIndex >= 0) {
         parts.push(
-          <code key={key++} className="rounded bg-black/10 px-1 font-mono text-[0.9em] dark:bg-white/10">
-            {highlightPreviewText(remaining.slice(monospaceMarker.length, closingIndex), highlightedValue)}
+          <code
+            key={key++}
+            className="rounded bg-black/10 px-1 font-mono text-[0.9em] dark:bg-white/10"
+          >
+            {highlightPreviewText(
+              remaining.slice(monospaceMarker.length, closingIndex),
+              highlightedValue,
+            )}
           </code>,
         );
         remaining = remaining.slice(closingIndex + monospaceMarker.length);
@@ -109,7 +127,13 @@ function previewText(value: string, highlightedValue?: string) {
       if (closingIndex > 1) {
         const text = remaining.slice(1, closingIndex);
         parts.push(
-          marker === "*" ? <strong key={key++}>{highlightPreviewText(text, highlightedValue)}</strong> : marker === "_" ? <em key={key++}>{highlightPreviewText(text, highlightedValue)}</em> : <del key={key++}>{highlightPreviewText(text, highlightedValue)}</del>,
+          marker === "*" ? (
+            <strong key={key++}>{highlightPreviewText(text, highlightedValue)}</strong>
+          ) : marker === "_" ? (
+            <em key={key++}>{highlightPreviewText(text, highlightedValue)}</em>
+          ) : (
+            <del key={key++}>{highlightPreviewText(text, highlightedValue)}</del>
+          ),
         );
         remaining = remaining.slice(closingIndex + 1);
         continue;
@@ -118,7 +142,9 @@ function previewText(value: string, highlightedValue?: string) {
     const nextMarker = remaining.search(/[\*_~`]/);
     const length = nextMarker <= 0 ? 1 : nextMarker;
     parts.push(
-      <span key={key++}>{highlightPreviewText(remaining.slice(0, length), highlightedValue)}</span>,
+      <span key={key++}>
+        {highlightPreviewText(remaining.slice(0, length), highlightedValue)}
+      </span>,
     );
     remaining = remaining.slice(length);
   }
@@ -126,7 +152,10 @@ function previewText(value: string, highlightedValue?: string) {
 }
 
 function replacePreviewVariables(value: string, values: Record<string, string>) {
-  return value.replace(/{{\s*([^}]+?)\s*}}/g, (match, variable: string) => values[variable.trim()]?.trim() || match);
+  return value.replace(
+    /{{\s*([^}]+?)\s*}}/g,
+    (match, variable: string) => values[variable.trim()]?.trim() || match,
+  );
 }
 
 function locationPreviewImageUrl(location: GoogleLocationSelection | null) {
@@ -185,9 +214,11 @@ function stringVariables(value: unknown) {
 
 type TemplateButtonInput = {
   buttonIndex: number;
+  buttonType: string;
   key: string;
   label: string;
   placeholder: string;
+  url?: string;
   variable: string;
 };
 
@@ -198,13 +229,16 @@ function buttonInputs(component?: Record<string, unknown>): TemplateButtonInput[
     const record = button as Record<string, unknown>;
     const type = String(record.type ?? "").toUpperCase();
     const label = typeof record.text === "string" ? record.text : `Button ${index + 1}`;
+    const url = typeof record.url === "string" ? record.url : undefined;
     const variables = [...stringVariables(record.url), ...stringVariables(record.text)];
     if (variables.length > 0) {
       return variables.map((variable) => ({
         buttonIndex: index,
+        buttonType: type,
         key: `button:${index}:${variable}`,
         label,
         placeholder: `Enter variable {{${variable}}}`,
+        url,
         variable,
       }));
     }
@@ -212,9 +246,11 @@ function buttonInputs(component?: Record<string, unknown>): TemplateButtonInput[
       return [
         {
           buttonIndex: index,
+          buttonType: type,
           key: `button:${index}:code`,
           label,
           placeholder: "Enter code",
+          url,
           variable: "code",
         },
       ];
@@ -278,10 +314,7 @@ function variableMaxLength(
   return undefined;
 }
 
-function fieldConstraintsLabel(
-  required?: boolean,
-  maxLength?: number,
-): string | null {
+function fieldConstraintsLabel(required?: boolean, maxLength?: number): string | null {
   const parts: string[] = [];
   if (required) parts.push("required");
   if (maxLength) parts.push(`max length ${maxLength}`);
@@ -304,65 +337,72 @@ function buildSendComponents(
     if (!variable) return undefined;
     const source = variableSources[variable] ?? "custom";
     const customValue = variableValues[variable] ?? variableValues[`body:${variable}`] ?? "";
-    return source === "custom"
-      ? { text: customValue }
-      : { source };
+    return source === "custom" ? { text: customValue } : { source };
   };
 
   return (components ?? []).map((component) => {
     const type = String(component.type ?? "").toLowerCase();
     const index = String(component.index ?? "0");
-    const variables = type === "header"
-      ? headerVariables
-      : type === "body"
-        ? bodyVariables.map((variable) => `body:${variable}`)
-        : buttons
-            .filter((button) => String(button.buttonIndex) === index)
-            .map((button) => button.key);
+    const variables =
+      type === "header"
+        ? headerVariables
+        : type === "body"
+          ? bodyVariables.map((variable) => `body:${variable}`)
+          : buttons
+              .filter((button) => String(button.buttonIndex) === index)
+              .map((button) => button.key);
     let parameterIndex = 0;
     const parameters = Array.isArray(component.parameters)
-      ? component.parameters.map((parameter) => {
-          const currentParameterIndex = parameterIndex++;
-          const variable = variables[currentParameterIndex];
-          const input = parameter && typeof parameter === "object"
-            ? parameter as SendTemplateParameter
-            : undefined;
-          if (
-            variable &&
-            !input?.input_required &&
-            (variableSources[variable] ?? "custom") === "custom" &&
-            !(variableValues[variable] ?? variableValues[`body:${variable}`] ?? "").trim()
-          ) {
-            return null;
-          }
-          if (type === "header" && headerMediaUrl && parameter && typeof parameter === "object") {
-            const mediaType = String(parameter.type ?? "").toLowerCase();
-            if (["image", "video", "document"].includes(mediaType)) {
-              return { ...parameter, [mediaType]: { link: headerMediaUrl } };
+      ? component.parameters
+          .map((parameter) => {
+            const currentParameterIndex = parameterIndex++;
+            const variable = variables[currentParameterIndex];
+            const input =
+              parameter && typeof parameter === "object"
+                ? (parameter as SendTemplateParameter)
+                : undefined;
+            if (
+              variable &&
+              !input?.input_required &&
+              (variableSources[variable] ?? "custom") === "custom" &&
+              !(variableValues[variable] ?? variableValues[`body:${variable}`] ?? "").trim()
+            ) {
+              return null;
             }
-          }
-          if (
-            type === "header" &&
-            headerLocation &&
-            parameter &&
-            typeof parameter === "object" &&
-            String(parameter.type ?? "").toLowerCase() === "location"
-          ) {
-            return {
-              ...parameter,
-              location: {
-                latitude: headerLocation.latitude,
-                longitude: headerLocation.longitude,
-                name: headerLocation.name.trim(),
-                address: headerLocation.address.trim(),
-              },
-            };
-          }
-          if (parameter && typeof parameter === "object" && variable) {
-            return { ...parameter, ...getParameter(variable) };
-          }
-          return parameter;
-        }).filter((parameter): parameter is Record<string, unknown> => parameter !== null)
+            if (
+              type === "header" &&
+              headerMediaUrl &&
+              parameter &&
+              typeof parameter === "object"
+            ) {
+              const mediaType = String(parameter.type ?? "").toLowerCase();
+              if (["image", "video", "document"].includes(mediaType)) {
+                return { ...parameter, [mediaType]: { link: headerMediaUrl } };
+              }
+            }
+            if (
+              type === "header" &&
+              headerLocation &&
+              parameter &&
+              typeof parameter === "object" &&
+              String(parameter.type ?? "").toLowerCase() === "location"
+            ) {
+              return {
+                ...parameter,
+                location: {
+                  latitude: headerLocation.latitude,
+                  longitude: headerLocation.longitude,
+                  name: headerLocation.name.trim(),
+                  address: headerLocation.address.trim(),
+                },
+              };
+            }
+            if (parameter && typeof parameter === "object" && variable) {
+              return { ...parameter, ...getParameter(variable) };
+            }
+            return parameter;
+          })
+          .filter((parameter): parameter is Record<string, unknown> => parameter !== null)
       : component.parameters;
     return { ...component, parameters };
   });
@@ -373,7 +413,8 @@ function customerParameterValue(
   source: CustomerParameterSource,
 ) {
   if (!customer || source === "custom") return "";
-  if (source === "customer.token") return `${customer.token || customer.bsuid || "token"} (example)`;
+  if (source === "customer.token")
+    return `${customer.token || customer.bsuid || "token"} (example)`;
   return `${customer.display_name} (example)`;
 }
 
@@ -429,8 +470,9 @@ export function EditCampaignForm({
     (component) => String(component.type ?? "").toUpperCase() === "FOOTER",
   );
   const headerFormat = String(headerComponent?.format ?? "TEXT").toUpperCase();
-  const headerExampleHandle = (headerComponent?.example as { header_handle?: string[] } | undefined)
-    ?.header_handle?.[0];
+  const headerExampleHandle = (
+    headerComponent?.example as { header_handle?: string[] } | undefined
+  )?.header_handle?.[0];
   const headerVariables = componentVariables(headerComponent);
   const bodyVariables = componentVariables(bodyComponent);
   const buttons = buttonInputs(buttonsComponent);
@@ -490,16 +532,19 @@ export function EditCampaignForm({
   const bodyPreviewValues = Object.fromEntries(
     bodyVariables.map((variable) => [variable, resolvedVariableValue(`body:${variable}`)]),
   );
-  const previewValues = Object.fromEntries(
-    [...Object.entries(headerPreviewValues), ...Object.entries(bodyPreviewValues)],
-  );
+  const previewValues = Object.fromEntries([
+    ...Object.entries(headerPreviewValues),
+    ...Object.entries(bodyPreviewValues),
+  ]);
   const highlightedHeaderValue =
     highlightedVariable?.component === "header"
-      ? headerPreviewValues[highlightedVariable.name]?.trim() || `{{${highlightedVariable.name}}}`
+      ? headerPreviewValues[highlightedVariable.name]?.trim() ||
+        `{{${highlightedVariable.name}}}`
       : undefined;
   const highlightedBodyValue =
     highlightedVariable?.component === "body"
-      ? bodyPreviewValues[highlightedVariable.name]?.trim() || `{{${highlightedVariable.name}}}`
+      ? bodyPreviewValues[highlightedVariable.name]?.trim() ||
+        `{{${highlightedVariable.name}}}`
       : undefined;
   const previewButtons = Array.isArray(buttonsComponent?.buttons)
     ? buttonsComponent.buttons.flatMap((item) => {
@@ -550,7 +595,9 @@ export function EditCampaignForm({
       .map((button) => button.key),
   ]);
   const missingVariableKeys = new Set(
-    variableKeys.filter((key) => requiredVariableKeys.has(key) && !resolvedVariableValue(key).trim()),
+    variableKeys.filter(
+      (key) => requiredVariableKeys.has(key) && !resolvedVariableValue(key).trim(),
+    ),
   );
   const tooLongVariableKeys = new Map<string, { max: number; label: string }>();
   for (const key of variableKeys) {
@@ -658,7 +705,9 @@ export function EditCampaignForm({
         setError("send_date", { message: "Select a date and time." });
         invalid = true;
       } else if (new Date(values.send_date).getTime() < minimumScheduledDate().getTime()) {
-        setError("send_date", { message: "Schedule the campaign at least 5 minutes from now." });
+        setError("send_date", {
+          message: "Schedule the campaign at least 5 minutes from now.",
+        });
         invalid = true;
       }
     }
@@ -678,7 +727,8 @@ export function EditCampaignForm({
     if (!invalid) {
       const payload = {
         name: values.name.trim(),
-        send_date: values.schedule === "Send later" ? new Date(values.send_date).toISOString() : null,
+        send_date:
+          values.schedule === "Send later" ? new Date(values.send_date).toISOString() : null,
         wa_template_id: values.template_id,
         send_template: {
           components: buildSendComponents(
@@ -712,9 +762,9 @@ export function EditCampaignForm({
   return (
     <form
       onSubmit={handleSubmit(submitCampaign)}
-      className="grid items-start gap-6 md:grid-cols-[minmax(0,28rem)_20rem] lg:grid-cols-[minmax(0,34rem)_22rem] xl:grid-cols-[minmax(0,40rem)_22rem] 2xl:grid-cols-[minmax(0,46rem)_22rem]"
+      className="grid max-w-full min-w-0 items-start gap-6 min-[769px]:grid-cols-[minmax(0,28rem)_20rem] lg:grid-cols-[minmax(0,34rem)_22rem] xl:grid-cols-[minmax(0,40rem)_22rem] 2xl:grid-cols-[minmax(0,46rem)_22rem]"
     >
-      <div className="max-w-md space-y-4 lg:max-w-[34rem] xl:max-w-[40rem] 2xl:max-w-[46rem]">
+      <div className="w-full min-w-0 space-y-4 min-[769px]:max-w-md lg:max-w-[34rem] xl:max-w-[40rem] 2xl:max-w-[46rem]">
         <div className="space-y-2">
           <Label htmlFor="name">Campaign name</Label>
           <Input
@@ -834,13 +884,16 @@ export function EditCampaignForm({
           ) : null}
           {headerNeedsInput ? (
             <div className="space-y-3 pt-2">
-              <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
+              <p className="text-muted-foreground text-sm font-medium tracking-wide uppercase">
                 Header
               </p>
               {mediaHeader ? (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <Label>{headerFormat[0]}{headerFormat.slice(1).toLowerCase()}</Label>
+                    <Label>
+                      {headerFormat[0]}
+                      {headerFormat.slice(1).toLowerCase()}
+                    </Label>
                     {headerExampleHandle ? (
                       <Button
                         type="button"
@@ -854,7 +907,13 @@ export function EditCampaignForm({
                               headerExampleHandle.split("/").pop()?.split("?")[0] ||
                               `example.${headerFormat === "IMAGE" ? "png" : headerFormat === "VIDEO" ? "mp4" : "pdf"}`;
                             const file = new File([blob], filename, {
-                              type: blob.type || (headerFormat === "IMAGE" ? "image/png" : headerFormat === "VIDEO" ? "video/mp4" : "application/pdf"),
+                              type:
+                                blob.type ||
+                                (headerFormat === "IMAGE"
+                                  ? "image/png"
+                                  : headerFormat === "VIDEO"
+                                    ? "video/mp4"
+                                    : "application/pdf"),
                             });
                             setHeaderFile(file);
                           } catch {
@@ -1012,7 +1071,7 @@ export function EditCampaignForm({
           ) : null}
           {bodyVariables.length > 0 ? (
             <div className="space-y-3 pt-5">
-              <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
+              <p className="text-muted-foreground text-sm font-medium tracking-wide uppercase">
                 Body
               </p>
               {bodyVariables.map((variable, index) => {
@@ -1090,7 +1149,7 @@ export function EditCampaignForm({
           ) : null}
           {buttons.length > 0 ? (
             <div className="space-y-3 pt-5">
-              <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
+              <p className="text-muted-foreground text-sm font-medium tracking-wide uppercase">
                 Buttons
               </p>
               {buttons.map((button) => {
@@ -1108,11 +1167,26 @@ export function EditCampaignForm({
                   buttons,
                 );
                 const constraints = fieldConstraintsLabel(param?.input_required, maxLen);
+                const buttonTitle =
+                  button.buttonType === "URL"
+                    ? "Visit website"
+                    : button.buttonType === "COPY_CODE" ||
+                        param?.type.toLowerCase() === "coupon_code"
+                      ? "Copy offer code"
+                      : param?.input_title || `{{${button.variable}}}`;
+                const ButtonIcon =
+                  button.buttonType === "URL"
+                    ? Globe
+                    : button.buttonType === "PHONE_NUMBER"
+                      ? Phone
+                      : button.buttonType === "COPY_CODE"
+                        ? Copy
+                        : CornerUpLeft;
                 return (
-                  <div key={button.key} className="space-y-2">
+                  <div key={button.key} className="mb-4 space-y-2">
                     <button
                       type="button"
-                      className="text-sm font-medium hover:underline"
+                      className="flex items-center gap-2 text-sm font-medium hover:underline"
                       title={button.label}
                       onClick={() => {
                         setHighlightedVariable(null);
@@ -1122,7 +1196,8 @@ export function EditCampaignForm({
                         });
                       }}
                     >
-                      {param?.input_title || `{{${button.variable}}}`}
+                      <ButtonIcon className="size-4" />
+                      {buttonTitle}
                       {constraints ? (
                         <span className="text-muted-foreground ml-1 font-normal">
                           {constraints}
@@ -1139,7 +1214,8 @@ export function EditCampaignForm({
                       )}
                       maxLength={maxLen}
                       alphanumericOnly={
-                        button.variable === "code" || param?.type.toLowerCase() === "coupon_code"
+                        button.variable === "code" ||
+                        param?.type.toLowerCase() === "coupon_code"
                       }
                       onSourceChange={(source) =>
                         setVariableSources((currentSources) => ({
@@ -1155,6 +1231,14 @@ export function EditCampaignForm({
                       }
                       placeholder={button.placeholder}
                     />
+                    {button.buttonType === "URL" && button.url ? (
+                      <p className="text-muted-foreground w-full truncate text-left text-sm">
+                        Full URL:{" "}
+                        {replacePreviewVariables(button.url, {
+                          [button.variable]: resolvedVariableValue(button.key),
+                        })}
+                      </p>
+                    ) : null}
                     {validationAttempted && missingVariableKeys.has(button.key) ? (
                       <p className="text-destructive text-sm">
                         Enter a value for {`{{${button.variable}}}`}.
@@ -1178,14 +1262,16 @@ export function EditCampaignForm({
       </div>
       {selectedTemplate ? (
         <div className="min-w-0 self-start lg:col-start-2 lg:row-start-1">
-          <p className="mb-1 text-sm font-medium tracking-wide">
-            Preview
-          </p>
+          <p className="mb-1 text-sm font-medium tracking-wide">Preview</p>
           <div className="border-border max-w-sm overflow-hidden rounded-[7.5px] border bg-white px-3 pt-2 text-sm text-[#111b21] shadow-sm dark:bg-[#202c33] dark:text-[#e9edef]">
             {headerFormat === "IMAGE" && (previewMediaUrl || headerExampleHandle) ? (
               <div className="-mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={previewMediaUrl || headerExampleHandle} alt="Template header" className="block h-auto max-h-56 w-full rounded-none object-contain" />
+                <img
+                  src={previewMediaUrl || headerExampleHandle}
+                  alt="Template header"
+                  className="block h-auto max-h-56 w-full rounded-none object-contain"
+                />
               </div>
             ) : headerFormat === "VIDEO" && (previewMediaUrl || headerExampleHandle) ? (
               <div className="-mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)]">
@@ -1198,16 +1284,29 @@ export function EditCampaignForm({
               </div>
             ) : headerFormat === "DOCUMENT" && (previewMediaUrl || headerExampleHandle) ? (
               <div className="-mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)]">
-                <iframe src={previewMediaUrl || headerExampleHandle} title="Template header document" className="block h-56 w-full border-0" />
+                <iframe
+                  src={previewMediaUrl || headerExampleHandle}
+                  title="Template header document"
+                  className="block h-56 w-full border-0"
+                />
               </div>
             ) : headerFormat === "IMAGE" ? (
-              <div className="bg-muted/70 text-muted-foreground -mx-3 -mt-2 mb-2 flex min-h-24 w-[calc(100%+1.5rem)] items-center justify-center gap-3 rounded-none px-3 py-4 text-center text-sm dark:bg-white/10"><ImageIcon className="size-5 shrink-0" /><span>Sample image</span></div>
+              <div className="bg-muted/70 text-muted-foreground -mx-3 -mt-2 mb-2 flex min-h-24 w-[calc(100%+1.5rem)] items-center justify-center gap-3 rounded-none px-3 py-4 text-center text-sm dark:bg-white/10">
+                <ImageIcon className="size-5 shrink-0" />
+                <span>Sample image</span>
+              </div>
             ) : headerFormat === "VIDEO" ? (
-              <div className="bg-muted/70 text-muted-foreground -mx-3 -mt-2 mb-2 flex min-h-24 w-[calc(100%+1.5rem)] items-center justify-center gap-3 rounded-none px-3 py-4 text-sm dark:bg-white/10"><Video className="size-5 shrink-0" /><span>Sample video</span></div>
+              <div className="bg-muted/70 text-muted-foreground -mx-3 -mt-2 mb-2 flex min-h-24 w-[calc(100%+1.5rem)] items-center justify-center gap-3 rounded-none px-3 py-4 text-sm dark:bg-white/10">
+                <Video className="size-5 shrink-0" />
+                <span>Sample video</span>
+              </div>
             ) : headerFormat === "DOCUMENT" ? (
-              <div className="bg-muted/70 text-muted-foreground -mx-3 -mt-2 mb-2 flex min-h-24 w-[calc(100%+1.5rem)] items-center justify-center gap-3 rounded-none px-3 py-4 text-sm dark:bg-white/10"><FileText className="size-5 shrink-0" /><span className="min-w-0 truncate">Sample document</span></div>
+              <div className="bg-muted/70 text-muted-foreground -mx-3 -mt-2 mb-2 flex min-h-24 w-[calc(100%+1.5rem)] items-center justify-center gap-3 rounded-none px-3 py-4 text-sm dark:bg-white/10">
+                <FileText className="size-5 shrink-0" />
+                <span className="min-w-0 truncate">Sample document</span>
+              </div>
             ) : headerFormat === "LOCATION" ? (
-              <div className="-mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)] overflow-hidden bg-muted/50 dark:bg-white/10">
+              <div className="bg-muted/50 -mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)] overflow-hidden dark:bg-white/10">
                 <Image
                   src={locationPreviewImageUrl(headerLocationDetails)}
                   alt="Location map preview"
@@ -1217,21 +1316,59 @@ export function EditCampaignForm({
                   className="h-38 w-full object-cover"
                 />
                 <div className="space-y-0.5 px-3 py-2">
-                  <p className="font-medium">{headerLocationDetails?.name || "Location name"}</p>
+                  <p className="font-medium">
+                    {headerLocationDetails?.name || "Location name"}
+                  </p>
                   <p className="text-xs text-[#667781] dark:text-[#aebac1]">
                     {headerLocationDetails?.address || "Location address"}
                   </p>
                 </div>
               </div>
             ) : typeof headerComponent?.text === "string" ? (
-              <p className="mb-1.5 font-medium whitespace-pre-wrap break-words">{previewText(replacePreviewVariables(headerComponent.text, headerPreviewValues), highlightedHeaderValue)}</p>
+              <p className="mb-1.5 font-medium break-words whitespace-pre-wrap">
+                {previewText(
+                  replacePreviewVariables(headerComponent.text, headerPreviewValues),
+                  highlightedHeaderValue,
+                )}
+              </p>
             ) : null}
-            <p className="whitespace-pre-wrap break-words">{previewText(replacePreviewVariables(typeof bodyComponent?.text === "string" ? bodyComponent.text : "", bodyPreviewValues), highlightedBodyValue)}</p>
-            {typeof footerComponent?.text === "string" ? <p className="mt-2 text-xs whitespace-pre-wrap text-[#667781] dark:text-[#aebac1]">{previewText(footerComponent.text)}</p> : null}
-            {previewButtons.length > 0 ? <div className="mt-2 -mx-3 divide-y divide-black/10 border-t border-black/10 text-[#008f72] dark:divide-white/10 dark:border-white/10 dark:text-[#53bdeb]">{previewButtons.map((button, index) => {
-              const Icon = button.type === "URL" ? Globe : button.type === "PHONE_NUMBER" ? Phone : button.type === "COPY_CODE" ? Copy : CornerUpLeft;
-              return <div key={`${button.type}-${index}`} className={`flex items-center justify-center gap-2 px-3 py-3 text-base font-medium ${highlightedButton?.index === index ? "bg-yellow-100 text-black ring-2 ring-yellow-400 ring-inset" : ""}`}><Icon className="size-4" />{button.text}</div>;
-            })}</div> : null}
+            <p className="break-words whitespace-pre-wrap">
+              {previewText(
+                replacePreviewVariables(
+                  typeof bodyComponent?.text === "string" ? bodyComponent.text : "",
+                  bodyPreviewValues,
+                ),
+                highlightedBodyValue,
+              )}
+            </p>
+            {typeof footerComponent?.text === "string" ? (
+              <p className="mt-2 text-xs whitespace-pre-wrap text-[#667781] dark:text-[#aebac1]">
+                {previewText(footerComponent.text)}
+              </p>
+            ) : null}
+            {previewButtons.length > 0 ? (
+              <div className="-mx-3 mt-2 divide-y divide-black/10 border-t border-black/10 text-[#008f72] dark:divide-white/10 dark:border-white/10 dark:text-[#53bdeb]">
+                {previewButtons.map((button, index) => {
+                  const Icon =
+                    button.type === "URL"
+                      ? Globe
+                      : button.type === "PHONE_NUMBER"
+                        ? Phone
+                        : button.type === "COPY_CODE"
+                          ? Copy
+                          : CornerUpLeft;
+                  return (
+                    <div
+                      key={`${button.type}-${index}`}
+                      className={`flex items-center justify-center gap-2 px-3 py-3 text-base font-medium ${highlightedButton?.index === index ? "bg-yellow-100 text-black ring-2 ring-yellow-400 ring-inset" : ""}`}
+                    >
+                      <Icon className="size-4" />
+                      {button.text}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
           </div>
           {isLocalhost ? (
             <div className="mt-2 space-y-2">

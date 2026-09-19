@@ -26,7 +26,11 @@ import {
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import { formatDateTime, formatPhoneNumber } from "@/lib/format";
-import type { MessageAnalytics, MessageAnalyticsDataPoint, PhoneNumber } from "@/lib/api/types";
+import type {
+  MessageAnalytics,
+  MessageAnalyticsDataPoint,
+  PhoneNumber,
+} from "@/lib/api/types";
 
 type PhoneNumberListResponse = {
   items: PhoneNumber[];
@@ -169,7 +173,8 @@ export function PhoneNumberListTable({
                 </TableHead>
                 <TableHead className="text-right">
                   <span className="inline-flex items-center gap-1">
-                    Delivered {usageLoading ? <Loader2 className="size-3.5 animate-spin" /> : null}
+                    Delivered{" "}
+                    {usageLoading ? <Loader2 className="size-3.5 animate-spin" /> : null}
                   </span>
                 </TableHead>
                 <TableHead className="text-right">Action</TableHead>
@@ -185,7 +190,9 @@ export function PhoneNumberListTable({
                       "-"}
                   </TableCell>
                   <TableCell>
-                    {formatPhoneNumber(phoneNumber.display_phone_number || phoneNumber.phone_number) || "-"}
+                    {formatPhoneNumber(
+                      phoneNumber.display_phone_number || phoneNumber.phone_number,
+                    ) || "-"}
                   </TableCell>
                   <TableCell className="text-right">
                     {usage.get(phoneNumber.id)?.sent.toLocaleString("en-US") ?? "-"}
@@ -254,7 +261,7 @@ export function PhoneNumberListTable({
                   ) : (
                     detailPoints.map((point) => (
                       <TableRow key={`${point.start}-${point.end}`}>
-                        <TableCell className="text-xs">
+                        <TableCell className="text-xs font-medium">
                           {formatDateTime(new Date(point.start * 1000))}
                         </TableCell>
                         <TableCell className="text-xs">
