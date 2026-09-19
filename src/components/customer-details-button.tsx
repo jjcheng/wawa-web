@@ -182,7 +182,7 @@ export function CustomerDetailsButton({
           title={editing ? "Edit customer" : customer.display_name}
           subtitle="Customer details"
         />
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 !overflow-y-auto">
         {editing ? <div className="grid gap-3">
           <label className="grid gap-1 text-sm">
             <span className="text-muted-foreground">Name</span>
@@ -286,14 +286,18 @@ export function CustomerDetailsButton({
         </div> : <CustomerInfo customer={customer} />}
         </div>
         <DialogFooter className="shrink-0">
+          <Button
+            variant="destructive"
+            className="sm:mr-auto"
+            onClick={() => setConfirmOpen(true)}
+          >
+            Delete
+          </Button>
           {editing ? (
             <>
               <Button onClick={handleSave} disabled={updateMutation.isPending}>Save</Button>
             </>
           ) : <Button variant="outline" onClick={() => { setSaveErrors({}); setEditing(true); }}>Edit</Button>}
-          <Button variant="destructive" onClick={() => setConfirmOpen(true)}>
-            Delete
-          </Button>
         </DialogFooter>
       </DialogContent>
 

@@ -493,7 +493,8 @@ function MessageInfoPopover({
                 </>
               ) : null}
 
-              {errorMessage?.trim() || details.error_message?.trim() ? (
+              {!details.statuses?.length &&
+              (errorMessage?.trim() || details.error_message?.trim()) ? (
                 <>
                   <dt className="text-muted-foreground">Error</dt>
                   <dd className="break-words text-destructive">

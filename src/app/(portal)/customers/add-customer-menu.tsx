@@ -390,7 +390,7 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
             </div>
           ) : null}
           {!importResult ? (
-            <div className="max-h-[60vh] overflow-auto">
+            <div className="max-h-[60vh] !overflow-auto">
               <Table containerClassName="overflow-visible">
                 <TableHeader>
                   <TableRow>
@@ -465,7 +465,7 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
             </div>
           ) : null}
           {importResult?.skipped.length ? (
-            <div className="max-h-[30vh] overflow-auto">
+            <div className="max-h-[30vh] !overflow-auto">
               <h3 className="mb-2 text-sm font-medium">Skipped contacts</h3>
               <Table containerClassName="overflow-visible">
                 <TableHeader>
