@@ -762,7 +762,6 @@ export function CreateTemplateForm({
     },
     onError: (error) => {
       const apiError = toApiError(error);
-      setSubmitError(apiError.message);
       if (apiError instanceof ApiError && apiError.inputErrors.length > 0) {
         for (const inputError of apiError.inputErrors) {
           const field = FORM_FIELDS.find((name) => name === inputError.field);
@@ -770,6 +769,8 @@ export function CreateTemplateForm({
         }
         return;
       }
+      setSubmitError(apiError.message);
+      toast.error(apiError.message);
     },
   });
 

@@ -18,7 +18,9 @@ import { useForm, useWatch } from "react-hook-form";
 import { toast } from "@/lib/toast";
 
 import { apiFetch } from "@/lib/api/client";
+import { toApiError } from "@/lib/api/errors";
 import { Button } from "@/components/ui/button";
+import { FormSubmitError } from "@/components/form-submit-error";
 import {
   GoogleLocationInput,
   type GoogleLocationSelection,
@@ -489,6 +491,7 @@ export function EditBroadcastForm({
   const [headerLocationDetails, setHeaderLocationDetails] =
     useState<GoogleLocationSelection | null>(null);
   const [validationAttempted, setValidationAttempted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [highlightedVariable, setHighlightedVariable] = useState<{
     name: string;
     component: "header" | "body";
@@ -681,10 +684,15 @@ export function EditBroadcastForm({
       });
     },
     onSuccess: () => {
+      setSubmitError(null);
       toast.success(broadcastId ? "Broadcast updated." : "Broadcast created.");
       router.push("/broadcasts");
     },
-    onError: (error) => toast.error(error.message),
+    onError: (error) => {
+      const message = toApiError(error).message;
+      setSubmitError(message);
+      toast.error(message);
+    },
   });
 
   function submitBroadcast(values: EditBroadcastInput) {
@@ -1259,6 +1267,7 @@ export function EditBroadcastForm({
           {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
           {broadcastId ? "Save broadcast" : "Start broadcast"}
         </Button>
+        <FormSubmitError message={submitError} />
       </div>
       {selectedTemplate ? (
         <div className="min-w-0 self-start lg:col-start-2 lg:row-start-1">

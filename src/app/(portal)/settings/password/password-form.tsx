@@ -3,11 +3,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "@/lib/toast";
 
 import { PasswordStrengthIndicator } from "@/components/password-strength-indicator";
 import { Button } from "@/components/ui/button";
+import { FormSubmitError } from "@/components/form-submit-error";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { apiFetch } from "@/lib/api/client";
@@ -38,11 +40,13 @@ export function PasswordForm() {
     defaultValues: { old_password: "", new_password: "", confirm_new_password: "" },
   });
   const newPassword = useWatch({ control, name: "new_password" });
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: (values: ChangePasswordInput) =>
       apiFetch<User>("v1/account/users/me/password", { method: "PATCH", body: values }),
     onSuccess: () => {
+      setSubmitError(null);
       toast.success("Password changed.");
       reset();
     },
@@ -55,6 +59,7 @@ export function PasswordForm() {
         }
         return;
       }
+      setSubmitError(apiError.message);
       toast.error(apiError.message);
     },
   });
@@ -80,6 +85,7 @@ export function PasswordForm() {
         {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
         Change password
       </Button>
+      <FormSubmitError message={submitError} />
     </form>
   );
 }

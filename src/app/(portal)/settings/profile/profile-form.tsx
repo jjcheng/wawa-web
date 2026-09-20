@@ -4,11 +4,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "@/lib/toast";
 
 import { Button } from "@/components/ui/button";
+import { FormSubmitError } from "@/components/form-submit-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -54,6 +55,7 @@ export function ProfileForm({ user }: { user: User }) {
       email: user.email ?? "",
     },
   });
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: (values: UpdateProfileInput) =>
@@ -62,6 +64,7 @@ export function ProfileForm({ user }: { user: User }) {
         body: { description: values.description, email: values.email || null },
       }),
     onSuccess: () => {
+      setSubmitError(null);
       toast.success("Profile updated.");
       router.refresh();
     },
@@ -75,6 +78,7 @@ export function ProfileForm({ user }: { user: User }) {
         }
         return;
       }
+      setSubmitError(apiError.message);
       toast.error(apiError.message);
     },
   });
@@ -122,6 +126,7 @@ export function ProfileForm({ user }: { user: User }) {
         {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
         Save changes
       </Button>
+      <FormSubmitError message={submitError} />
     </form>
   );
 }

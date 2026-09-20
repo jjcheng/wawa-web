@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { PhoneNumberFields } from "@/components/phone-number-fields";
 import { loginAction, type LoginState } from "@/lib/auth/actions";
+import { toast } from "@/lib/toast";
 import { cn, MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 
 function fieldError(state: LoginState, field: string) {
@@ -36,13 +37,13 @@ export function LoginForm({ next }: { next?: string }) {
     setCountryCode(nextCountryCode);
   }
 
+  useEffect(() => {
+    if (state.message) toast.error(state.message);
+  }, [state.message]);
+
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="next" value={next ?? ""} />
-
-      {state.message ? (
-        <p className="text-destructive text-sm">{state.message}</p>
-      ) : null}
 
       <div className="space-y-2">
         <Label htmlFor="phone_number">Phone number</Label>
@@ -76,6 +77,9 @@ export function LoginForm({ next }: { next?: string }) {
       </div>
 
       <SignInButton />
+      {state.message ? (
+        <p className="text-destructive text-sm">{state.message}</p>
+      ) : null}
     </form>
   );
 }

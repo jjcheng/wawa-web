@@ -4,11 +4,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "@/lib/toast";
 
 import { PasswordStrengthIndicator } from "@/components/password-strength-indicator";
 import { Button } from "@/components/ui/button";
+import { FormSubmitError } from "@/components/form-submit-error";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { apiFetch } from "@/lib/api/client";
@@ -40,11 +42,13 @@ export function SetPasswordForm({ next }: { next: string }) {
     defaultValues: { new_password: "", confirm_new_password: "" },
   });
   const newPassword = useWatch({ control, name: "new_password" });
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: (values: SetInitialPasswordInput) =>
       apiFetch<User>("v1/account/users/me/initial-password", { method: "PATCH", body: values }),
     onSuccess: async () => {
+      setSubmitError(null);
       const restoredMaster = await restoreMasterSession();
       toast.success("New WhatsApp number connected.");
       router.push(restoredMaster ? "/numbers" : next);
@@ -59,6 +63,7 @@ export function SetPasswordForm({ next }: { next: string }) {
         }
         return;
       }
+      setSubmitError(apiError.message);
       toast.error(apiError.message);
     },
   });
@@ -89,6 +94,7 @@ export function SetPasswordForm({ next }: { next: string }) {
         {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
         Set password
       </Button>
+      <FormSubmitError message={submitError} />
     </form>
   );
 }
