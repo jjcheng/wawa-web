@@ -25,7 +25,7 @@ import { requireUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Phone numbers" };
 
-export default async function PhoneNumbersPage({ searchParams }: PageProps<"/numbers">) {
+export default async function PhoneNumbersPage({ searchParams }: PageProps<"/phone-numbers">) {
   const params = await searchParams;
   const user = await requireUser();
 
@@ -89,7 +89,7 @@ export default async function PhoneNumbersPage({ searchParams }: PageProps<"/num
                     action={
                       status !== "ALL" ? (
                         <Button asChild size="sm" variant="outline">
-                          <Link href="/numbers">Reset filters</Link>
+                          <Link href="/phone-numbers">Reset filters</Link>
                         </Button>
                       ) : undefined
                     }

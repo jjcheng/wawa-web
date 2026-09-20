@@ -176,7 +176,7 @@ export async function completeEmbeddedSignup(input: unknown): Promise<EmbeddedSi
   return {
     status: envelope.data?.status,
     wa_activated: envelope.data?.wa_activated,
-    redirectTo: masterSessionToken ? "/numbers" : "/login",
+    redirectTo: masterSessionToken ? "/phone-numbers" : "/login",
   };
 }
 

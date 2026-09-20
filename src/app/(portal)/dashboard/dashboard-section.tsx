@@ -37,7 +37,7 @@ export function DashboardSection({
   }, [businessAccount, requestKey]);
 
   const stats = [
-    { label: "Connected phone numbers", value: sectionDashboard.active_phone_numbers, icon: Phone, href: "/numbers" },
+    { label: "Connected phone numbers", value: sectionDashboard.active_phone_numbers, icon: Phone, href: "/phone-numbers" },
     { label: "Active customers", value: sectionDashboard.active_customers, icon: Users, href: "/customers" },
     { label: "Messages sent (30d)", value: sectionDashboard.messages_sent_last_30_days, icon: Send, href: showUsageLinks ? "/usage" : undefined },
     { label: "Messages delivered (30d)", value: sectionDashboard.messages_delivered_last_30_days, icon: MessagesSquare, href: showUsageLinks ? "/usage" : undefined },

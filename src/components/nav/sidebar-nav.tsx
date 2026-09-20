@@ -36,7 +36,7 @@ const SECTIONS = [
   {
     label: "Assets",
     items: [
-      { href: "/numbers", label: "Phone Numbers", icon: Phone },
+      { href: "/phone-numbers", label: "Phone Numbers", icon: Phone },
       { href: "/templates", label: "Templates", icon: FileText },
       { href: "/catalogs", label: "Catalogs", icon: Store },
     ],
