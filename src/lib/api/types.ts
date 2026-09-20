@@ -151,6 +151,25 @@ export type CustomerListResponse = {
   additional_data?: Record<string, unknown>;
 };
 
+export type Notification = {
+  id: number;
+  entry_date?: string;
+  last_update?: string;
+  type: "SUCCESS" | "INFO" | "WARNING" | "ERROR";
+  title: string;
+  body: string;
+  url?: string;
+  read: boolean;
+};
+
+export type NotificationListResponse = {
+  items: Notification[];
+  number_of_pages?: number;
+  number_of_items?: number;
+  next_page_offset?: unknown;
+  additional_data?: Record<string, unknown>;
+};
+
 export type CustomerImportContact = {
   display_name: string;
   phone_number: string;

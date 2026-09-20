@@ -29,6 +29,11 @@ export function formatDate(value?: string | Date | null) {
   return date ? dateFormatter.format(date) : "—";
 }
 
+/** Resolves a possibly-relative URL from the API against the current site origin. */
+export function resolveSiteUrl(url: string) {
+  return /^https:\/\//i.test(url) ? url : new URL(url, window.location.origin).toString();
+}
+
 export function formatPhoneNumber(value?: string | null, countryCode?: string | null) {
   if (!value) return "—";
   if (value.startsWith("+")) return value;

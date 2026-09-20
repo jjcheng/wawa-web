@@ -1761,7 +1761,7 @@ export function CreateTemplateForm({
                                 : "text-muted-foreground",
                             )}
                           >
-                            Full URL: {button.url}
+                            Example Full URL: {button.url}
                             {button.urlPath}
                             12345
                           </p>

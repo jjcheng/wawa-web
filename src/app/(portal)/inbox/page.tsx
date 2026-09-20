@@ -1,49 +1,37 @@
 import type { Metadata } from "next";
 
-import { PageHeader } from "@/components/page-header";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { mockInboxMessages } from "@/lib/mock/crm";
-import { cn } from "@/lib/utils";
+import { ApiError } from "@/lib/api/errors";
+import { serverFetch } from "@/lib/api/server-client";
+import type { NotificationListResponse } from "@/lib/api/types";
+import { InboxShell } from "./inbox-shell";
 
 export const metadata: Metadata = { title: "Inbox" };
+const PAGE_SIZES = ["10", "25", "50", "100"];
+const TYPES = ["SUCCESS", "INFO", "WARNING", "ERROR"];
 
-export default function InboxPage() {
+export default async function InboxPage({ searchParams }: PageProps<"/inbox">) {
+  const params = await searchParams;
+  const requestedPageSize = typeof params.page_size === "string" ? params.page_size : "25";
+  const pageSize = PAGE_SIZES.includes(requestedPageSize) ? requestedPageSize : "25";
+  const requestedType = typeof params.type === "string" ? params.type : "";
+  const type = TYPES.includes(requestedType) ? requestedType : "";
+  const requestedRead = typeof params.read === "string" ? params.read : "";
+  const read = requestedRead === "true" || requestedRead === "false" ? requestedRead : "";
+
+  const notifications = await serverFetch<NotificationListResponse>("/v1/account/notifications", {
+    query: { page: "1", page_size: pageSize, type, read },
+  }).catch((error) => {
+    if (error instanceof ApiError) return { items: [], number_of_pages: 0 };
+    throw error;
+  });
+
   return (
-    <>
-      <PageHeader
-        title="Inbox"
-        description="Messages from CoreConcept about your account and platform updates."
-        action={<Badge variant="secondary">Preview — not yet backed by the API</Badge>}
-      />
-
-      <Card>
-        <CardContent className="divide-y p-0">
-          {mockInboxMessages.map((message) => (
-            <div key={message.subject} className="flex items-start gap-3 p-4">
-              <span
-                className={cn(
-                  "mt-1.5 size-2 shrink-0 rounded-full",
-                  message.unread ? "bg-primary" : "bg-transparent",
-                )}
-                aria-hidden="true"
-              />
-              <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className={cn("text-sm", message.unread ? "font-semibold" : "font-medium")}>
-                    {message.subject}
-                  </p>
-                  <span className="text-muted-foreground text-xs whitespace-nowrap">
-                    {message.date}
-                  </span>
-                </div>
-                <p className="text-muted-foreground truncate text-sm">{message.preview}</p>
-                <p className="text-muted-foreground text-xs">From CoreConcept</p>
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-    </>
+    <InboxShell
+      initialRows={notifications.items}
+      initialNumberOfPages={notifications.number_of_pages ?? 1}
+      pageSize={pageSize}
+      type={type}
+      read={read}
+    />
   );
 }

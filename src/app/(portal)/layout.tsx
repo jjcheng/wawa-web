@@ -1,6 +1,7 @@
 import { NavigationProgressProvider } from "@/components/nav/navigation-progress";
 import { SidebarNav } from "@/components/nav/sidebar-nav";
 import { Topbar } from "@/components/nav/topbar";
+import { NotificationsRealtimeProvider } from "@/components/notifications-realtime-provider";
 import { requireUser } from "@/lib/auth/session";
 
 export default async function PortalLayout({ children }: LayoutProps<"/">) {
@@ -8,6 +9,7 @@ export default async function PortalLayout({ children }: LayoutProps<"/">) {
 
   return (
     <NavigationProgressProvider>
+      <NotificationsRealtimeProvider user={user} />
       <div className="flex min-h-svh">
         <aside className="bg-sidebar hidden w-52 shrink-0 border-r lg:block xl:w-60">
           <div className="sticky top-0">

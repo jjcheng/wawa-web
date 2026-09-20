@@ -3,6 +3,7 @@
 import {
   FileText,
   Gauge,
+  Inbox,
   LayoutDashboard,
   Megaphone,
   Phone,
@@ -14,6 +15,7 @@ import { usePathname } from "next/navigation";
 
 import { Brand } from "@/components/brand";
 import type { User } from "@/lib/api/types";
+import { useUnreadNotificationsCount } from "@/lib/unread-notifications-store";
 import { cn } from "@/lib/utils";
 
 const SECTIONS = [
@@ -21,6 +23,7 @@ const SECTIONS = [
     label: "Overview",
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/inbox", label: "Inbox", icon: Inbox },
     ],
   },
   {
@@ -46,6 +49,7 @@ const SECTIONS = [
 
 export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user: User }) {
   const pathname = usePathname();
+  const unreadNotificationsCount = useUnreadNotificationsCount();
 
   return (
     <nav className="flex h-full flex-col gap-5 p-3">
@@ -74,6 +78,11 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
                 >
                   <item.icon className="size-4" />
                   {item.label}
+                  {item.href === "/inbox" && unreadNotificationsCount > 0 ? (
+                    <span className="bg-primary text-primary-foreground ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-medium">
+                      {unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount}
+                    </span>
+                  ) : null}
                 </Link>
               );
             })}
