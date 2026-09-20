@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
+import { stripScriptTags } from "@/lib/html";
+
 export function TemplateRawPreview({
   html,
   highlightedVariable,
@@ -30,7 +32,7 @@ export function TemplateRawPreview({
   useEffect(() => {
     const preview = previewRef.current;
     if (!preview) return;
-    preview.innerHTML = html;
+    preview.innerHTML = stripScriptTags(html);
     const pattern = /{{\s*([^}]+?)\s*}}/g;
     const variableOccurrences = new Map<string, number>();
     const walker = document.createTreeWalker(preview, NodeFilter.SHOW_TEXT);
@@ -122,7 +124,7 @@ export function TemplateRawPreview({
     <div
       ref={previewRef}
       className="overflow-hidden [&_*]:max-w-full [&>div:first-child]:!w-auto [&>div:first-child]:!max-w-none [&>div:first-child]:!bg-transparent [&>div:first-child]:!p-0"
-      dangerouslySetInnerHTML={{ __html: html }}
+      dangerouslySetInnerHTML={{ __html: stripScriptTags(html) }}
     />
   );
 }
