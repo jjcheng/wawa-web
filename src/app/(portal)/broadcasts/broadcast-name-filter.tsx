@@ -6,7 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Input } from "@/components/ui/input";
 
-export function CampaignNameFilter({ value }: { value: string }) {
+export function BroadcastNameFilter({ value }: { value: string }) {
   const [searchInput, setSearchInput] = useState(value);
   const pathname = usePathname();
   const router = useRouter();
@@ -37,14 +37,14 @@ export function CampaignNameFilter({ value }: { value: string }) {
           }
         }}
         placeholder="Name"
-        aria-label="Search campaigns by name"
+        aria-label="Search broadcasts by name"
         className="h-7 border-none pr-6 pl-6 font-medium shadow-none focus-visible:ring-0"
       />
       {searchInput ? (
         <button
           type="button"
           onClick={clearSearch}
-          aria-label="Clear campaign name search"
+          aria-label="Clear broadcast name search"
           className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 flex items-center pr-1"
         >
           <X className="size-3.5" />

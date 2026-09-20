@@ -27,6 +27,7 @@ export default async function InboxPage({ searchParams }: PageProps<"/inbox">) {
 
   return (
     <InboxShell
+      key={`${pageSize}-${type}-${read}`}
       initialRows={notifications.items}
       initialNumberOfPages={notifications.number_of_pages ?? 1}
       pageSize={pageSize}

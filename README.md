@@ -24,7 +24,7 @@ npm run dev
 | `SESSION_COOKIE_NAME` | Session cookie issued by the API (`wawa_session`) |
 | `NEXT_META_APP_ID` | Meta app ID used by Embedded Signup |
 | `NEXT_META_EMBEDDED_SIGNUP_CONFIG_ID` | Meta login configuration ID |
-| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Maps key with Places API enabled for campaign locations |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Maps key with Places API enabled for broadcast locations |
 
 ### Authentication header
 
@@ -62,5 +62,5 @@ new header, while keeping the older `x-user-access-token` name as a compatibilit
 ## Status
 
 Auth, dashboard, WhatsApp phone numbers, Embedded Signup onboarding and account settings
-are wired to the live API. Contacts, Conversations and Campaigns are UI previews backed by
+are wired to the live API. Contacts, Conversations and Broadcasts are UI previews backed by
 mock data until the corresponding API endpoints exist.

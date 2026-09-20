@@ -172,7 +172,7 @@ function locationPreviewImageUrl(location: GoogleLocationSelection | null) {
   return url.toString();
 }
 
-type EditCampaignInput = {
+type EditBroadcastInput = {
   name: string;
   customer_ids: number[];
   template_id: string;
@@ -418,12 +418,12 @@ function customerParameterValue(
   return `${customer.display_name} (example)`;
 }
 
-export function EditCampaignForm({
-  campaignId,
+export function EditBroadcastForm({
+  broadcastId,
   customers,
   templates,
 }: {
-  campaignId?: string;
+  broadcastId?: string;
   customers: Customer[];
   templates: Template[];
 }) {
@@ -441,7 +441,7 @@ export function EditCampaignForm({
     setError,
     setValue,
     formState: { errors },
-  } = useForm<EditCampaignInput>({
+  } = useForm<EditBroadcastInput>({
     mode: "onChange",
     defaultValues: {
       name: "",
@@ -451,7 +451,7 @@ export function EditCampaignForm({
       send_date: "",
     },
   });
-  const campaignName = useWatch({ control, name: "name" }) ?? "";
+  const broadcastName = useWatch({ control, name: "name" }) ?? "";
   const schedule = useWatch({ control, name: "schedule" });
   const sendDate = useWatch({ control, name: "send_date" });
   const selectedCustomerIds = useWatch({ control, name: "customer_ids" });
@@ -556,7 +556,7 @@ export function EditCampaignForm({
       })
     : [];
   const previewJson = {
-    name: campaignName.trim(),
+    name: broadcastName.trim(),
     send_date: schedule === "Send later" && sendDate ? new Date(sendDate).toISOString() : null,
     wa_template_id: selectedTemplateId,
     send_template: {
@@ -637,7 +637,7 @@ export function EditCampaignForm({
   );
 
   const mutation = useMutation({
-    mutationFn: async (values: EditCampaignInput) => {
+    mutationFn: async (values: EditBroadcastInput) => {
       let headerMediaUrl: string | undefined;
       if (mediaHeader) {
         if (!headerFile) {
@@ -656,7 +656,7 @@ export function EditCampaignForm({
         headerMediaUrl = media.url;
         if (!headerMediaUrl) throw new Error("Media upload did not return a URL.");
       }
-      return apiFetch("v1/campaigns", {
+      return apiFetch("v1/broadcasts", {
         method: "POST",
         body: {
           name: values.name.trim(),
@@ -681,13 +681,13 @@ export function EditCampaignForm({
       });
     },
     onSuccess: () => {
-      toast.success(campaignId ? "Campaign updated." : "Campaign created.");
-      router.push("/campaigns");
+      toast.success(broadcastId ? "Broadcast updated." : "Broadcast created.");
+      router.push("/broadcasts");
     },
     onError: (error) => toast.error(error.message),
   });
 
-  function submitCampaign(values: EditCampaignInput) {
+  function submitBroadcast(values: EditBroadcastInput) {
     setValidationAttempted(true);
     clearErrors(["customer_ids", "template_id"]);
     let invalid = false;
@@ -706,7 +706,7 @@ export function EditCampaignForm({
         invalid = true;
       } else if (new Date(values.send_date).getTime() < minimumScheduledDate().getTime()) {
         setError("send_date", {
-          message: "Schedule the campaign at least 5 minutes from now.",
+          message: "Schedule the broadcast at least 5 minutes from now.",
         });
         invalid = true;
       }
@@ -745,7 +745,7 @@ export function EditCampaignForm({
         },
         customer_ids: values.customer_ids,
       };
-      console.log("Campaign payload", payload);
+      console.log("Broadcast payload", payload);
       mutation.mutate(values);
     }
   }
@@ -761,21 +761,21 @@ export function EditCampaignForm({
 
   return (
     <form
-      onSubmit={handleSubmit(submitCampaign)}
+      onSubmit={handleSubmit(submitBroadcast)}
       className="grid w-full max-w-full min-w-0 items-start gap-6 min-[769px]:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]"
     >
       <div className="w-full min-w-0 space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="name">Campaign name</Label>
+          <Label htmlFor="name">Broadcast name</Label>
           <Input
             id="name"
-            placeholder="Enter campaign name"
+            placeholder="Enter broadcast name"
             {...register("name", {
               validate: (value) => value.trim().length > 0,
             })}
           />
           {errors.name ? (
-            <p className="text-destructive text-sm">Enter a campaign name.</p>
+            <p className="text-destructive text-sm">Enter a broadcast name.</p>
           ) : null}
         </div>
 
@@ -807,7 +807,7 @@ export function EditCampaignForm({
           <Select
             value={schedule}
             onValueChange={(value) => {
-              setValue("schedule", value as EditCampaignInput["schedule"]);
+              setValue("schedule", value as EditBroadcastInput["schedule"]);
               if (value === "Send now") clearErrors("send_date");
             }}
           >
@@ -835,7 +835,7 @@ export function EditCampaignForm({
                     if (schedule !== "Send later" || !value) return true;
                     return new Date(value).getTime() >= minimumScheduledDate().getTime()
                       ? true
-                      : "Schedule the campaign at least 5 minutes from now.";
+                      : "Schedule the broadcast at least 5 minutes from now.";
                   },
                 })}
               />
@@ -1257,7 +1257,7 @@ export function EditCampaignForm({
 
         <Button type="submit" className={MEDIUM_BUTTON_HEIGHT} disabled={mutation.isPending}>
           {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-          {campaignId ? "Save campaign" : "Start campaign"}
+          {broadcastId ? "Save broadcast" : "Start broadcast"}
         </Button>
       </div>
       {selectedTemplate ? (

@@ -17,17 +17,17 @@ import {
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 
-export function CampaignDeleteButton({ campaignId }: { campaignId: number }) {
+export function BroadcastDeleteButton({ broadcastId }: { broadcastId: number }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  async function deleteCampaign() {
+  async function deleteBroadcast() {
     setLoading(true);
     try {
-      await apiFetch(`v1/campaigns/${campaignId}`, { method: "DELETE" });
+      await apiFetch(`v1/broadcasts/${broadcastId}`, { method: "DELETE" });
       setConfirmOpen(false);
-      toast.success("Campaign deleted.");
+      toast.success("Broadcast deleted.");
       router.refresh();
     } catch (error) {
       toast.error(toApiError(error).message);
@@ -44,13 +44,13 @@ export function CampaignDeleteButton({ campaignId }: { campaignId: number }) {
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete this campaign?</DialogTitle>
+            <DialogTitle>Delete this broadcast?</DialogTitle>
             <DialogDescription>
-              This cancelled campaign will be permanently deleted.
+              This cancelled broadcast will be permanently deleted.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="destructive" onClick={deleteCampaign} disabled={loading}>
+            <Button variant="destructive" onClick={deleteBroadcast} disabled={loading}>
               {loading ? <Loader2 className="size-4 animate-spin" /> : null}
               Delete
             </Button>

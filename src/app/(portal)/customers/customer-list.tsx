@@ -138,6 +138,15 @@ export function CustomerList({
     submitSearch(field, "");
   }
 
+  function resetFilters() {
+    setNameInput("");
+    setSelectedTags(new Set());
+    const params = new URLSearchParams(searchParams);
+    params.delete("name");
+    params.delete("tags");
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
   function handleDeleted(customer: Customer) {
     const remainingRows = rows.filter((row) => row.id !== customer.id);
     setSelectedRows((current) => {
@@ -229,7 +238,7 @@ export function CustomerList({
             <Button
               onClick={() => {
                 if (selectedRows.size === 0) {
-                  toast.info("Select at least one customer to start a campaign.");
+                  toast.info("Select at least one customer to start a broadcast.");
                   return;
                 }
                 const invalidCustomers = rows.filter(
@@ -242,13 +251,13 @@ export function CustomerList({
                   return;
                 }
                 sessionStorage.setItem(
-                  "new-campaign-customer-ids",
+                  "new-broadcast-customer-ids",
                   JSON.stringify([...selectedRows]),
                 );
-                router.push("/customers/new-campaign");
+                router.push("/customers/new-broadcast");
               }}
             >
-              New Campaign
+              New Broadcast
             </Button>
           </div>
         ) : null}
@@ -309,7 +318,16 @@ export function CustomerList({
             </TableHeader>
             <TableBody>
               {filteredRows.length === 0 ? (
-                <TableEmptyState colSpan={COLUMNS.length + 1}>
+                <TableEmptyState
+                  colSpan={COLUMNS.length + 1}
+                  action={
+                    rows.length === 0 && selectedTags.size === 0 ? undefined : (
+                      <Button size="sm" variant="outline" onClick={resetFilters}>
+                        Reset filters
+                      </Button>
+                    )
+                  }
+                >
                   {rows.length === 0 && selectedTags.size === 0
                     ? "No customers yet."
                     : "No customers match these filters."}

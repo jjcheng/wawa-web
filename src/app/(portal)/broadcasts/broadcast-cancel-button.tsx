@@ -17,17 +17,17 @@ import {
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 
-export function CampaignCancelButton({ campaignId }: { campaignId: number }) {
+export function BroadcastCancelButton({ broadcastId }: { broadcastId: number }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  async function cancelCampaign() {
+  async function cancelBroadcast() {
     setLoading(true);
     try {
-      await apiFetch(`v1/campaigns/${campaignId}/cancel`, { method: "PATCH" });
+      await apiFetch(`v1/broadcasts/${broadcastId}/cancel`, { method: "PATCH" });
       setConfirmOpen(false);
-      toast.success("Campaign cancelled.");
+      toast.success("Broadcast cancelled.");
       router.refresh();
     } catch (error) {
       toast.error(toApiError(error).message);
@@ -44,16 +44,16 @@ export function CampaignCancelButton({ campaignId }: { campaignId: number }) {
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Cancel this campaign?</DialogTitle>
+            <DialogTitle>Cancel this broadcast?</DialogTitle>
             <DialogDescription>
-              This pending campaign will be cancelled and cannot be sent.
+              This pending broadcast will be cancelled and cannot be sent.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={loading}>
-              Keep campaign
+              Keep broadcast
             </Button>
-            <Button variant="destructive" onClick={cancelCampaign} disabled={loading}>
+            <Button variant="destructive" onClick={cancelBroadcast} disabled={loading}>
               {loading ? <Loader2 className="size-4 animate-spin" /> : null}
               Cancel
             </Button>

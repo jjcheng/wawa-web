@@ -3,16 +3,16 @@
 import { useEffect, useState } from "react";
 import { toast } from "@/lib/toast";
 
-import { EditCampaignForm } from "../../campaigns/new/edit-campaign-form";
+import { EditBroadcastForm } from "../../broadcasts/new/edit-broadcast-form";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import type { Customer, CustomerListResponse, Template } from "@/lib/api/types";
 
-export function NewCampaignContent({
-  campaignId,
+export function NewBroadcastContent({
+  broadcastId,
   templates,
 }: {
-  campaignId?: string;
+  broadcastId?: string;
   templates: Template[];
 }) {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -22,7 +22,7 @@ export function NewCampaignContent({
     let active = true;
     let customerIds: number[] = [];
     try {
-      const stored = JSON.parse(sessionStorage.getItem("new-campaign-customer-ids") ?? "[]");
+      const stored = JSON.parse(sessionStorage.getItem("new-broadcast-customer-ids") ?? "[]");
       if (Array.isArray(stored)) {
         customerIds = stored.filter(
           (id): id is number => typeof id === "number" && Number.isInteger(id),
@@ -67,5 +67,5 @@ export function NewCampaignContent({
 
   if (loading) return <p className="text-muted-foreground text-sm">Loading customers...</p>;
 
-  return <EditCampaignForm campaignId={campaignId} customers={customers} templates={templates} />;
+  return <EditBroadcastForm broadcastId={broadcastId} customers={customers} templates={templates} />;
 }

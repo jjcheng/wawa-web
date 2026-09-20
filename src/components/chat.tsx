@@ -486,10 +486,10 @@ function MessageInfoPopover({
                 </>
               ) : null}
 
-              {details.campaign_id ? (
+              {details.broadcast_id ? (
                 <>
-                  <dt className="text-muted-foreground">Campaign ID</dt>
-                  <dd>{details.campaign_id}</dd>
+                  <dt className="text-muted-foreground">Broadcast ID</dt>
+                  <dd>{details.broadcast_id}</dd>
                 </>
               ) : null}
 

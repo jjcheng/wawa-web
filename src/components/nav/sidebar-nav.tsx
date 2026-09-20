@@ -30,7 +30,7 @@ const SECTIONS = [
     label: "MESSAGING",
     items: [
       { href: "/customers", label: "Customers", icon: Users },
-      { href: "/campaigns", label: "Campaigns", icon: Megaphone },
+      { href: "/broadcasts", label: "Broadcasts", icon: Megaphone },
     ],
   },
   {

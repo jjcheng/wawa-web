@@ -195,7 +195,7 @@ export type CustomerImportResult = {
   message: string;
 };
 
-export type Campaign = {
+export type Broadcast = {
   id: number;
   entry_date?: string;
   last_update?: string;
@@ -211,45 +211,45 @@ export type Campaign = {
   };
 };
 
-export type CampaignListResponse = {
-  items: Campaign[];
+export type BroadcastListResponse = {
+  items: Broadcast[];
   number_of_pages?: number;
   number_of_items?: number;
   next_page_offset?: unknown;
   additional_data?: Record<string, unknown>;
 };
 
-export type CampaignRecipientMessage = {
+export type BroadcastRecipientMessage = {
   status?: string;
   error_message?: string;
   attempts?: number;
   next_attempt_at?: string | null | { Time?: string; Valid?: boolean };
 };
 
-export type CampaignRecipient = {
+export type BroadcastRecipient = {
   id: number;
   customer_name: string;
   customer_wa_id: string;
   customer_country_code?: string;
   customer_phone_number?: string;
-  campaign_id: number;
+  broadcast_id: number;
   customer_id: number;
   status: string;
   attempts: number;
   next_attempt_at?: string | null | { Time?: string; Valid?: boolean };
   last_error?: string;
-  message?: CampaignRecipientMessage | null;
+  message?: BroadcastRecipientMessage | null;
 };
 
-export type CampaignRecipientListResponse = {
-  items: CampaignRecipient[];
+export type BroadcastRecipientListResponse = {
+  items: BroadcastRecipient[];
   number_of_pages?: number;
   number_of_items?: number;
   next_page_offset?: unknown;
   additional_data?: Record<string, unknown> | null;
 };
 
-export type CampaignStatisticsResponse = Record<string, number | string>;
+export type BroadcastStatisticsResponse = Record<string, number | string>;
 
 export type TemplateQualityScore = {
   score?: string;
@@ -384,7 +384,7 @@ export type MessageDetail = DtoBase & {
   type: string;
   status: string;
   payload?: Record<string, unknown>;
-  campaign_id?: number | null;
+  broadcast_id?: number | null;
   attachment_url?: string;
   billable?: boolean;
   category?: string;

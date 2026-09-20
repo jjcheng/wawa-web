@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { PhoneNumberStatusFilter } from "./phone-number-status-filter";
 import { PhoneNumberViewButton } from "./phone-number-view-button";
@@ -6,6 +7,7 @@ import { PageHeader } from "@/components/page-header";
 import { TableEmptyState } from "@/components/table-empty-state";
 import { EmbeddedSignupButton } from "@/components/whatsapp/embedded-signup-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -82,7 +84,18 @@ export default async function PhoneNumbersPage({ searchParams }: PageProps<"/num
               </TableHeader>
               <TableBody>
                 {phoneNumbers.length === 0 ? (
-                  <TableEmptyState colSpan={6}>No phone numbers found.</TableEmptyState>
+                  <TableEmptyState
+                    colSpan={6}
+                    action={
+                      status !== "ALL" ? (
+                        <Button asChild size="sm" variant="outline">
+                          <Link href="/numbers">Reset filters</Link>
+                        </Button>
+                      ) : undefined
+                    }
+                  >
+                    {status !== "ALL" ? "No phone numbers match this filter." : "No phone numbers found."}
+                  </TableEmptyState>
                 ) : (
                   phoneNumbers.map((number) => (
                     <TableRow key={number.id}>

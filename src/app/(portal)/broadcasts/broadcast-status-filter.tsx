@@ -30,7 +30,7 @@ function displayStatus(status: string) {
   return normalized.charAt(0) + normalized.slice(1).toLowerCase();
 }
 
-export function CampaignStatusFilter({
+export function BroadcastStatusFilter({
   value,
   options = DEFAULT_STATUS_OPTIONS,
 }: {
@@ -58,7 +58,7 @@ export function CampaignStatusFilter({
     <Select value={safeValue} onValueChange={setStatus}>
       <SelectTrigger
         className="h-7 border-none px-0 pl-1 font-medium shadow-none"
-        aria-label="Filter campaigns by status"
+        aria-label="Filter broadcasts by status"
       >
         <SelectValue />
       </SelectTrigger>

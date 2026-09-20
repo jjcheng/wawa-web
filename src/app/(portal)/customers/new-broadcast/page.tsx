@@ -6,15 +6,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type { BusinessAccount, TemplateListResponse } from "@/lib/api/types";
-import { NewCampaignContent } from "./new-campaign-content";
+import { NewBroadcastContent } from "./new-broadcast-content";
 
-export const metadata: Metadata = { title: "New campaign" };
+export const metadata: Metadata = { title: "New broadcast" };
 
-export default async function NewCampaignPage({
+export default async function NewBroadcastPage({
   searchParams,
-}: PageProps<"/customers/new-campaign">) {
+}: PageProps<"/customers/new-broadcast">) {
   const params = await searchParams;
-  const campaignId = typeof params.id === "string" ? params.id : undefined;
+  const broadcastId = typeof params.id === "string" ? params.id : undefined;
   let templates: TemplateListResponse["items"] = [];
   try {
     const businessAccount = await serverFetch<BusinessAccount>("/v1/wa/business-accounts");
@@ -34,13 +34,13 @@ export default async function NewCampaignPage({
       <BackBar href="/customers" />
 
       <PageHeader
-        title={campaignId ? "Edit campaign" : "New campaign"}
-        description="Campaigns are a preview and are not yet backed by the API."
+        title={broadcastId ? "Edit broadcast" : "New broadcast"}
+        description="Broadcasts are a preview and are not yet backed by the API."
       />
 
       <Card>
         <CardContent>
-          <NewCampaignContent campaignId={campaignId} templates={templates} />
+          <NewBroadcastContent broadcastId={broadcastId} templates={templates} />
         </CardContent>
       </Card>
     </>

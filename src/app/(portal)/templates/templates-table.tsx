@@ -7,6 +7,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useNavigationProgress } from "@/components/nav/navigation-progress";
 import { LoadMoreButton } from "@/components/load-more-button";
 import { TableEmptyState } from "@/components/table-empty-state";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ViewTemplateButton } from "@/components/whatsapp/view-template-button";
@@ -137,6 +138,19 @@ export function TemplatesTable({
   function setLanguage(value: string) {
     const params = new URLSearchParams(searchParams);
     params.set("language", value);
+    const nextRoute = `${pathname}?${params}`;
+    startNavigationProgress(nextRoute);
+    router.push(nextRoute);
+  }
+
+  function resetFilters() {
+    setSearchInput("");
+    const params = new URLSearchParams(searchParams);
+    params.delete("name_or_content");
+    params.delete("category");
+    params.delete("status");
+    params.delete("quality_score");
+    params.delete("language");
     const nextRoute = `${pathname}?${params}`;
     startNavigationProgress(nextRoute);
     router.push(nextRoute);
@@ -278,7 +292,28 @@ export function TemplatesTable({
             </TableHeader>
             <TableBody>
               {templates.length === 0 ? (
-                <TableEmptyState colSpan={6}>No templates match this filter.</TableEmptyState>
+                <TableEmptyState
+                  colSpan={6}
+                  action={
+                    category !== "ALL" ||
+                    nameOrContent ||
+                    status !== "ALL" ||
+                    qualityScore !== "ALL" ||
+                    language !== "ALL" ? (
+                      <Button size="sm" variant="outline" onClick={resetFilters}>
+                        Reset filters
+                      </Button>
+                    ) : undefined
+                  }
+                >
+                  {category !== "ALL" ||
+                  nameOrContent ||
+                  status !== "ALL" ||
+                  qualityScore !== "ALL" ||
+                  language !== "ALL"
+                    ? "No templates match this filter."
+                    : "No templates found."}
+                </TableEmptyState>
               ) : (
                 templates.map((template) => (
                   <TableRow key={template.id}>

@@ -75,13 +75,6 @@ export function InboxShell({
   const searchParams = useSearchParams();
   const { startNavigationProgress } = useNavigationProgress();
 
-  // Filter/page-size changes navigate client-side without remounting, so re-sync state from the new server props.
-  useEffect(() => {
-    setRows(initialRows);
-    setCurrentPage(1);
-    setNumberOfPages(initialNumberOfPages);
-  }, [initialRows, initialNumberOfPages]);
-
   useEffect(() => {
     if (currentPage !== 1) return;
     function onNotification(event: Event) {
@@ -124,6 +117,15 @@ export function InboxShell({
   function setPageSize(value: string) {
     const params = new URLSearchParams(searchParams);
     params.set("page_size", value);
+    const nextRoute = `${pathname}?${params}`;
+    startNavigationProgress(nextRoute);
+    router.push(nextRoute);
+  }
+
+  function resetFilters() {
+    const params = new URLSearchParams(searchParams);
+    params.delete("type");
+    params.delete("read");
     const nextRoute = `${pathname}?${params}`;
     startNavigationProgress(nextRoute);
     router.push(nextRoute);
@@ -181,7 +183,18 @@ export function InboxShell({
             </TableHeader>
             <TableBody>
               {rows.length === 0 ? (
-                <TableEmptyState colSpan={5}>No notifications found.</TableEmptyState>
+                <TableEmptyState
+                  colSpan={5}
+                  action={
+                    type || read ? (
+                      <Button size="sm" variant="outline" onClick={resetFilters}>
+                        Reset filters
+                      </Button>
+                    ) : undefined
+                  }
+                >
+                  {type || read ? "No notifications match this filter." : "No notifications found."}
+                </TableEmptyState>
               ) : (
                 rows.map((notification) => (
                   <TableRow

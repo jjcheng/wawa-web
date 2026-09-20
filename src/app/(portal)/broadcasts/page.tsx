@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { CampaignStatusFilter } from "./campaign-status-filter";
-import { CampaignNameFilter } from "./campaign-name-filter";
-import { CampaignCancelButton } from "./campaign-cancel-button";
-import { CampaignDeleteButton } from "./campaign-delete-button";
-import { CampaignViewButton } from "./campaign-view-button";
-import { NewCampaignButton } from "./new-campaign-button";
+import { BroadcastStatusFilter } from "./broadcast-status-filter";
+import { BroadcastNameFilter } from "./broadcast-name-filter";
+import { BroadcastCancelButton } from "./broadcast-cancel-button";
+import { BroadcastDeleteButton } from "./broadcast-delete-button";
+import { BroadcastViewButton } from "./broadcast-view-button";
+import { NewBroadcastButton } from "./new-broadcast-button";
 import { PageHeader } from "@/components/page-header";
 import { TableEmptyState } from "@/components/table-empty-state";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
-import type { Campaign, CampaignListResponse } from "@/lib/api/types";
+import type { Broadcast, BroadcastListResponse } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
 import {
   Table,
@@ -23,7 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export const metadata: Metadata = { title: "Campaigns" };
+export const metadata: Metadata = { title: "Broadcasts" };
 
 const COLUMN_COUNT = 5;
 
@@ -44,12 +45,12 @@ function displayStatus(status: string) {
   return normalized.charAt(0) + normalized.slice(1).toLowerCase();
 }
 
-function CampaignTable({
+function BroadcastTable({
   rows,
   status,
   name,
 }: {
-  rows: Campaign[];
+  rows: Broadcast[];
   status: string;
   name: string;
 }) {
@@ -60,35 +61,46 @@ function CampaignTable({
           <TableHeader>
             <TableRow>
               <TableHead>
-                <CampaignNameFilter value={name} />
+                <BroadcastNameFilter value={name} />
               </TableHead>
               <TableHead>Audience</TableHead>
               <TableHead>Send date</TableHead>
               <TableHead>
-                <CampaignStatusFilter value={status} />
+                <BroadcastStatusFilter value={status} />
               </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.length === 0 ? (
-              <TableEmptyState colSpan={COLUMN_COUNT}>No campaigns yet.</TableEmptyState>
+              <TableEmptyState
+                colSpan={COLUMN_COUNT}
+                action={
+                  name || status !== "ALL" ? (
+                    <Button asChild size="sm" variant="outline">
+                      <Link href="/broadcasts">Reset filters</Link>
+                    </Button>
+                  ) : undefined
+                }
+              >
+                {name || status !== "ALL" ? "No broadcasts match this filter." : "No broadcasts yet."}
+              </TableEmptyState>
             ) : (
-              rows.map((campaign) => (
-                <TableRow key={campaign.id}>
-                  <TableCell className="font-medium">{campaign.name}</TableCell>
+              rows.map((broadcast) => (
+                <TableRow key={broadcast.id}>
+                  <TableCell className="font-medium">{broadcast.name}</TableCell>
                   <TableCell>
-                    {campaign.recipient_count ?? campaign.customer_ids?.length ?? 0}
+                    {broadcast.recipient_count ?? broadcast.customer_ids?.length ?? 0}
                   </TableCell>
-                  <TableCell>{formatDateTime(campaign.send_date)}</TableCell>
-                  <TableCell>{displayStatus(campaign.status)}</TableCell>
+                  <TableCell>{formatDateTime(broadcast.send_date)}</TableCell>
+                  <TableCell>{displayStatus(broadcast.status)}</TableCell>
                   <TableCell className="text-right whitespace-nowrap">
                     <div className="flex items-center justify-end gap-2">
-                      <CampaignViewButton campaign={campaign} />
-                      {campaign.status === "PENDING" ? (
-                        <CampaignCancelButton campaignId={campaign.id} />
-                      ) : campaign.status === "CANCELLED" ? (
-                        <CampaignDeleteButton campaignId={campaign.id} />
+                      <BroadcastViewButton broadcast={broadcast} />
+                      {broadcast.status === "PENDING" ? (
+                        <BroadcastCancelButton broadcastId={broadcast.id} />
+                      ) : broadcast.status === "CANCELLED" ? (
+                        <BroadcastDeleteButton broadcastId={broadcast.id} />
                       ) : null}
                     </div>
                   </TableCell>
@@ -102,16 +114,16 @@ function CampaignTable({
   );
 }
 
-export default async function CampaignsPage({ searchParams }: PageProps<"/campaigns">) {
+export default async function BroadcastsPage({ searchParams }: PageProps<"/broadcasts">) {
   const params = await searchParams;
   const name = typeof params.name === "string" ? params.name : "";
   const requestedStatus = typeof params.status === "string" ? params.status : "ALL";
   const status = ["PENDING", "SENDING", "COMPLETED", "CANCELLED"].includes(requestedStatus)
     ? requestedStatus
     : "ALL";
-  let campaigns: Campaign[] = [];
+  let broadcasts: Broadcast[] = [];
   try {
-    const response = await serverFetch<CampaignListResponse>("/v1/campaigns", {
+    const response = await serverFetch<BroadcastListResponse>("/v1/broadcasts", {
       query: {
         page: "1",
         page_size: "100",
@@ -119,27 +131,27 @@ export default async function CampaignsPage({ searchParams }: PageProps<"/campai
         name,
       },
     });
-    campaigns = response.items;
+    broadcasts = response.items;
   } catch (error) {
     if (!(error instanceof ApiError)) throw error;
   }
   return (
     <>
       <PageHeader
-        title="Campaigns"
+        title="Broadcasts"
         description={
           <>
-            Broadcast template messages to your customers. Start new campaign in{" "}
+            Broadcast template messages to your customers. Start new broadcast in{" "}
             <Link href="/customers" className="text-primary hover:underline">
               Customers
             </Link>{" "}
             page.
           </>
         }
-        action={<NewCampaignButton />}
+        action={<NewBroadcastButton />}
       />
 
-      <CampaignTable rows={campaigns} status={status} name={name} />
+      <BroadcastTable rows={broadcasts} status={status} name={name} />
     </>
   );
 }

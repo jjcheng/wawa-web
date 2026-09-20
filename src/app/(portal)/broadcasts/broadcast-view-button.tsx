@@ -3,12 +3,12 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import type { Campaign } from "@/lib/api/types";
+import type { Broadcast } from "@/lib/api/types";
 
-export function CampaignViewButton({ campaign }: { campaign: Campaign }) {
+export function BroadcastViewButton({ broadcast }: { broadcast: Broadcast }) {
   return (
       <Button asChild size="sm" variant="outline">
-        <Link href={`/campaigns/recipients?campaign_id=${campaign.id}`}>
+        <Link href={`/broadcasts/recipients?broadcast_id=${broadcast.id}`}>
         View
         </Link>
       </Button>

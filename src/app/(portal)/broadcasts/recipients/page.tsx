@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
-import { CampaignNameFilter } from "../campaign-name-filter";
-import { CampaignStatusFilter } from "../campaign-status-filter";
+import { BroadcastNameFilter } from "../broadcast-name-filter";
+import { BroadcastStatusFilter } from "../broadcast-status-filter";
 import { BackBar } from "@/components/back-bar";
 import { PageHeader } from "@/components/page-header";
 import { TableEmptyState } from "@/components/table-empty-state";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -17,20 +19,20 @@ import {
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type {
-  Campaign,
-  CampaignRecipient,
-  CampaignRecipientListResponse,
-  CampaignStatisticsResponse,
+  Broadcast,
+  BroadcastRecipient,
+  BroadcastRecipientListResponse,
+  BroadcastStatisticsResponse,
 } from "@/lib/api/types";
-import { formatDateTime, formatPhoneNumber } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Campaign recipients" };
+export const metadata: Metadata = { title: "Broadcast recipients" };
 
-export default async function CampaignRecipientsPage({
+export default async function BroadcastRecipientsPage({
   searchParams,
-}: PageProps<"/campaigns/recipients">) {
+}: PageProps<"/broadcasts/recipients">) {
   const params = await searchParams;
-  const campaignId = typeof params.campaign_id === "string" ? params.campaign_id : "";
+  const broadcastId = typeof params.broadcast_id === "string" ? params.broadcast_id : "";
   const name = typeof params.name === "string" ? params.name : "";
   const recipientStatusOptions = [
     "ALL",
@@ -44,24 +46,24 @@ export default async function CampaignRecipientsPage({
   ];
   const requestedStatus = typeof params.status === "string" ? params.status : "ALL";
   const status = recipientStatusOptions.includes(requestedStatus) ? requestedStatus : "ALL";
-  let recipients: CampaignRecipient[] = [];
+  let recipients: BroadcastRecipient[] = [];
   let recipientStats: Record<string, number> = {};
-  let campaignName = "Campaign recipients";
+  let broadcastName = "Broadcast recipients";
 
-  if (campaignId) {
+  if (broadcastId) {
     try {
-      const campaign = await serverFetch<Campaign>(`/v1/campaigns/${campaignId}`);
-      campaignName = campaign.name || campaignName;
+      const broadcast = await serverFetch<Broadcast>(`/v1/broadcasts/${broadcastId}`);
+      broadcastName = broadcast.name || broadcastName;
     } catch (error) {
       if (!(error instanceof ApiError)) throw error;
     }
   }
 
   try {
-    if (campaignId) {
-      const response = await serverFetch<CampaignRecipientListResponse>("/v1/campaigns/recipients", {
+    if (broadcastId) {
+      const response = await serverFetch<BroadcastRecipientListResponse>("/v1/broadcasts/recipients", {
         query: {
-          campaign_id: campaignId,
+          broadcast_id: broadcastId,
           page: "1",
           page_size: "100",
           name,
@@ -74,10 +76,10 @@ export default async function CampaignRecipientsPage({
     if (!(error instanceof ApiError)) throw error;
   }
 
-  if (campaignId) {
+  if (broadcastId) {
     try {
-      const statistics = await serverFetch<CampaignStatisticsResponse>(
-        `/v1/campaigns/${campaignId}/statistics`,
+      const statistics = await serverFetch<BroadcastStatisticsResponse>(
+        `/v1/broadcasts/${broadcastId}/statistics`,
       );
       recipientStats = Object.fromEntries(
         Object.entries(statistics).map(([key, value]) => [key.toLowerCase(), Number(value) || 0]),
@@ -93,8 +95,8 @@ export default async function CampaignRecipientsPage({
 
   return (
     <>
-      <BackBar href="/campaigns" />
-      <PageHeader title={`Campaign: ${campaignName}`} description="Customers included in this campaign." />
+      <BackBar href="/broadcasts" />
+      <PageHeader title={`Broadcast: ${broadcastName}`} description="Customers included in this broadcast." />
       {statItems.length > 0 ? (
         <div className="mb-4 flex flex-wrap gap-2">
           {statItems.map(([key, value]) => (
@@ -126,10 +128,9 @@ export default async function CampaignRecipientsPage({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead><CampaignNameFilter value={name} /></TableHead>
-                <TableHead>Phone</TableHead>
+                <TableHead><BroadcastNameFilter value={name} /></TableHead>
                 <TableHead>
-                  <CampaignStatusFilter
+                  <BroadcastStatusFilter
                     value={status}
                     options={recipientStatusOptions}
                   />
@@ -141,7 +142,18 @@ export default async function CampaignRecipientsPage({
             </TableHeader>
             <TableBody>
               {recipients.length === 0 ? (
-                <TableEmptyState colSpan={6}>No recipients found.</TableEmptyState>
+                <TableEmptyState
+                  colSpan={5}
+                  action={
+                    name || status !== "ALL" ? (
+                      <Button asChild size="sm" variant="outline">
+                        <Link href={`/broadcasts/recipients?broadcast_id=${broadcastId}`}>Reset filters</Link>
+                      </Button>
+                    ) : undefined
+                  }
+                >
+                  {name || status !== "ALL" ? "No recipients match this filter." : "No recipients found."}
+                </TableEmptyState>
               ) : (
                 recipients.map((recipient) => {
                   const messageStatus = recipient.message?.status ?? recipient.status;
@@ -152,12 +164,6 @@ export default async function CampaignRecipientsPage({
                   return (
                     <TableRow key={recipient.id}>
                       <TableCell className="font-medium">{recipient.customer_name || "—"}</TableCell>
-                      <TableCell>
-                        {formatPhoneNumber(
-                          recipient.customer_phone_number || recipient.customer_wa_id,
-                          recipient.customer_country_code,
-                        ) || "—"}
-                      </TableCell>
                       <TableCell>
                       {(() => {
                         const labelMap: Record<string, string> = {

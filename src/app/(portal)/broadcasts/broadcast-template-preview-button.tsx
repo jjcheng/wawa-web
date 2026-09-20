@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { Campaign } from "@/lib/api/types";
+import type { Broadcast } from "@/lib/api/types";
 
 function componentLabel(component: Record<string, unknown>) {
   return String(component.type ?? "Component").toLowerCase();
@@ -36,9 +36,9 @@ function componentText(component: Record<string, unknown>) {
     .join("\n");
 }
 
-export function CampaignTemplatePreviewButton({ campaign }: { campaign: Campaign }) {
+export function BroadcastTemplatePreviewButton({ broadcast }: { broadcast: Broadcast }) {
   const [open, setOpen] = useState(false);
-  const components = campaign.send_template_payload?.components ?? [];
+  const components = broadcast.send_template_payload?.components ?? [];
 
   return (
     <>
@@ -46,16 +46,16 @@ export function CampaignTemplatePreviewButton({ campaign }: { campaign: Campaign
         size="icon-sm"
         variant="ghost"
         onClick={() => setOpen(true)}
-        aria-label="Preview campaign template"
-        title="Preview campaign template"
+        aria-label="Preview broadcast template"
+        title="Preview broadcast template"
       >
         <Eye />
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[80vh] overflow-hidden sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{campaign.name}</DialogTitle>
-            <DialogDescription>Campaign template preview</DialogDescription>
+            <DialogTitle>{broadcast.name}</DialogTitle>
+            <DialogDescription>Broadcast template preview</DialogDescription>
           </DialogHeader>
           <div className="min-h-0 space-y-3 overflow-y-auto">
             {components.length === 0 ? (
