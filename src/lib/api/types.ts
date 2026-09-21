@@ -119,6 +119,8 @@ export type ProductListResponse = {
   additional_data?: Record<string, unknown>;
 };
 
+export type GenericProductListResponse = ProductListResponse | Product[];
+
 export type PhoneNumber = DtoBase & {
   wa_id?: string;
   display_phone_number?: string;

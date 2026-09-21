@@ -68,6 +68,11 @@ const ALLOWED: { method: string; pattern: RegExp }[] = [
   { method: "DELETE", pattern: /^v1\/commerce\/websites\/[^/]+$/ },
   { method: "PATCH", pattern: /^v1\/commerce\/websites\/[^/]+\/status$/ },
   { method: "GET", pattern: /^v1\/commerce\/websites\/by-meta-catalog-id$/ },
+  { method: "GET", pattern: /^v1\/public\/ping$/ },
+  { method: "GET", pattern: /^v1\/public\/sets$/ },
+  { method: "GET", pattern: /^v1\/public\/generic-products$/ },
+  { method: "GET", pattern: /^v1\/public\/products\/[^/]+$/ },
+  { method: "GET", pattern: /^v1\/public\/wa-link$/ },
 ];
 
 export function isAllowedUpstream(method: string, path: string) {

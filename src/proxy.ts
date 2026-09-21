@@ -2,16 +2,69 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME ?? "wawa_session";
+const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:9000";
+const PORTAL_HOST = process.env.NEXT_PUBLIC_PORTAL_HOST ?? "";
 
 const PUBLIC_PATHS = ["/login"];
 
 // These routes must stay reachable in both session states.
 const UNGUARDED_PATHS = ["/session/end", "/embedded-signup"];
 
+function isPortalHost(hostname: string) {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1" ||
+    (PORTAL_HOST && hostname === PORTAL_HOST)
+  );
+}
+
+function requestHost(request: NextRequest) {
+  return (request.headers.get("host") ?? request.nextUrl.host).split(",")[0].trim();
+}
+
+function hostnameFromHost(host: string) {
+  return host.replace(/^\[/, "").replace(/\]$/, "").split(":")[0];
+}
+
+async function resolveWebsiteId(hostname: string, origin: string) {
+  try {
+    const url = new URL("/v1/public/ping", `${API_BASE_URL}/`);
+    const response = await fetch(url, {
+      cache: "no-store",
+      headers: { Host: hostname, "X-Forwarded-Host": hostname, Origin: origin },
+    });
+    const envelope = (await response.json().catch(() => null)) as {
+      success?: boolean;
+      data?: { id?: string | number } | null;
+    } | null;
+    return response.ok && envelope?.success && envelope.data?.id !== undefined
+      ? String(envelope.data.id)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 // Cheap cookie-presence gate only — the session is actually validated
 // server-side by requireUser().
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const host = requestHost(request);
+  const hostname = hostnameFromHost(host);
+
+  if (pathname.startsWith("/sites/")) return NextResponse.next();
+
+  if (!isPortalHost(hostname)) {
+    const websiteId = await resolveWebsiteId(host, request.nextUrl.origin);
+    if (websiteId) {
+      return NextResponse.rewrite(
+        new URL(`/sites/${encodeURIComponent(websiteId)}${pathname}`, request.url),
+      );
+    }
+            return NextResponse.rewrite(new URL("/sites/not-found", request.url));
+  }
+
   if (UNGUARDED_PATHS.includes(pathname)) return NextResponse.next();
 
   const hasSession = Boolean(request.cookies.get(SESSION_COOKIE_NAME)?.value);

@@ -12,6 +12,10 @@ type RequestOptions = {
   rawBody?: BodyInit;
   contentType?: string;
   query?: Record<string, string | string[] | undefined>;
+  /** Original customer-domain host for host-scoped public API requests. */
+  forwardedHost?: string;
+  /** Original customer-domain origin for host-scoped public API requests. */
+  forwardedOrigin?: string;
   /** Pass an explicit session token when it is not yet in the cookie store. */
   sessionToken?: string;
 };
@@ -28,8 +32,15 @@ function buildUrl(path: string, query?: RequestOptions["query"]) {
 
 export async function buildUpstreamHeaders(
   sessionToken?: string,
+  forwardedHost?: string,
+  forwardedOrigin?: string,
 ): Promise<Headers> {
   const headers = new Headers({ Accept: "application/json" });
+  if (forwardedHost) {
+    headers.set("Host", forwardedHost);
+    headers.set("X-Forwarded-Host", forwardedHost);
+  }
+  if (forwardedOrigin) headers.set("Origin", forwardedOrigin);
   const token = sessionToken ?? (await cookies()).get(serverEnv.SESSION_COOKIE_NAME)?.value;
   if (token) {
     headers.set("x-user-access-token", token);
@@ -41,9 +52,9 @@ export async function buildUpstreamHeaders(
 
 export async function rawServerFetch(
   path: string,
-  { method = "GET", body, rawBody, contentType, query, sessionToken }: RequestOptions = {},
+  { method = "GET", body, rawBody, contentType, query, forwardedHost, forwardedOrigin, sessionToken }: RequestOptions = {},
 ) {
-  const headers = await buildUpstreamHeaders(sessionToken);
+  const headers = await buildUpstreamHeaders(sessionToken, forwardedHost, forwardedOrigin);
   if (rawBody !== undefined) headers.set("Content-Type", contentType ?? "application/octet-stream");
   else if (body !== undefined) headers.set("Content-Type", "application/json");
   return fetch(buildUrl(path, query), {

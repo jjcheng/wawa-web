@@ -124,7 +124,6 @@ export function TemplateRawPreview({
     <div
       ref={previewRef}
       className="overflow-hidden [&_*]:max-w-full [&>div:first-child]:!w-auto [&>div:first-child]:!max-w-none [&>div:first-child]:!bg-transparent [&>div:first-child]:!p-0"
-      dangerouslySetInnerHTML={{ __html: stripScriptTags(html) }}
     />
   );
 }

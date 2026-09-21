@@ -64,6 +64,8 @@ async function proxyRequest(request: NextRequest, context: Context) {
       rawBody,
       contentType,
       query,
+      forwardedHost: request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? undefined,
+      forwardedOrigin: request.nextUrl.origin,
       sessionToken: accessToken,
     });
   } catch {
