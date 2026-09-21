@@ -1,6 +1,6 @@
-# CoreConcept CRM Portal
+# WAWAGO CRM Portal
 
-Web portal for **CoreConcept** — a CRM integrated with WhatsApp Business. It is a
+Web portal for **WAWAGO** — a CRM integrated with WhatsApp Business. It is a
 Next.js App Router front end for the `wawa-go` API.
 
 ## Requirements
@@ -25,6 +25,8 @@ npm run dev
 | `NEXT_META_APP_ID` | Meta app ID used by Embedded Signup |
 | `NEXT_META_EMBEDDED_SIGNUP_CONFIG_ID` | Meta login configuration ID |
 | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Maps key with Places API enabled for broadcast locations |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key rendered on the login page |
+| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key used to verify tokens server-side |
 
 ### Authentication header
 
@@ -61,6 +63,6 @@ new header, while keeping the older `x-user-access-token` name as a compatibilit
 
 ## Status
 
-Auth, dashboard, WhatsApp phone numbers, Embedded Signup onboarding and account settings
+Auth, dashboard, WhatsApp phone numbers, Embedded Signup onboarding and settings
 are wired to the live API. Contacts, Conversations and Broadcasts are UI previews backed by
 mock data until the corresponding API endpoints exist.

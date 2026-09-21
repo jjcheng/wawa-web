@@ -38,10 +38,32 @@ function safeNextPath(value: FormDataEntryValue | null) {
   return /^\/(?!\/)[\w\-./?%&=]*$/.test(path) ? path : "/dashboard";
 }
 
+async function verifyTurnstileToken(token: FormDataEntryValue | null): Promise<boolean> {
+  if (!serverEnv.TURNSTILE_SECRET_KEY) return true;
+  if (typeof token !== "string" || !token) return false;
+
+  try {
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ secret: serverEnv.TURNSTILE_SECRET_KEY, response: token }),
+    });
+    const result = (await response.json().catch(() => null)) as { success?: boolean } | null;
+    return Boolean(result?.success);
+  } catch {
+    return false;
+  }
+}
+
 export async function loginAction(
   _previous: LoginState,
   formData: FormData,
 ): Promise<LoginState> {
+  const turnstileVerified = await verifyTurnstileToken(formData.get("cf-turnstile-response"));
+  if (!turnstileVerified) {
+    return { message: "Verification failed. Please try again." };
+  }
+
   const parsed = loginSchema.safeParse({
     country_code: formData.get("country_code"),
     phone_number: formData.get("phone_number"),

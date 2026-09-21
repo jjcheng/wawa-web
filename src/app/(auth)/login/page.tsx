@@ -33,7 +33,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           <div className="my-6 flex items-center gap-3">
             <Separator className="flex-1" />
             <span className="text-muted-foreground text-xs whitespace-nowrap">
-              New to CoreConcept?
+              New to WAWAGO?
             </span>
             <Separator className="flex-1" />
           </div>

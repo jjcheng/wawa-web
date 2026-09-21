@@ -19,7 +19,7 @@ export default async function PasswordPage() {
 
   return (
     <>
-      <PageHeader title="Account Settings" description="Manage your profile and login password" />
+      <PageHeader title="Settings" description="Manage your profile and login password" />
       <SettingsTabs isMaster={user.type === "MASTER"} />
       <Card>
         <CardHeader>

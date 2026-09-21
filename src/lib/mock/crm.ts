@@ -1,4 +1,4 @@
-// System/announcement messages sent by CoreConcept to this account's users.
+// System/announcement messages sent by WAWAGO to this account's users.
 export const mockInboxMessages = [
   {
     subject: "Your WhatsApp Business number is now connected",
@@ -9,7 +9,7 @@ export const mockInboxMessages = [
   {
     subject: "Scheduled maintenance on Sept 6",
     preview:
-      "CoreConcept will run brief maintenance between 2–3 AM SGT. No downtime expected.",
+      "WAWAGO will run brief maintenance between 2–3 AM SGT. No downtime expected.",
     date: "Yesterday",
     unread: true,
   },

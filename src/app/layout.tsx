@@ -16,11 +16,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "CoreConcept Portal",
-    template: "%s · CoreConcept",
+    default: "WAWAGO Portal",
+    template: "%s · WAWAGO",
   },
   description:
-    "CoreConcept — WhatsApp-integrated CRM. Manage your WhatsApp Business numbers, contacts and conversations.",
+    "WAWAGO — WhatsApp-integrated CRM. Manage your WhatsApp Business numbers, contacts and conversations.",
   icons: {
     icon: [
       { url: "/favicons/favicon-32x32.png", sizes: "32x32", type: "image/png" },

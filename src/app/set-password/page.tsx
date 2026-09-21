@@ -23,8 +23,7 @@ export default async function SetPasswordPage({ searchParams }: PageProps<"/set-
         <CardHeader>
           <CardTitle>Set your password</CardTitle>
           <CardDescription>
-            Your WhatsApp account is connected. Choose a password to finish setting up your
-            CoreConcept account.
+            Your WhatsApp account is connected. Choose a password to finish setting up your WAWAGO account.
           </CardDescription>
         </CardHeader>
         <CardContent>

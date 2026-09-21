@@ -12,6 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { requireUser } from "@/lib/auth/session";
 import { formatPhoneNumber } from "@/lib/format";
+import { CloseAccountButton } from "./close-account-button";
 import { ProfileForm } from "./profile-form";
 
 export const metadata: Metadata = { title: "Profile" };
@@ -22,8 +23,9 @@ export default async function ProfilePage() {
   return (
     <>
       <PageHeader
-        title="Account Settings"
+        title="Settings"
         description="Manage your profile and login password"
+        action={<CloseAccountButton />}
       />
       <SettingsTabs isMaster={user.type === "MASTER"} />
       <Card>

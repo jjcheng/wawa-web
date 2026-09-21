@@ -18,6 +18,7 @@ const ALLOWED: { method: string; pattern: RegExp }[] = [
   { method: "PATCH", pattern: /^v1\/account\/users\/me\/profile$/ },
   { method: "PATCH", pattern: /^v1\/account\/users\/me\/password$/ },
   { method: "PATCH", pattern: /^v1\/account\/users\/me\/initial-password$/ },
+  { method: "DELETE", pattern: /^v1\/account\/users\/me$/ },
   { method: "POST", pattern: /^v1\/customers$/ },
   { method: "POST", pattern: /^v1\/customers\/import$/ },
   { method: "POST", pattern: /^v1\/broadcasts$/ },

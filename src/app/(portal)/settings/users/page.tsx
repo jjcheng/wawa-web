@@ -28,7 +28,7 @@ export default async function UsersPage() {
 
   return (
     <>
-      <PageHeader title="Account Settings" description="Manage users in your account." />
+      <PageHeader title="Settings" description="Manage users in your account." />
       <SettingsTabs isMaster />
 
       {loadError ? (

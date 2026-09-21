@@ -9,7 +9,7 @@ export function Brand({ className }: { className?: string }) {
         <MessageCircle className="size-4" />
       </span>
       <span className="flex flex-col leading-tight whitespace-nowrap">
-        <span className="text-sm font-semibold">CoreConcept</span>
+        <span className="text-sm font-semibold">WAWAGO</span>
         <span className="text-muted-foreground text-xs">WhatsApp CRM</span>
       </span>
     </div>

@@ -49,7 +49,7 @@ export default async function EmbeddedSignupPage({ searchParams }: PageProps<"/e
       <Brand />
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Onboard the WhatsApp Business Platform With CoreConcept WhatsApp CRM</CardTitle>
+          <CardTitle>Onboard the WhatsApp Business Platform With WAWAGO WhatsApp CRM</CardTitle>
           <CardDescription>
            Get started with a few simple steps
           </CardDescription>
