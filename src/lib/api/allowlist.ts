@@ -55,11 +55,19 @@ const ALLOWED: { method: string; pattern: RegExp }[] = [
   { method: "PATCH", pattern: /^v1\/wa\/business-accounts$/ },
   { method: "GET", pattern: /^v1\/wa\/business-accounts\/usage$/ },
   { method: "GET", pattern: /^v1\/wa\/phone-numbers\/\d+$/ },
+  { method: "GET", pattern: /^v1\/wa\/phone-numbers\/business-profile$/ },
   { method: "GET", pattern: /^v1\/wa\/catalogs$/ },
   { method: "GET", pattern: /^v1\/wa\/catalogs\/[^/]+$/ },
   { method: "GET", pattern: /^v1\/wa\/catalogs\/[^/]+\/sets$/ },
   { method: "GET", pattern: /^v1\/wa\/catalogs\/[^/]+\/products$/ },
   { method: "GET", pattern: /^v1\/wa\/product-sets\/[^/]+\/products$/ },
+  { method: "GET", pattern: /^v1\/commerce\/websites$/ },
+  { method: "GET", pattern: /^v1\/commerce\/websites\/[^/]+$/ },
+  { method: "POST", pattern: /^v1\/commerce\/websites$/ },
+  { method: "PATCH", pattern: /^v1\/commerce\/websites\/[^/]+$/ },
+  { method: "DELETE", pattern: /^v1\/commerce\/websites\/[^/]+$/ },
+  { method: "PATCH", pattern: /^v1\/commerce\/websites\/[^/]+\/status$/ },
+  { method: "GET", pattern: /^v1\/commerce\/websites\/by-meta-catalog-id$/ },
 ];
 
 export function isAllowedUpstream(method: string, path: string) {

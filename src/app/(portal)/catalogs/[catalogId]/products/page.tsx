@@ -10,6 +10,7 @@ import type {
   CatalogSetListResponse,
   Product,
   ProductListResponse,
+  Website,
 } from "@/lib/api/types";
 import { requireUser } from "@/lib/auth/session";
 import Link from "next/link";
@@ -36,6 +37,7 @@ export default async function CatalogProductsPage({
   let catalogName = "";
   let sets: CatalogSet[] = [];
   let products: Product[] = [];
+  let website: Website | null = null;
   let afterCursor: string | undefined;
   let loadError: string | null = null;
 
@@ -45,7 +47,7 @@ export default async function CatalogProductsPage({
     );
     catalogName = catalog.name || "";
 
-    const [setsResponse, productsResponse] = await Promise.all([
+    const [setsResponse, productsResponse, websiteResponse] = await Promise.all([
       serverFetch<CatalogSetListResponse>(
         `/v1/wa/catalogs/${encodeURIComponent(catalogId)}/sets`,
         { query: { limit: "100" } },
@@ -54,10 +56,14 @@ export default async function CatalogProductsPage({
         `/v1/wa/catalogs/${encodeURIComponent(catalogId)}/products`,
         { query: { limit } },
       ),
+      serverFetch<Website | null>("/v1/commerce/websites/by-meta-catalog-id", {
+        query: { meta_catalog_id: catalogId },
+      }).catch(() => null),
     ]);
     sets = Array.isArray(setsResponse.items) ? setsResponse.items : [];
     const response = productsResponse;
     products = Array.isArray(response.items) ? response.items : [];
+    website = websiteResponse;
     const additionalData = response.additional_data as
       | { after?: string; next?: string }
       | undefined;
@@ -73,15 +79,27 @@ export default async function CatalogProductsPage({
         title="Products"
         description={catalogName ? `Products in ${catalogName}.` : "Products in this catalog."}
         action={
-          <Button asChild>
-            <Link
-              href={`/catalogs/${encodeURIComponent(catalogId)}/products/website`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Build website
-            </Link>
-          </Button>
+          <div className="flex flex-col items-end gap-1">
+            <Button asChild className="mb-1">
+              <Link
+                href={website
+                  ? `/websites/${encodeURIComponent(String(website.id))}`
+                  : `/catalogs/${encodeURIComponent(catalogId)}/products/website/setup`}
+              >
+                {website ? "View website" : "Create website"}
+              </Link>
+            </Button>
+            {website?.url ? (
+              <a
+                href={website.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground max-w-56 truncate text-xs hover:underline"
+              >
+                {website.url}
+              </a>
+            ) : null}
+          </div>
         }
       />
 

@@ -59,8 +59,25 @@ export type BusinessAccount = DtoBase & {
 export type Catalog = {
   id: string;
   name: string;
+  website_id?: number | string;
   vertical?: string;
   product_count?: number;
+};
+
+export type Website = {
+  id: number | string;
+  business_account_id: number | string;
+  meta_catalog_id: number;
+  domain_name: string;
+  catalog_name: string;
+  url?: string;
+  about?: string;
+  description?: string;
+  profile_picture_url?: string;
+  address?: string;
+  email?: string;
+  status?: string;
+  entry_date?: string;
 };
 
 export type CatalogSet = {
@@ -114,6 +131,16 @@ export type PhoneNumber = DtoBase & {
   status?: string;
   business_portfolio?: BusinessPortfolio | null;
   business_account?: BusinessAccount | null;
+};
+
+export type BusinessProfile = {
+  about?: string;
+  description?: string;
+  profile_picture_url?: string;
+  address?: string;
+  email?: string;
+  websites?: string[];
+  vertical?: string;
 };
 export type PhoneNumberListResponse = {
   items: PhoneNumber[];

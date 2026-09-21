@@ -3,6 +3,7 @@
 import {
   FileText,
   Gauge,
+  Globe2,
   Inbox,
   LayoutDashboard,
   Megaphone,
@@ -39,6 +40,7 @@ const SECTIONS = [
       { href: "/phone-numbers", label: "Phone Numbers", icon: Phone },
       { href: "/templates", label: "Templates", icon: FileText },
       { href: "/catalogs", label: "Catalogs", icon: Store },
+      { href: "/websites", label: "Websites", icon: Globe2 },
     ],
   },
   {
@@ -60,7 +62,10 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
             {section.label}
           </p>
           {section.items
-            .filter((item) => item.href !== "/catalogs" || user.type === "MASTER")
+            .filter(
+              (item) =>
+                (!["/catalogs", "/websites"].includes(item.href) || user.type === "MASTER"),
+            )
             .map((item) => {
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (

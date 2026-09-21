@@ -22,12 +22,19 @@ import { requireUser } from "@/lib/auth/session";
 import { metaCommerceManagerUrl } from "@/lib/meta-links";
 import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 import { redirect } from "next/navigation";
+import { CatalogsNotice } from "./catalogs-notice";
 
 export const metadata: Metadata = { title: "Catalogs" };
 
-export default async function CatalogsPage() {
+export default async function CatalogsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ notice?: string }>;
+}) {
   const user = await requireUser();
   if (user.type !== "MASTER") redirect("/dashboard");
+
+  const { notice } = await searchParams;
 
   let catalogs: Catalog[] = [];
   let loadError: string | null = null;
@@ -50,6 +57,7 @@ export default async function CatalogsPage() {
 
   return (
     <>
+      <CatalogsNotice notice={notice} />
       <PageHeader
         title="Catalogs"
         description="Product catalogs owned by your Meta business portfolio, upload or edit in Meta Commerce Manager."

@@ -1,0 +1,95 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+import { rawServerFetch } from "@/lib/api/server-client";
+import type { ApiEnvelope } from "@/lib/api/types";
+
+export type WebsiteActionState = {
+  message?: string;
+  deleted?: boolean;
+};
+
+
+export async function updateWebsiteStatus(websiteId: string, status: "ACTIVE" | "INACTIVE") {
+  let response: Response;
+  try {
+    response = await rawServerFetch(`/v1/commerce/websites/${encodeURIComponent(websiteId)}/status`, {
+      method: "PATCH",
+      query: { status },
+    });
+  } catch {
+    return { success: false, message: "Unable to reach the commerce service." };
+  }
+
+  const envelope = (await response.json().catch(() => null)) as ApiEnvelope<unknown> | null;
+  if (!response.ok || !envelope?.success) {
+    return {
+      success: false,
+      message: envelope?.message ?? "Could not update the website status.",
+    };
+  }
+
+  revalidatePath(`/websites/${encodeURIComponent(websiteId)}`);
+  revalidatePath("/websites");
+  return { success: true };
+}
+
+export async function updateWebsiteAction(
+  _previousState: WebsiteActionState,
+  formData: FormData,
+): Promise<WebsiteActionState> {
+  const websiteId = formData.get("website_id");
+  if (typeof websiteId !== "string" || !websiteId) return { message: "Website ID is missing." };
+
+  let response: Response;
+  try {
+    response = await rawServerFetch(`/v1/commerce/websites/${encodeURIComponent(websiteId)}`, {
+      method: "PATCH",
+      body: {
+        about: String(formData.get("about") ?? ""),
+        description: String(formData.get("description") ?? ""),
+        profile_picture_url: String(formData.get("profile_picture_url") ?? ""),
+        address: String(formData.get("address") ?? ""),
+        email: String(formData.get("email") ?? ""),
+      },
+    });
+  } catch {
+    return { message: "Unable to reach the commerce service." };
+  }
+
+  const envelope = (await response.json().catch(() => null)) as ApiEnvelope<unknown> | null;
+  if (!response.ok || !envelope?.success) {
+    return { message: envelope?.message ?? "Could not update the website." };
+  }
+
+  revalidatePath(`/websites/${encodeURIComponent(websiteId)}`);
+  revalidatePath("/websites");
+  return {};
+}
+
+export async function deleteWebsiteAction(
+  _previousState: WebsiteActionState,
+  formData: FormData,
+): Promise<WebsiteActionState> {
+  const websiteId = formData.get("website_id");
+  if (typeof websiteId !== "string" || !websiteId) return { message: "Website ID is missing." };
+
+  let response: Response;
+  try {
+    response = await rawServerFetch(`/v1/commerce/websites/${encodeURIComponent(websiteId)}`, {
+      method: "DELETE",
+    });
+  } catch {
+    return { message: "Unable to reach the commerce service." };
+  }
+
+  const envelope = (await response.json().catch(() => null)) as ApiEnvelope<unknown> | null;
+  if (!response.ok || !envelope?.success) {
+    return { message: envelope?.message ?? "Could not delete the website." };
+  }
+
+  revalidatePath("/websites");
+  redirect("/websites");
+}
