@@ -16,8 +16,23 @@ import { cn, MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 declare global {
   interface Window {
     turnstile?: {
+      render: (
+        container: HTMLElement,
+        options: {
+          sitekey: string;
+          theme?: "light" | "dark" | "auto";
+          size?: "normal" | "flexible";
+          callback?: (token: string) => void;
+          "expired-callback"?: () => void;
+          "error-callback"?: () => void;
+        },
+      ) => string;
       reset: (container?: string | HTMLElement) => void;
+      remove?: (widgetId: string) => void;
     };
+    onTurnstileSuccess?: (token: string) => void;
+    onTurnstileExpired?: () => void;
+    onTurnstileError?: () => void;
   }
 }
 
@@ -27,12 +42,37 @@ function fieldError(state: LoginState, field: string) {
 
 function SignInButton() {
   const { pending } = useFormStatus();
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const turnstileToken = useTurnstileToken();
+
   return (
-    <Button type="submit" className={cn("w-full", MEDIUM_BUTTON_HEIGHT)} disabled={pending}>
+    <Button
+      type="submit"
+      className={cn("w-full", MEDIUM_BUTTON_HEIGHT)}
+      disabled={pending || Boolean(turnstileSiteKey && !turnstileToken)}
+    >
       {pending ? <Loader2 className="size-4 animate-spin" /> : null}
       Sign in
     </Button>
   );
+}
+
+function useTurnstileToken() {
+  const [token, setToken] = useState("");
+
+  useEffect(() => {
+    window.onTurnstileSuccess = setToken;
+    window.onTurnstileExpired = () => setToken("");
+    window.onTurnstileError = () => setToken("");
+
+    return () => {
+      delete window.onTurnstileSuccess;
+      delete window.onTurnstileExpired;
+      delete window.onTurnstileError;
+    };
+  }, []);
+
+  return token;
 }
 
 export function LoginForm({ next }: { next?: string }) {
@@ -45,6 +85,9 @@ export function LoginForm({ next }: { next?: string }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const turnstileRef = useRef<HTMLDivElement>(null);
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const [turnstileReady, setTurnstileReady] = useState(() =>
+    typeof window !== "undefined" && Boolean(window.turnstile),
+  );
 
   function handleCountryCodeChange(nextCountryCode: string) {
     window.localStorage.setItem("country_code", nextCountryCode);
@@ -52,8 +95,24 @@ export function LoginForm({ next }: { next?: string }) {
   }
 
   useEffect(() => {
+    if (!turnstileSiteKey || !turnstileReady || !turnstileRef.current || !window.turnstile) return;
+
+    const widgetId = window.turnstile.render(turnstileRef.current, {
+      sitekey: turnstileSiteKey,
+      theme: "auto",
+      size: "flexible",
+      callback: (token) => window.onTurnstileSuccess?.(token),
+      "expired-callback": () => window.onTurnstileExpired?.(),
+      "error-callback": () => window.onTurnstileError?.(),
+    });
+
+    return () => window.turnstile?.remove?.(widgetId);
+  }, [turnstileReady, turnstileSiteKey]);
+
+  useEffect(() => {
     if (state.message) {
       toast.error(state.message);
+      window.onTurnstileExpired?.();
       if (turnstileRef.current) window.turnstile?.reset(turnstileRef.current);
     }
   }, [state.message]);
@@ -97,8 +156,15 @@ export function LoginForm({ next }: { next?: string }) {
 
       {turnstileSiteKey ? (
         <>
-          <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
-          <div ref={turnstileRef} className="cf-turnstile" data-sitekey={turnstileSiteKey} />
+          <Script
+            src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+            async
+            defer
+            onReady={() => setTurnstileReady(true)}
+          />
+          <div
+            ref={turnstileRef}
+          />
         </>
       ) : null}
 

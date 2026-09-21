@@ -63,7 +63,7 @@ function BroadcastTable({
               <TableHead>
                 <BroadcastNameFilter value={name} />
               </TableHead>
-              <TableHead>Audience</TableHead>
+              <TableHead>Recipients</TableHead>
               <TableHead>Send date</TableHead>
               <TableHead>
                 <BroadcastStatusFilter value={status} />

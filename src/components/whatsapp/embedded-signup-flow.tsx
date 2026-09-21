@@ -15,9 +15,9 @@ import { cn, MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 
 const GRAPH_VERSION = "v26.0";
 
-function showConnectedToast() {
+function showConnectedToast(description = "You're all set to start messaging your customers.") {
   toast.success("WhatsApp account connected", {
-    description: "You're all set to start messaging your customers.",
+    description,
     icon: <CircleCheckIcon className="size-4 text-emerald-500" />,
     duration: 6000,
   });
@@ -73,6 +73,7 @@ export function EmbeddedSignupFlow({
   const [sdkReady, setSdkReady] = useState(false);
   const sessionRef = useRef<SignupSession>({});
   const authorizationCodeRef = useRef<string | null>(null);
+  const redirectUriRef = useRef<string | null>(null);
   const isSubmittingRef = useRef(false);
   const signupActiveRef = useRef(false);
   const [signupAborted, setSignupAborted] = useState(false);
@@ -110,12 +111,13 @@ export function EmbeddedSignupFlow({
       }
       const destination = redirectTo ?? "/dashboard";
       if (result.status === "PENDING_PASSWORD") {
+        showConnectedToast("Final step: set your password and you're all good to go!");
         router.push(`/set-password?next=${encodeURIComponent(destination)}`);
         return;
       }
       if (!result.loggedIn) {
         // No access token was issued: send the user back to where they can see the result.
-        showConnectedToast();
+        showConnectedToast("You're all set, login now using your existing password!");
         router.push(result.redirectTo ?? "/login");
         router.refresh();
         return;
@@ -137,8 +139,15 @@ export function EmbeddedSignupFlow({
   const submitSignup = useCallback(() => {
     const authorizationCode = authorizationCodeRef.current;
     const session = sessionRef.current;
+    const redirectUri = redirectUriRef.current;
     if (isSubmittingRef.current) return;
-    if (!authorizationCode || !session.phone_number_id || !session.waba_id || !session.business_id) {
+    if (
+      !authorizationCode ||
+      !redirectUri ||
+      !session.phone_number_id ||
+      !session.waba_id ||
+      !session.business_id
+    ) {
       return;
     }
 
@@ -149,6 +158,7 @@ export function EmbeddedSignupFlow({
       event: "FINISH",
       data: session,
       authorization_code: authorizationCode,
+      redirect_uri: redirectUri,
     });
   }, [mutation]);
 
@@ -218,6 +228,7 @@ export function EmbeddedSignupFlow({
     signupActiveRef.current = true;
     sessionRef.current = {};
     authorizationCodeRef.current = null;
+    redirectUriRef.current = window.location.href;
     setSignupStarted(true);
     setSignupAborted(false);
     setSignupError(null);
@@ -232,6 +243,7 @@ export function EmbeddedSignupFlow({
       config_id: configId,
       response_type: "code",
       override_default_response_type: true,
+      redirect_uri: redirectUriRef.current,
       extras: { 
         version: "v4",
         featureType: 'whatsapp_business_app_onboarding',

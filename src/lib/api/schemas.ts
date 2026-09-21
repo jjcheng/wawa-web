@@ -65,6 +65,7 @@ export const embeddedSignupSchema = z.object({
     instagram_account_ids: z.array(z.string()).optional(),
   }),
   authorization_code: z.string().min(1),
+  redirect_uri: z.url(),
 });
 export type EmbeddedSignupInput = z.infer<typeof embeddedSignupSchema>;
 

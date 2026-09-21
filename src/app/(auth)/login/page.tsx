@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { Brand } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { EmbeddedSignupButton } from "@/components/whatsapp/embedded-signup-button";
 import {
   Card,
@@ -18,7 +19,10 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const { next } = await searchParams;
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6">
+    <div className="flex min-h-svh min-w-[375px] flex-col items-center justify-center gap-6 p-6">
+      <div className="fixed top-4 right-4">
+        <ThemeToggle />
+      </div>
       <Brand />
       <Card className="w-full max-w-md">
         <CardHeader>
