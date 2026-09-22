@@ -106,10 +106,12 @@ function loadGoogleMaps(apiKey: string) {
 export function GoogleLocationInput({
   value,
   onChange,
+  onSearchChange,
   onPlaceSelect,
 }: {
   value: string;
   onChange: (value: string) => void;
+  onSearchChange?: (value: string) => void;
   onPlaceSelect?: (location: GoogleLocationSelection | null) => void;
 }) {
   const { resolvedTheme } = useTheme();
@@ -170,7 +172,7 @@ export function GoogleLocationInput({
           .fetchFields({ fields: ["formattedAddress", "displayName", "location"] })
           .then(() => {
             const name = place.displayName || place.formattedAddress || "";
-            const address = place.formattedAddress || place.displayName || "";
+            const address = place.displayName || place.formattedAddress || "";
             if (address) onChange(address);
             if (name && address) {
               onPlaceSelect?.({
@@ -183,7 +185,7 @@ export function GoogleLocationInput({
           })
           .catch(() => {
             const name = place.displayName || place.formattedAddress || "";
-            const address = place.formattedAddress || place.displayName || "";
+            const address = place.displayName || place.formattedAddress || "";
             if (address) onChange(address);
             if (name && address) onPlaceSelect?.({ name, address });
           });
@@ -192,7 +194,7 @@ export function GoogleLocationInput({
       placeAutocomplete.addEventListener("input", (event: Event) => {
         const target = event.target as HTMLInputElement;
         if (target && typeof target.value === "string") {
-          onChange(target.value);
+          (onSearchChange ?? onChange)(target.value);
           onPlaceSelect?.(null);
         }
       });
@@ -205,13 +207,19 @@ export function GoogleLocationInput({
     return () => {
       cancelled = true;
     };
-  }, [apiKey, onChange, onPlaceSelect, resolvedTheme]);
+  }, [apiKey, onChange, onPlaceSelect, onSearchChange, resolvedTheme, value]);
 
   useEffect(() => {
     if (placeAutocompleteRef.current && placeAutocompleteRef.current.value !== value) {
       placeAutocompleteRef.current.value = value;
     }
   }, [value]);
+
+  useEffect(() => {
+    if (placeAutocompleteRef.current) {
+      placeAutocompleteRef.current.style.colorScheme = resolvedTheme === "dark" ? "dark" : "light";
+    }
+  }, [resolvedTheme]);
 
   return (
     <div className="w-full overflow-visible" style={{ overflow: "visible" }}>

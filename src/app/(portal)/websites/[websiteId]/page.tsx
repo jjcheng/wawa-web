@@ -58,8 +58,13 @@ export default async function WebsitePage({
             about: website.about ?? "",
             description: website.description ?? "",
             profilePictureUrl: website.profile_picture_url ?? "",
+            coverImageUrl: website.cover_image_url ?? "",
+            tagline: website.tagline ?? "",
             address: website.address ?? "",
+            latitude: website.latitude?.toString() ?? "",
+            longitude: website.longitude?.toString() ?? "",
             contactText: website.contact_text ?? "",
+            copyrightText: website.copyright_text ?? "",
           }}
         />
       ) : null}

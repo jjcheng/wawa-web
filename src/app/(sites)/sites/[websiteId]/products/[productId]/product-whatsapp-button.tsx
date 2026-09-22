@@ -1,8 +1,10 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
 import { WhatsappIcon } from "@/components/icons/whatsapp-icon";
+import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import { toast } from "@/lib/toast";
@@ -14,10 +16,17 @@ function whatsappLink(response: WhatsAppLinkResponse) {
   return response.link ?? response.url ?? "";
 }
 
-export function PublicWhatsAppButton({ storeName }: { storeName: string }) {
+function productWhatsAppLink(link: string, productUrl: string) {
+  const url = new URL(link);
+  const existingText = url.searchParams.get("text");
+  url.searchParams.set("text", [existingText, productUrl].filter(Boolean).join("\n"));
+  return url.toString();
+}
+
+export function ProductWhatsAppButton() {
   const [loading, setLoading] = useState(false);
 
-  async function contactStore() {
+  async function askMore() {
     if (loading) return;
     const whatsappTab = window.open("about:blank", "_blank");
     if (whatsappTab) whatsappTab.opener = null;
@@ -26,8 +35,9 @@ export function PublicWhatsAppButton({ storeName }: { storeName: string }) {
       const response = await apiFetch<WhatsAppLinkResponse>("v1/public/wa-link");
       const link = whatsappLink(response);
       if (!link) throw new Error("WhatsApp link is unavailable.");
-      if (whatsappTab) whatsappTab.location.assign(link);
-      else window.open(link, "_blank", "noopener,noreferrer");
+      const destination = productWhatsAppLink(link, window.location.href);
+      if (whatsappTab) whatsappTab.location.assign(destination);
+      else window.open(destination, "_blank", "noopener,noreferrer");
     } catch (error) {
       whatsappTab?.close();
       toast.error(toApiError(error).message);
@@ -37,15 +47,14 @@ export function PublicWhatsAppButton({ storeName }: { storeName: string }) {
   }
 
   return (
-    <button
+    <Button
       type="button"
-      onClick={() => void contactStore()}
+      className="rounded-full bg-[#25d366] text-white hover:bg-[#1fbd59]"
+      onClick={() => void askMore()}
       disabled={loading}
-      aria-label={`Contact ${storeName} on WhatsApp`}
-      title="Contact us on WhatsApp"
-      className="fixed right-5 bottom-16 z-40 flex size-14 items-center justify-center rounded-full bg-[#25d366] text-white shadow-lg transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-75 sm:right-8 sm:bottom-20"
     >
-      <WhatsappIcon className="size-7" />
-    </button>
+      {loading ? <Loader2 className="size-4 animate-spin" /> : <WhatsappIcon className="size-4" />}
+      {loading ? "Opening WhatsApp..." : "Ask on WhatsApp"}
+    </Button>
   );
 }

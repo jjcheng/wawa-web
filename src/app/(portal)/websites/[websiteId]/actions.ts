@@ -44,6 +44,14 @@ export async function updateWebsiteAction(
   const websiteId = formData.get("website_id");
   if (typeof websiteId !== "string" || !websiteId) return { message: "Website ID is missing." };
 
+  const latitudeText = String(formData.get("latitude") ?? "").trim();
+  const longitudeText = String(formData.get("longitude") ?? "").trim();
+  const latitude = latitudeText ? Number(latitudeText) : undefined;
+  const longitude = longitudeText ? Number(longitudeText) : undefined;
+  if ((latitudeText && !Number.isFinite(latitude)) || (longitudeText && !Number.isFinite(longitude))) {
+    return { message: "Location coordinates must be valid numbers." };
+  }
+
   let response: Response;
   try {
     response = await rawServerFetch(`/v1/commerce/websites/${encodeURIComponent(websiteId)}`, {
@@ -52,8 +60,13 @@ export async function updateWebsiteAction(
         about: String(formData.get("about") ?? ""),
         description: String(formData.get("description") ?? ""),
         profile_picture_url: String(formData.get("profile_picture_url") ?? ""),
+        cover_image_url: String(formData.get("cover_image_url") ?? ""),
+        tagline: String(formData.get("tagline") ?? ""),
         address: String(formData.get("address") ?? ""),
+        latitude,
+        longitude,
         contact_text: String(formData.get("contact_text") ?? ""),
+        copyright_text: String(formData.get("copyright_text") ?? ""),
       },
     });
   } catch {

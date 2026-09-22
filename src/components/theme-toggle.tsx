@@ -11,8 +11,28 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function ThemeToggle() {
-  const { setTheme } = useTheme();
+export function ThemeToggle({
+  toggleOnly = false,
+  large = false,
+}: {
+  toggleOnly?: boolean;
+  large?: boolean;
+}) {
+  const { resolvedTheme, setTheme } = useTheme();
+
+  if (toggleOnly) {
+    return (
+      <Button
+        variant="ghost"
+        size={large ? "icon-lg" : "icon"}
+        aria-label="Toggle theme"
+        onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+      >
+        <Sun className={`${large ? "size-5" : "size-4"} dark:hidden`} />
+        <Moon className={`${large ? "size-5" : "size-4"} hidden dark:block`} />
+      </Button>
+    );
+  }
 
   return (
     <DropdownMenu>

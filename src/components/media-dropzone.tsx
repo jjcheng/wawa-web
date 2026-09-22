@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const ACCEPT_BY_FORMAT: Record<string, Accept | undefined> = {
-  IMAGE: { "image/jpeg": [".jpg", ".jpeg"], "image/png": [".png"] },
+  IMAGE: { "image/*": [] },
   VIDEO: { "video/mp4": [".mp4"], "video/3gpp": [".3gp"] },
   DOCUMENT: { "application/pdf": [".pdf"] },
 };
@@ -19,7 +19,7 @@ const MAX_SIZE_BY_FORMAT: Record<string, number> = {
 };
 
 const SUPPORTED_TYPES_BY_FORMAT: Record<string, string> = {
-  IMAGE: ".jpg, .jpeg, .png (max 5 MB)",
+  IMAGE: "any image format (max 5 MB)",
   DOCUMENT: ".pdf (max 16 MB)",
   VIDEO: ".mp4, .3gp (max 100 MB)",
 };

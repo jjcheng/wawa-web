@@ -12,8 +12,11 @@ import {
 } from "react";
 
 import { MediaDropzone } from "@/components/media-dropzone";
+import {
+  GoogleLocationInput,
+  type GoogleLocationSelection,
+} from "@/components/google-location-input";
 import { PageHeader } from "@/components/page-header";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -47,8 +50,13 @@ export function WebsiteDetailsForm({
     about: string;
     description: string;
     profilePictureUrl: string;
+    coverImageUrl: string;
+    tagline: string;
     address: string;
+    latitude: string;
+    longitude: string;
     contactText: string;
+    copyrightText: string;
   };
 }) {
   const [state, formAction, pending] = useActionState<WebsiteActionState, FormData>(
@@ -61,11 +69,15 @@ export function WebsiteDetailsForm({
   );
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [values, setValues] = useState(initialValues);
+  const [searchAddress, setSearchAddress] = useState(initialValues.address);
   const [syncPending, setSyncPending] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [pictureFile, setPictureFile] = useState<File | null>(null);
   const [pictureUploading, setPictureUploading] = useState(false);
   const [pictureError, setPictureError] = useState<string | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const [coverError, setCoverError] = useState<string | null>(null);
 
   // Local preview for a selected-but-not-yet-uploaded file.
   const pictureFilePreviewUrl = useMemo(
@@ -78,6 +90,16 @@ export function WebsiteDetailsForm({
     };
   }, [pictureFilePreviewUrl]);
 
+  const coverFilePreviewUrl = useMemo(
+    () => (coverFile ? URL.createObjectURL(coverFile) : null),
+    [coverFile],
+  );
+  useEffect(() => {
+    return () => {
+      if (coverFilePreviewUrl) URL.revokeObjectURL(coverFilePreviewUrl);
+    };
+  }, [coverFilePreviewUrl]);
+
   useEffect(() => {
     if (state.savedAt) {
       toast.success("Changes are saved, view your website to see them!");
@@ -85,6 +107,7 @@ export function WebsiteDetailsForm({
   }, [state.savedAt]);
 
   const displayedPictureUrl = pictureFilePreviewUrl ?? values.profilePictureUrl;
+  const displayedCoverUrl = coverFilePreviewUrl ?? values.coverImageUrl;
 
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -110,6 +133,28 @@ export function WebsiteDetailsForm({
         return;
       }
       setPictureUploading(false);
+    }
+
+    if (coverFile) {
+      setCoverUploading(true);
+      setCoverError(null);
+      try {
+        const media = await apiFetch<{ url?: string }>("v1/wa/media", {
+          method: "POST",
+          rawBody: coverFile,
+          contentType: coverFile.type,
+          query: { to_meta: "false", filename: coverFile.name, content_type: coverFile.type },
+        });
+        if (!media.url) throw new Error("Media upload did not return a URL.");
+        formData.set("cover_image_url", media.url);
+        setValues((current) => ({ ...current, coverImageUrl: media.url! }));
+        setCoverFile(null);
+      } catch (error) {
+        setCoverError(toApiError(error).message);
+        setCoverUploading(false);
+        return;
+      }
+      setCoverUploading(false);
     }
 
     startTransition(() => formAction(formData));
@@ -183,6 +228,9 @@ export function WebsiteDetailsForm({
       <form onSubmit={(event) => void handleSubmit(event)} className="space-y-5">
         <input type="hidden" name="website_id" value={websiteId} />
         <input type="hidden" name="profile_picture_url" value={values.profilePictureUrl} />
+        <input type="hidden" name="cover_image_url" value={values.coverImageUrl} />
+        <input type="hidden" name="latitude" value={values.latitude} />
+        <input type="hidden" name="longitude" value={values.longitude} />
 
         <div className="space-y-2">
           <Label>Profile picture</Label>
@@ -224,7 +272,58 @@ export function WebsiteDetailsForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="website-about">About</Label>
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor="website-tagline">Tagline</Label>
+            <span className="text-muted-foreground text-xs">{values.tagline.length}/100</span>
+          </div>
+          <Input
+            id="website-tagline"
+            name="tagline"
+            maxLength={100}
+            value={values.tagline}
+            onChange={(event) => setValues((current) => ({ ...current, tagline: event.target.value }))}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Cover image</Label>
+          {displayedCoverUrl ? (
+            <div className="bg-muted space-y-2 rounded-lg p-2">
+              <Image
+                src={displayedCoverUrl}
+                alt="Cover image preview"
+                width={800}
+                height={320}
+                unoptimized
+                className="aspect-[5/2] w-full rounded-md object-cover"
+              />
+              <div className="flex items-center justify-between gap-3">
+                <span className="min-w-0 truncate text-sm">
+                  {coverFile ? coverFile.name : values.coverImageUrl}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label="Remove cover image"
+                  onClick={() => {
+                    setCoverFile(null);
+                    setValues((current) => ({ ...current, coverImageUrl: "" }));
+                  }}
+                >
+                  <X />
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <MediaDropzone format="IMAGE" file={coverFile} onChange={setCoverFile} />
+          )}
+          {coverUploading ? <p className="text-muted-foreground text-sm">Uploading cover image...</p> : null}
+          {coverError ? <p className="text-destructive text-sm">{coverError}</p> : null}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="website-about">About (directly below cover image)</Label>
           <Textarea
             rows={8}
             id="website-about"
@@ -234,7 +333,7 @@ export function WebsiteDetailsForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="website-description">Description</Label>
+          <Label htmlFor="website-description">Description (in About Us section)</Label>
           <Textarea
             id="website-description"
             name="description"
@@ -243,10 +342,29 @@ export function WebsiteDetailsForm({
           />
         </div>
         <div className="space-y-2">
+          <Label>Search address</Label>
+          <GoogleLocationInput
+            value={searchAddress}
+            onChange={(address) => setSearchAddress(address)}
+            onSearchChange={setSearchAddress}
+            onPlaceSelect={(location: GoogleLocationSelection | null) => {
+              if (!location) return;
+              setSearchAddress(location.address);
+              setValues((current) => ({
+                ...current,
+                address: location.address,
+                latitude: location.latitude?.toString() ?? "",
+                longitude: location.longitude?.toString() ?? "",
+              }));
+            }}
+          />
+        </div>
+        <div className="space-y-2">
           <Label htmlFor="website-address">Address</Label>
-          <Input
+          <Textarea
             id="website-address"
             name="address"
+            rows={3}
             value={values.address}
             onChange={(event) => setValues((current) => ({ ...current, address: event.target.value }))}
           />
@@ -278,22 +396,38 @@ export function WebsiteDetailsForm({
             }
           />
         </div>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="website-copyright-text">Copyright text</Label>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className="text-muted-foreground inline-flex items-center justify-center"
+                  aria-label="About copyright text"
+                >
+                  <Info className="size-3.5" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Will show at the left side of the footer</TooltipContent>
+            </Tooltip>
+          </div>
+          <Input
+            id="website-copyright-text"
+            name="copyright_text"
+            value={values.copyrightText}
+            onChange={(event) =>
+              setValues((current) => ({ ...current, copyrightText: event.target.value }))
+            }
+          />
+        </div>
 
-        {syncError ? (
-          <Alert variant="destructive">
-            <AlertDescription>{syncError}</AlertDescription>
-          </Alert>
-        ) : null}
-        {state.message ? (
-          <Alert variant="destructive">
-            <AlertDescription>{state.message}</AlertDescription>
-          </Alert>
-        ) : null}
+        {syncError ? <p className="text-destructive text-sm" role="alert">{syncError}</p> : null}
+        {state.message ? <p className="text-destructive text-sm" role="alert">{state.message}</p> : null}
 
         <div className="flex justify-end">
-          <Button type="submit" disabled={pending || syncPending || pictureUploading}>
-            {pending || pictureUploading ? <Loader2 className="size-4 animate-spin" /> : null}
-            {pictureUploading ? "Uploading..." : pending ? "Saving..." : "Save changes"}
+          <Button type="submit" disabled={pending || syncPending || pictureUploading || coverUploading}>
+            {pending || pictureUploading || coverUploading ? <Loader2 className="size-4 animate-spin" /> : null}
+            {pictureUploading || coverUploading ? "Uploading..." : pending ? "Saving..." : "Save changes"}
           </Button>
         </div>
       </form>
