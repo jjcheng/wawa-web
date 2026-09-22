@@ -19,7 +19,7 @@ import { redirect } from "next/navigation";
 import { ProductsTable } from "./products-table";
 import { WebsiteSummary } from "./website-summary";
 
-export const metadata: Metadata = { title: "Catalog products" };
+export const metadata: Metadata = { title: "Products" };
 
 export default async function CatalogProductsPage({
   params,

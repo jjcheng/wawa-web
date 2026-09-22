@@ -3,7 +3,7 @@
 import {
   FileText,
   Gauge,
-  Globe2,
+  // Globe2,
   Inbox,
   LayoutDashboard,
   Loader2,
@@ -57,7 +57,7 @@ const SECTIONS = [
       { href: "/phone-numbers", label: "Phone Numbers", icon: Phone },
       { href: "/templates", label: "Templates", icon: FileText },
       { href: "/catalogs", label: "Catalogs", icon: Store },
-      { href: "/websites", label: "Websites", icon: Globe2 },
+      // { href: "/websites", label: "Websites", icon: Globe2 },
     ],
   },
   {

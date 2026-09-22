@@ -15,7 +15,7 @@ import type {
 import { requireUser } from "@/lib/auth/session";
 import { ProductsTable } from "@/app/(portal)/catalogs/[catalogId]/products/products-table";
 
-export const metadata: Metadata = { title: "Catalog products" };
+export const metadata: Metadata = { title: "Products" };
 
 export default async function WebsiteCatalogProductsPage({
   params,

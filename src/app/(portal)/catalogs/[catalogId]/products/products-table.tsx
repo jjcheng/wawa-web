@@ -26,6 +26,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+function descriptionPreview(description: string) {
+  return description.length > 100 ? `${description.slice(0, 100)}...` : description;
+}
+
 export function ProductsTable({
   catalogId,
   limit,
@@ -147,13 +151,13 @@ export function ProductsTable({
                         "—"
                       )}
                     </TableCell>
-                    <TableCell className="min-w-56">
-                      <div className="font-medium">
+                    <TableCell className="w-[min(32rem,40vw)] max-w-[min(32rem,40vw)] whitespace-normal break-words">
+                      <div className="font-medium break-words">
                         {product.name || product.title || "Unnamed product"}
                       </div>
                       {product.description ? (
-                        <div className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                          {product.description}
+                        <div className="mt-1 line-clamp-3 text-sm text-muted-foreground">
+                          {descriptionPreview(product.description)}
                         </div>
                       ) : null}
                     </TableCell>
