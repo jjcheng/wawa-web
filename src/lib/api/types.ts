@@ -15,8 +15,8 @@ export type InputError = {
 
 type DtoBase = {
   id: number;
-  entry_date: string;
-  last_update: string;
+  added_at: string;
+  last_updated_at: string;
 };
 
 export type UserStatus = "ACTIVE" | "PENDING_PASSWORD" | "INACTIVE";
@@ -88,7 +88,7 @@ export type Website = {
   copyright_text?: string;
   status?: string;
   products_last_synced_at?: string;
-  entry_date?: string;
+  added_at?: string;
 };
 
 export type CatalogSet = {
@@ -168,8 +168,8 @@ export type EmbeddedSignupResult = {
 
 export type Customer = {
   id: number;
-  entry_date?: string;
-  last_update?: string;
+  added_at?: string;
+  last_updated_at?: string;
   display_name: string;
   country_code: string;
   phone_number: string;
@@ -193,8 +193,8 @@ export type CustomerListResponse = {
 
 export type Notification = {
   id: number;
-  entry_date?: string;
-  last_update?: string;
+  added_at?: string;
+  last_updated_at?: string;
   type: "SUCCESS" | "INFO" | "WARNING" | "ERROR";
   title: string;
   body: string;
@@ -237,8 +237,8 @@ export type CustomerImportResult = {
 
 export type Broadcast = {
   id: number;
-  entry_date?: string;
-  last_update?: string;
+  added_at?: string;
+  last_updated_at?: string;
   name: string;
   send_date: string;
   wa_template_id: string;

@@ -13,7 +13,7 @@ export function CustomerInfo({ customer }: { customer: Customer }) {
       <dt className="text-muted-foreground">Status</dt>
       <dd>{customer.status || "—"}</dd>
       <dt className="text-muted-foreground">Added</dt>
-      <dd>{formatDateTime(customer.entry_date)}</dd>
+      <dd>{formatDateTime(customer.added_at)}</dd>
       <dt className="text-muted-foreground">Remarks</dt>
       <dd className="min-w-0 whitespace-pre-wrap break-words">{customer.remarks || "—"}</dd>
       {Object.keys(customer.additional_data ?? {}).length > 0 ? (

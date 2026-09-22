@@ -117,7 +117,7 @@ export default async function WebsitesPage() {
                         <WebsiteSyncCells
                           websiteId={String(website.id)}
                           initialSyncedAt={website.products_last_synced_at}
-                          addedAt={website.entry_date}
+                          addedAt={website.added_at}
                         />
                       </TableRow>
                     );

@@ -101,7 +101,7 @@ export default async function DashboardPage() {
                     </p>
                   </div>
                   <span className="text-muted-foreground text-xs">
-                    {formatDateTime(number.last_update)}
+                    {formatDateTime(number.last_updated_at)}
                   </span>
                 </div>
               ))
@@ -133,7 +133,7 @@ export default async function DashboardPage() {
             </div>
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">Member since</span>
-              <span>{formatDateTime(user.entry_date)}</span>
+              <span>{formatDateTime(user.added_at)}</span>
             </div>
           </CardContent>
         </Card>

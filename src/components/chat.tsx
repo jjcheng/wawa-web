@@ -512,7 +512,7 @@ function MessageInfoPopover({
                     <div key={event.id || `${event.status}-${event.timestamp}`} className="contents">
                       <dt className="capitalize text-foreground">{event.status}</dt>
                       <dd className="text-muted-foreground">
-                        {formatDateTime(event.timestamp ? new Date(event.timestamp * 1000) : event.entry_date)}
+                        {formatDateTime(event.timestamp ? new Date(event.timestamp * 1000) : event.added_at)}
                         {event.error_message ? (
                           <span className="block text-destructive break-words">
                             {event.error_message}

@@ -212,7 +212,7 @@ export function InboxShell({
                       </Badge>
                     </TableCell>
                     <TableCell>{notification.read ? "Read" : "Unread"}</TableCell>
-                    <TableCell>{formatDateTime(notification.entry_date)}</TableCell>
+                    <TableCell>{formatDateTime(notification.added_at)}</TableCell>
                     <TableCell className="text-right">
                       <NotificationViewButton
                         notification={notification}
@@ -311,7 +311,7 @@ function NotificationViewButton({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{notification.title}</DialogTitle>
-          <DialogDescription>{formatDateTime(notification.entry_date)}</DialogDescription>
+          <DialogDescription>{formatDateTime(notification.added_at)}</DialogDescription>
         </DialogHeader>
         <div className="max-h-[60vh] space-y-3 overflow-y-auto text-sm">
           <Badge variant="secondary" className={TYPE_BADGE_CLASSNAME[notification.type]}>

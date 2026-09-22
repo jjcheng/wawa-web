@@ -109,7 +109,7 @@ export default async function PhoneNumbersPage({ searchParams }: PageProps<"/pho
                           ? number.status.charAt(0) + number.status.slice(1).toLowerCase()
                           : "—"}
                       </TableCell>
-                      <TableCell>{formatDateTime(number.entry_date)}</TableCell>
+                      <TableCell>{formatDateTime(number.added_at)}</TableCell>
                       <TableCell className="text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-2">
                           <PhoneNumberViewButton
