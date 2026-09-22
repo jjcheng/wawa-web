@@ -10,7 +10,7 @@ import type { Website } from "@/lib/api/types";
 import { WebsiteDetailsForm } from "./website-details-form";
 import { WebsiteStatusSwitch } from "./website-status-switch";
 
-export const metadata: Metadata = { title: "Website" };
+export const metadata: Metadata = { title: "Customize website" };
 
 export default async function WebsitePage({
   params,
@@ -59,7 +59,7 @@ export default async function WebsitePage({
             description: website.description ?? "",
             profilePictureUrl: website.profile_picture_url ?? "",
             address: website.address ?? "",
-            email: website.email ?? "",
+            contactText: website.contact_text ?? "",
           }}
         />
       ) : null}

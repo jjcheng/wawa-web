@@ -4,6 +4,8 @@ import { useState } from "react";
 
 import { WhatsappIcon } from "@/components/icons/whatsapp-icon";
 import { apiFetch } from "@/lib/api/client";
+import { toApiError } from "@/lib/api/errors";
+import { toast } from "@/lib/toast";
 
 type WhatsAppLinkResponse = string | { link?: string; url?: string };
 
@@ -17,11 +19,18 @@ export function PublicWhatsAppButton({ storeName }: { storeName: string }) {
 
   async function contactStore() {
     if (loading) return;
+    const whatsappTab = window.open("about:blank", "_blank");
+    if (whatsappTab) whatsappTab.opener = null;
     setLoading(true);
     try {
       const response = await apiFetch<WhatsAppLinkResponse>("v1/public/wa-link");
       const link = whatsappLink(response);
-      if (link) window.location.assign(link);
+      if (!link) throw new Error("WhatsApp link is unavailable.");
+      if (whatsappTab) whatsappTab.location.assign(link);
+      else window.open(link, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      whatsappTab?.close();
+      toast.error(toApiError(error).message);
     } finally {
       setLoading(false);
     }

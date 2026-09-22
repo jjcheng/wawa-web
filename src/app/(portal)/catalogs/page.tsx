@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { Circle, ExternalLink } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
 import { TableEmptyState } from "@/components/table-empty-state";
@@ -88,6 +88,7 @@ export default async function CatalogsPage({
                   <TableHead>Name</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Products</TableHead>
+                  <TableHead>Website</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -108,6 +109,28 @@ export default async function CatalogsPage({
                           {catalog.product_count !== undefined
                             ? catalog.product_count.toLocaleString()
                             : "—"}
+                        </TableCell>
+                        <TableCell>
+                          {catalog.website_url && catalog.website_status ? (
+                            <a
+                              href={catalog.website_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex max-w-52 items-center gap-1.5 text-sm hover:underline"
+                            >
+                              <Circle
+                                className={
+                                  catalog.website_status === "ACTIVE"
+                                    ? "size-2 shrink-0 animate-pulse fill-emerald-500 text-emerald-500"
+                                    : "size-2 shrink-0 fill-red-500 text-red-500"
+                                }
+                                aria-hidden="true"
+                              />
+                              <span className="truncate">{catalog.website_url}</span>
+                            </a>
+                          ) : (
+                            "—"
+                          )}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button asChild variant="outline" size="sm">

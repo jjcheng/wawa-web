@@ -33,7 +33,7 @@ export type User = DtoBase & {
   access_token?: string;
   access_token_expiry?: string;
   wa_activated?: boolean;
-  wa_activation_error?: string;
+  wa_error?: string;
 };
 
 export type Dashboard = {
@@ -60,6 +60,9 @@ export type Catalog = {
   id: string;
   name: string;
   website_id?: number | string;
+  website_url?: string;
+  website_status?: string;
+  products_last_synced_at?: string;
   vertical?: string;
   product_count?: number;
 };
@@ -76,7 +79,9 @@ export type Website = {
   profile_picture_url?: string;
   address?: string;
   email?: string;
+  contact_text?: string;
   status?: string;
+  products_last_synced_at?: string;
   entry_date?: string;
 };
 

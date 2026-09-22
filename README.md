@@ -66,3 +66,11 @@ new header, while keeping the older `x-user-access-token` name as a compatibilit
 Auth, dashboard, WhatsApp phone numbers, Embedded Signup onboarding and settings
 are wired to the live API. Contacts, Conversations and Broadcasts are UI previews backed by
 mock data until the corresponding API endpoints exist.
+
+# https://localhost
+## in macos terminal
+brew install mkcert
+mkcert -install
+
+## in project terminal
+mkcert localhost 127.0.0.1 ::1

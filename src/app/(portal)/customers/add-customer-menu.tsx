@@ -37,7 +37,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import type { Customer, CustomerImportResult } from "@/lib/api/types";
-import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 
 type ImportedContact = {
   id: string;
@@ -246,13 +245,15 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button className={MEDIUM_BUTTON_HEIGHT}>
-            Add Customer
+          <Button size="sm">
+            Add customer
             <ChevronDown className="size-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={() => setOpen(true)}>Create customer</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setOpen(true)}>
+            Create customer
+          </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
               setImportInfoOpen(true);

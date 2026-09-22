@@ -8,6 +8,7 @@ import { serverFetch } from "@/lib/api/server-client";
 import type {
   CatalogSet,
   CatalogSetListResponse,
+  Catalog,
   Product,
   ProductListResponse,
   Website,
@@ -16,6 +17,7 @@ import { requireUser } from "@/lib/auth/session";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ProductsTable } from "./products-table";
+import { WebsiteSummary } from "./website-summary";
 
 export const metadata: Metadata = { title: "Catalog products" };
 
@@ -42,7 +44,7 @@ export default async function CatalogProductsPage({
   let loadError: string | null = null;
 
   try {
-    const catalog = await serverFetch<{ id: string; name?: string }>(
+    const catalog = await serverFetch<Catalog>(
       `/v1/wa/catalogs/${encodeURIComponent(catalogId)}`,
     );
     catalogName = catalog.name || "";
@@ -79,27 +81,22 @@ export default async function CatalogProductsPage({
         title="Products"
         description={catalogName ? `Products in ${catalogName}.` : "Products in this catalog."}
         action={
-          <div className="flex flex-col items-end gap-1">
-            <Button asChild className="mb-1">
-              <Link
-                href={website
-                  ? `/websites/${encodeURIComponent(String(website.id))}`
-                  : `/catalogs/${encodeURIComponent(catalogId)}/products/website/setup`}
-              >
-                {website ? "View website" : "Create website"}
-              </Link>
-            </Button>
-            {website?.url ? (
-              <a
-                href={website.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground max-w-56 truncate text-xs hover:underline"
-              >
-                {website.url}
-              </a>
-            ) : null}
-          </div>
+          website ? (
+            <WebsiteSummary
+              websiteId={String(website.id)}
+              url={website.url}
+              status={website.status}
+              initialSyncedAt={website.products_last_synced_at}
+            />
+          ) : (
+            <div>
+              <Button asChild className="mb-1">
+                <Link href={`/catalogs/${encodeURIComponent(catalogId)}/products/website/setup`}>
+                  Create website
+                </Link>
+              </Button>
+            </div>
+          )
         }
       />
 

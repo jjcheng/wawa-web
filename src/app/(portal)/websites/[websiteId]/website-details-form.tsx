@@ -8,7 +8,7 @@ import {
   useEffect,
   useMemo,
   useState,
-  type FormEvent,
+  type SubmitEvent,
 } from "react";
 
 import { MediaDropzone } from "@/components/media-dropzone";
@@ -32,6 +32,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import type { BusinessProfile } from "@/lib/api/types";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { deleteWebsiteAction, updateWebsiteAction, type WebsiteActionState } from "./actions";
 
@@ -47,7 +48,7 @@ export function WebsiteDetailsForm({
     description: string;
     profilePictureUrl: string;
     address: string;
-    email: string;
+    contactText: string;
   };
 }) {
   const [state, formAction, pending] = useActionState<WebsiteActionState, FormData>(
@@ -77,9 +78,15 @@ export function WebsiteDetailsForm({
     };
   }, [pictureFilePreviewUrl]);
 
+  useEffect(() => {
+    if (state.savedAt) {
+      toast.success("Changes are saved, view your website to see them!");
+    }
+  }, [state.savedAt]);
+
   const displayedPictureUrl = pictureFilePreviewUrl ?? values.profilePictureUrl;
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
 
@@ -119,7 +126,6 @@ export function WebsiteDetailsForm({
         description: profile.description ?? "",
         profilePictureUrl: profile.profile_picture_url ?? "",
         address: profile.address ?? "",
-        email: profile.email ?? "",
       }));
     } catch (error) {
       setSyncError(toApiError(error).message);
@@ -131,7 +137,7 @@ export function WebsiteDetailsForm({
   return (
     <div className="max-w-2xl">
       <PageHeader
-        title="Website"
+        title="Customize website"
         description={
           url ? (
             <a
@@ -150,7 +156,7 @@ export function WebsiteDetailsForm({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="text-muted-foreground inline-flex items-center justify-center rounded-full border p-1"
+                  className="text-muted-foreground inline-flex items-center justify-center"
                   aria-label="This will pull the business profile data from your WhatsApp Business app"
                 >
                   <Info className="size-3.5" />
@@ -246,13 +252,30 @@ export function WebsiteDetailsForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="website-email">Email</Label>
-          <Input
-            id="website-email"
-            name="email"
-            type="email"
-            value={values.email}
-            onChange={(event) => setValues((current) => ({ ...current, email: event.target.value }))}
+          <div className="flex items-center gap-2">
+            <Label htmlFor="website-contact-text">WhatsApp contact text</Label>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className="text-muted-foreground inline-flex items-center justify-center"
+                  aria-label="About WhatsApp contact text"
+                >
+                  <Info className="size-3.5" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                The text prefilled when your customers open the WhatsApp link.
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <Textarea
+            id="website-contact-text"
+            name="contact_text"
+            placeholder="Hi, tell me more about your products!"
+            value={values.contactText}
+            onChange={(event) =>
+              setValues((current) => ({ ...current, contactText: event.target.value }))
+            }
           />
         </div>
 

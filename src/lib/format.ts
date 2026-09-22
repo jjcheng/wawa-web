@@ -12,6 +12,8 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
+const relativeTimeFormatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+
 function toDate(value: string | Date) {
   const date = typeof value === "string" ? new Date(value) : value;
   return Number.isNaN(date.getTime()) ? null : date;
@@ -27,6 +29,39 @@ export function formatDate(value?: string | Date | null) {
   if (!value) return "—";
   const date = toDate(value);
   return date ? dateFormatter.format(date) : "—";
+}
+
+export function formatRelativeTime(
+  value?: string | Date | null,
+  now: string | Date | number = Date.now(),
+) {
+  if (!value) return "—";
+  const date = toDate(value);
+  const nowDate = typeof now === "number" ? new Date(now) : toDate(now);
+  if (!date || !nowDate) return "—";
+
+  const seconds = Math.round((date.getTime() - nowDate.getTime()) / 1000);
+  const absoluteSeconds = Math.abs(seconds);
+  if (absoluteSeconds < 10) return "just now";
+  if (absoluteSeconds < 60) return relativeTimeFormatter.format(seconds, "second");
+
+  const minutes = Math.round(seconds / 60);
+  if (absoluteSeconds < 60 * 60) return relativeTimeFormatter.format(minutes, "minute");
+
+  const hours = Math.round(seconds / (60 * 60));
+  if (absoluteSeconds < 24 * 60 * 60) return relativeTimeFormatter.format(hours, "hour");
+
+  const days = Math.round(seconds / (24 * 60 * 60));
+  if (absoluteSeconds < 7 * 24 * 60 * 60) return relativeTimeFormatter.format(days, "day");
+
+  const weeks = Math.round(seconds / (7 * 24 * 60 * 60));
+  if (absoluteSeconds < 30 * 24 * 60 * 60) return relativeTimeFormatter.format(weeks, "week");
+
+  const months = Math.round(seconds / (30 * 24 * 60 * 60));
+  if (absoluteSeconds < 365 * 24 * 60 * 60) return relativeTimeFormatter.format(months, "month");
+
+  const years = Math.round(seconds / (365 * 24 * 60 * 60));
+  return relativeTimeFormatter.format(years, "year");
 }
 
 /** Resolves a possibly-relative URL from the API against the current site origin. */

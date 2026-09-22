@@ -151,7 +151,7 @@ export function Topbar({ user }: { user: User }) {
             <Menu className="size-4" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-72 p-0">
+        <SheetContent side="left" className="data-[side=left]:w-[260px] p-0">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
           <SidebarNav user={user} onNavigate={() => setMobileOpen(false)} />
         </SheetContent>

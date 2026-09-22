@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Circle } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -19,7 +20,7 @@ import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type { Website } from "@/lib/api/types";
 import { requireUser } from "@/lib/auth/session";
-import { formatDateTime } from "@/lib/format";
+import { WebsiteSyncCells } from "./website-sync-cells";
 
 export const metadata: Metadata = { title: "Websites" };
 
@@ -66,13 +67,14 @@ export default async function WebsitesPage() {
                   <TableHead>Catalog</TableHead>
                   <TableHead>URL</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Products synced</TableHead>
                   <TableHead>Added</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {websites.length === 0 ? (
-                  <TableEmptyState colSpan={5}>No websites found.</TableEmptyState>
+                  <TableEmptyState colSpan={6}>No websites found.</TableEmptyState>
                 ) : (
                   websites.map((website) => {
                     return (
@@ -91,9 +93,17 @@ export default async function WebsitesPage() {
                               href={website.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-primary max-w-64 truncate hover:underline"
+                              className="text-primary inline-flex max-w-64 items-center gap-1.5 hover:underline"
                             >
-                              {website.url}
+                              <Circle
+                                className={
+                                  website.status === "ACTIVE"
+                                    ? "size-2 shrink-0 animate-pulse fill-emerald-500 text-emerald-500"
+                                    : "size-2 shrink-0 fill-red-500 text-red-500"
+                                }
+                                aria-hidden="true"
+                              />
+                              <span className="truncate">{website.url}</span>
                             </a>
                           ) : (
                             "—"
@@ -104,18 +114,11 @@ export default async function WebsitesPage() {
                             ? website.status.charAt(0) + website.status.slice(1).toLowerCase()
                             : "—"}
                         </TableCell>
-                        <TableCell>
-                          {website.entry_date ? formatDateTime(website.entry_date) : "—"}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button asChild size="sm" variant="outline">
-                            <Link
-                              href={`/websites/${encodeURIComponent(String(website.id))}`}
-                            >
-                              View
-                            </Link>
-                          </Button>
-                        </TableCell>
+                        <WebsiteSyncCells
+                          websiteId={String(website.id)}
+                          initialSyncedAt={website.products_last_synced_at}
+                          addedAt={website.entry_date}
+                        />
                       </TableRow>
                     );
                   })

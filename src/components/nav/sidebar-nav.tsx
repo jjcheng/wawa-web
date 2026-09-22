@@ -6,6 +6,8 @@ import {
   Globe2,
   Inbox,
   LayoutDashboard,
+  Loader2,
+  MessageSquareText,
   Megaphone,
   Phone,
   Store,
@@ -13,9 +15,24 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, type SubmitEvent } from "react";
 
 import { Brand } from "@/components/brand";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { apiFetch } from "@/lib/api/client";
+import { toApiError } from "@/lib/api/errors";
 import type { User } from "@/lib/api/types";
+import { toast } from "@/lib/toast";
 import { useUnreadNotificationsCount } from "@/lib/unread-notifications-store";
 import { cn } from "@/lib/utils";
 
@@ -52,9 +69,37 @@ const SECTIONS = [
 export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user: User }) {
   const pathname = usePathname();
   const unreadNotificationsCount = useUnreadNotificationsCount();
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+
+  async function submitFeedback(event: SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const content = feedback.trim();
+    if (content.length < 20) {
+      setFeedbackError("Feedback must be at least 20 characters.");
+      return;
+    }
+    setFeedbackSubmitting(true);
+    setFeedbackError(null);
+    try {
+      await apiFetch("v1/site/feedback", {
+        method: "POST",
+        body: { content },
+      });
+      setFeedback("");
+      setFeedbackOpen(false);
+      toast.success("Thank you for your feedback.");
+    } catch (error) {
+      toast.error(toApiError(error).message);
+    } finally {
+      setFeedbackSubmitting(false);
+    }
+  }
 
   return (
-    <nav className="flex h-full flex-col gap-5 p-3">
+    <nav className="flex h-svh flex-col gap-5 overflow-y-auto p-3">
       <Brand className="px-2" />
       {SECTIONS.filter((section) => user.type === "MASTER" || section.label !== "Analytics").map((section) => (
         <div key={section.label} className="space-y-1">
@@ -93,6 +138,65 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
             })}
         </div>
       ))}
+      <Dialog
+        open={feedbackOpen}
+        onOpenChange={(open) => {
+          if (!feedbackSubmitting) setFeedbackOpen(open);
+        }}
+      >
+        <DialogTrigger asChild>
+          <button
+            type="button"
+            className="text-muted-foreground mt-auto flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors hover:bg-accent/60 hover:text-foreground"
+          >
+            <MessageSquareText className="size-4" />
+            Feedback
+          </button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share feedback</DialogTitle>
+            <DialogDescription>
+              Tell us what is working well or what we can improve. We will get back to you if needed.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={submitFeedback} className="space-y-4">
+            <div className="space-y-1.5">
+              <Textarea
+                value={feedback}
+                onChange={(event) => {
+                  setFeedback(event.target.value);
+                  if (feedbackError && event.target.value.trim().length >= 20) {
+                    setFeedbackError(null);
+                  }
+                }}
+                minLength={20}
+                required
+                rows={8}
+                maxLength={5000}
+                placeholder="Enter your feedback, at least 20 characters"
+                aria-invalid={Boolean(feedbackError)}
+                aria-describedby="feedback-help"
+              />
+              {/* <div id="feedback-help" className="flex justify-between gap-3 text-xs">
+                <span className={feedbackError ? "text-destructive" : "text-muted-foreground"}>
+                  {feedbackError ?? "Minimum 20 characters"}
+                </span>
+                <span className="text-muted-foreground">{feedback.trim().length}</span>
+              </div> */}
+            </div>
+            <DialogFooter>
+              <Button
+                type="submit"
+                disabled={feedback.trim().length < 20 || feedbackSubmitting}
+              >
+                {feedbackSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
+                {feedbackSubmitting ? "Submitting..." : "Submit"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </nav>
   );
 }

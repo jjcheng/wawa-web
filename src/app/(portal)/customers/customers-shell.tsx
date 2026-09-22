@@ -77,7 +77,7 @@ export function CustomersShell({
         title="Customers"
         description="You can only see your own customers. Select at least one to start a broadcast."
         action={
-          <div className="mt-2">
+          <div>
             <AddCustomerMenu
               onCreated={(customer) => {
                 setRows((currentRows) => [customer, ...currentRows]);

@@ -9,6 +9,7 @@ import type { ApiEnvelope } from "@/lib/api/types";
 export type WebsiteActionState = {
   message?: string;
   deleted?: boolean;
+  savedAt?: number;
 };
 
 
@@ -52,7 +53,7 @@ export async function updateWebsiteAction(
         description: String(formData.get("description") ?? ""),
         profile_picture_url: String(formData.get("profile_picture_url") ?? ""),
         address: String(formData.get("address") ?? ""),
-        email: String(formData.get("email") ?? ""),
+        contact_text: String(formData.get("contact_text") ?? ""),
       },
     });
   } catch {
@@ -66,7 +67,7 @@ export async function updateWebsiteAction(
 
   revalidatePath(`/websites/${encodeURIComponent(websiteId)}`);
   revalidatePath("/websites");
-  return {};
+  return { savedAt: Date.now() };
 }
 
 export async function deleteWebsiteAction(

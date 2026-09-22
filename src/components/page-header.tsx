@@ -20,7 +20,11 @@ export function PageHeader({
           <p className="text-muted-foreground mt-1 text-sm">{description}</p>
         ) : null}
       </div>
-      {action}
+      {action ? (
+        <div className="flex w-full justify-start sm:w-auto sm:justify-end [&_[data-slot=button]]:h-7 [&_[data-slot=button]]:gap-1 [&_[data-slot=button]]:px-2.5 [&_[data-slot=button]]:text-[0.8rem] [&_[data-slot=button]_svg]:size-3.5">
+          {action}
+        </div>
+      ) : null}
     </div>
   );
 }

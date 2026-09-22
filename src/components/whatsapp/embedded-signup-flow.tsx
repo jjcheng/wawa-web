@@ -91,7 +91,7 @@ export function EmbeddedSignupFlow({
     onSuccess: (result) => {
       if (result.wa_activated === false) {
         const message =
-          result.wa_activation_error || result.message || "Meta could not activate the WhatsApp account.";
+          result.wa_error || result.message || "Meta could not activate the WhatsApp account.";
         signupActiveRef.current = false;
         isSubmittingRef.current = false;
         setSignupStarted(false);

@@ -236,6 +236,8 @@ export function CustomerList({
               </>
             ) : null}
             <Button
+              variant="outline"
+              size="sm"
               onClick={() => {
                 if (selectedRows.size === 0) {
                   toast.info("Select at least one customer to start a broadcast.");
@@ -257,7 +259,7 @@ export function CustomerList({
                 router.push("/customers/new-broadcast");
               }}
             >
-              New Broadcast
+              New broadcast
             </Button>
           </div>
         ) : null}

@@ -1,6 +1,6 @@
 "use client";
 
-import EmojiPicker, { EmojiStyle, type EmojiClickData } from "emoji-picker-react";
+import EmojiPicker, { EmojiStyle, Theme, type EmojiClickData } from "emoji-picker-react";
 import { ContactRound, FileText, ImageIcon, MapPin, Music2, Paperclip, Reply, Send, SmilePlus, Video, X } from "lucide-react";
 import {
   autoUpdate,
@@ -16,7 +16,8 @@ import {
   useRole,
 } from "@floating-ui/react";
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useTheme } from "next-themes";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type SubmitEvent } from "react";
 import { toast } from "@/lib/toast";
 
 import { Button } from "@/components/ui/button";
@@ -292,6 +293,7 @@ export function ChatMessageComposer({
   customerId,
 }: ChatMessageComposerProps) {
   const { replyTarget, setReplyTarget } = useChatCompose();
+  const { resolvedTheme } = useTheme();
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [attachmentOpen, setAttachmentOpen] = useState(false);
@@ -306,6 +308,7 @@ export function ChatMessageComposer({
   const [attachment, setAttachment] = useState<SelectedAttachment | null>(null);
   const [compressing, setCompressing] = useState(false);
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const emojiPickerTheme = resolvedTheme === "dark" ? Theme.DARK : Theme.LIGHT;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const vCardInputRef = useRef<HTMLInputElement>(null);
   const previewUrlRef = useRef<string | null>(null);
@@ -401,7 +404,7 @@ export function ChatMessageComposer({
     }
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     void sendMessage();
   }
@@ -578,7 +581,8 @@ export function ChatMessageComposer({
                 className="!border-0 !shadow-none"
                 onEmojiClick={handleEmojiSelect}
                 emojiStyle={EmojiStyle.NATIVE}
-                width={300}
+                theme={emojiPickerTheme}
+                width="100%"
                 height={360}
                 lazyLoadEmojis
                 previewConfig={{ showPreview: false }}

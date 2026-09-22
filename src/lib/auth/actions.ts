@@ -26,7 +26,7 @@ export type EmbeddedSignupState = {
   inputErrors?: InputError[];
   status?: User["status"];
   wa_activated?: boolean;
-  wa_activation_error?: string;
+  wa_error?: string;
   /** Set when the API did not issue an access token; tells the client where to send the user. */
   redirectTo?: string;
   loggedIn?: boolean;
@@ -163,9 +163,9 @@ export async function completeEmbeddedSignup(input: unknown): Promise<EmbeddedSi
 
   if (envelope.data?.wa_activated === false) {
     return {
-      message: envelope.data.wa_activation_error || "Meta could not activate the WhatsApp account, please try again.",
+      message: envelope.data.wa_error || "Meta could not activate the WhatsApp account, please try again.",
       wa_activated: false,
-      wa_activation_error: envelope.data.wa_activation_error,
+      wa_error: envelope.data.wa_error,
     };
   }
 
