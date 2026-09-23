@@ -17,7 +17,8 @@
     "NEXT_PUBLIC_COMMERCE_WEBSITE_DOMAIN": "wawago.app",
     "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyB0_mmwlcLwPzHeAS2lTedtWMwQoPPEBQ0",
     "NEXT_PUBLIC_PORTAL_HOST": "portal.wawago.app",
-    "NEXT_PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAAE-eKokMMNHOl956"
+    "NEXT_PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAAE-eKokMMNHOl956",
+    "TURNSTILE_HOSTNAMES": "portal.wawago.app"
   },
   "observability": {
     "logs": {

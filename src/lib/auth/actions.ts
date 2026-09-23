@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 import { ApiError } from "@/lib/api/errors";
 import { embeddedSignupSchema, loginSchema } from "@/lib/api/schemas";
@@ -40,16 +40,47 @@ function safeNextPath(value: FormDataEntryValue | null) {
 
 async function verifyTurnstileToken(token: FormDataEntryValue | null): Promise<boolean> {
   if (!serverEnv.TURNSTILE_SECRET_KEY) return true;
-  if (typeof token !== "string" || !token) return false;
+  const expectedHostnames = new Set(
+    serverEnv.TURNSTILE_HOSTNAMES.split(",")
+      .map((hostname) => hostname.trim().toLowerCase())
+      .filter(Boolean),
+  );
+  if (
+    typeof token !== "string" ||
+    token.length === 0 ||
+    token.length > 2048 ||
+    expectedHostnames.size === 0
+  ) {
+    return false;
+  }
 
   try {
+    const requestHeaders = await headers();
+    const remoteIp =
+      requestHeaders.get("cf-connecting-ip") ??
+      requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim();
+    const body = new URLSearchParams({
+      secret: serverEnv.TURNSTILE_SECRET_KEY,
+      response: token,
+    });
+    if (remoteIp) body.set("remoteip", remoteIp);
     const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ secret: serverEnv.TURNSTILE_SECRET_KEY, response: token }),
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+      signal: AbortSignal.timeout(10_000),
     });
-    const result = (await response.json().catch(() => null)) as { success?: boolean } | null;
-    return Boolean(result?.success);
+    const result = (await response.json().catch(() => null)) as {
+      success?: boolean;
+      action?: string;
+      hostname?: string;
+    } | null;
+    return Boolean(
+      result?.success &&
+        result.action === "login" &&
+        result.hostname &&
+        expectedHostnames.has(result.hostname.toLowerCase()),
+    );
   } catch {
     return false;
   }
