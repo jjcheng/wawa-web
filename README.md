@@ -82,6 +82,10 @@ be reachable from Cloudflare over HTTPS. For customer storefront domains, route 
 Worker for the relevant hostnames so `src/proxy.ts` and the public website loader can use
 the incoming host to resolve the website.
 
+Set `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` as a **build variable** in Workers Builds. Vinext
+embeds `NEXT_PUBLIC_*` values into browser assets at build time, so adding it only as a
+Worker runtime variable will not enable Google Places in the deployed UI.
+
 ## Status
 
 Auth, dashboard, WhatsApp phone numbers, Embedded Signup onboarding and settings
