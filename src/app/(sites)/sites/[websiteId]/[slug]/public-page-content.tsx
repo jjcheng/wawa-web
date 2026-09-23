@@ -29,7 +29,7 @@ export function PublicPageContent({ html }: { html: string }) {
     <>
       <div
         ref={contentRef}
-        className="mt-8 cursor-pointer text-base leading-7 [&_h1]:my-3 [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:my-2 [&_h2]:text-base [&_h2]:font-medium [&_img]:my-4 [&_img]:max-w-full [&_img]:rounded-md"
+        className="text-muted-foreground mt-8 cursor-pointer text-base leading-7 [&_h1]:my-3 [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:my-2 [&_h2]:text-base [&_h2]:font-medium [&_img]:my-4 [&_img]:max-w-full [&_img]:rounded-md"
         onClick={openGallery}
         dangerouslySetInnerHTML={{ __html: html }}
       />
