@@ -30,9 +30,6 @@ declare global {
       reset: (container?: string | HTMLElement) => void;
       remove?: (widgetId: string) => void;
     };
-    onTurnstileSuccess?: (token: string) => void;
-    onTurnstileExpired?: () => void;
-    onTurnstileError?: () => void;
   }
 }
 
@@ -48,10 +45,9 @@ function useHydrated() {
   return useSyncExternalStore(subscribeToHydration, () => true, () => false);
 }
 
-function SignInButton() {
+function SignInButton({ turnstileToken }: { turnstileToken: string }) {
   const { pending } = useFormStatus();
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
-  const turnstileToken = useTurnstileToken();
 
   return (
     <Button
@@ -65,24 +61,6 @@ function SignInButton() {
   );
 }
 
-function useTurnstileToken() {
-  const [token, setToken] = useState("");
-
-  useEffect(() => {
-    window.onTurnstileSuccess = setToken;
-    window.onTurnstileExpired = () => setToken("");
-    window.onTurnstileError = () => setToken("");
-
-    return () => {
-      delete window.onTurnstileSuccess;
-      delete window.onTurnstileExpired;
-      delete window.onTurnstileError;
-    };
-  }, []);
-
-  return token;
-}
-
 export function LoginForm({ next }: { next?: string }) {
   const [state, formAction] = useActionState<LoginState, FormData>(loginAction, {});
   const [countryCode, setCountryCode] = useState<string | undefined>(undefined);
@@ -92,6 +70,7 @@ export function LoginForm({ next }: { next?: string }) {
   const turnstileRef = useRef<HTMLDivElement>(null);
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   const [turnstileReady, setTurnstileReady] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
   const hydrated = useHydrated();
 
   function handleCountryCodeChange(nextCountryCode: string) {
@@ -106,9 +85,9 @@ export function LoginForm({ next }: { next?: string }) {
       sitekey: turnstileSiteKey,
       theme: "auto",
       size: "flexible",
-      callback: (token) => window.onTurnstileSuccess?.(token),
-      "expired-callback": () => window.onTurnstileExpired?.(),
-      "error-callback": () => window.onTurnstileError?.(),
+      callback: setTurnstileToken,
+      "expired-callback": () => setTurnstileToken(""),
+      "error-callback": () => setTurnstileToken(""),
     });
 
     return () => window.turnstile?.remove?.(widgetId);
@@ -117,7 +96,7 @@ export function LoginForm({ next }: { next?: string }) {
   useEffect(() => {
     if (state.message) {
       toast.error(state.message);
-      window.onTurnstileExpired?.();
+      queueMicrotask(() => setTurnstileToken(""));
       if (turnstileRef.current) window.turnstile?.reset(turnstileRef.current);
     }
   }, [state.message]);
@@ -162,11 +141,11 @@ export function LoginForm({ next }: { next?: string }) {
       {hydrated && turnstileSiteKey ? (
         <>
           <Script
-            src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+            src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
             strategy="afterInteractive"
             async
             defer
-            onReady={() => setTurnstileReady(true)}
+            onLoad={() => setTurnstileReady(true)}
           />
           <div
             ref={turnstileRef}
@@ -174,7 +153,7 @@ export function LoginForm({ next }: { next?: string }) {
         </>
       ) : null}
 
-      <SignInButton />
+      <SignInButton turnstileToken={turnstileToken} />
       {state.message ? (
         <p className="text-destructive text-sm">{state.message}</p>
       ) : null}
