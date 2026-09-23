@@ -715,6 +715,7 @@ export function Chat({
   const messageRefs = useRef(new Map<string, HTMLDivElement>());
   const realtimeConnectedRef = useRef(false);
   const isNearBottomRef = useRef(true);
+  const initialScrollCompleteRef = useRef(false);
   const [showScrollToLatest, setShowScrollToLatest] = useState(false);
   const [flashedMessageKey, setFlashedMessageKey] = useState<string | null>(null);
 
@@ -787,7 +788,10 @@ export function Chat({
   });
 
   useEffect(() => {
-    window.scrollTo({ top: document.documentElement.scrollHeight });
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: document.documentElement.scrollHeight });
+      initialScrollCompleteRef.current = true;
+    });
   }, []);
 
   useEffect(() => {
@@ -838,7 +842,9 @@ export function Chat({
   useEffect(() => {
     const onScroll = () => {
       updateScrollPosition();
-      if (window.scrollY <= 8) void loadOlderMessages();
+      if (initialScrollCompleteRef.current && window.scrollY <= 8) {
+        void loadOlderMessages();
+      }
     };
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
