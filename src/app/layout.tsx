@@ -24,6 +24,17 @@ const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
 });
 
+const themeScript = `(() => {
+  try {
+    const theme = localStorage.getItem("theme") || "system";
+    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    const resolvedTheme = theme === "system" ? systemTheme : theme;
+    document.documentElement.classList.remove("light", "dark");
+    document.documentElement.classList.add(resolvedTheme);
+    document.documentElement.style.colorScheme = resolvedTheme;
+  } catch {}
+})();`;
+
 export const metadata: Metadata = {
   title: {
     default: "WAWAGO Portal",
@@ -49,6 +60,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${playfairDisplay.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="flex min-h-full flex-col">
         <Providers>{children}</Providers>
       </body>

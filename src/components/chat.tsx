@@ -2,7 +2,7 @@
 
 import EmojiPicker, { EmojiStyle, Theme, type EmojiClickData } from "emoji-picker-react";
 import { ArrowDown, Check, CheckCheck, ContactRound, Info, Loader2, Phone, Reply, SmilePlus } from "lucide-react";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/components/theme-provider";
 import { useEffect, useEffectEvent, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { toast } from "@/lib/toast";
 

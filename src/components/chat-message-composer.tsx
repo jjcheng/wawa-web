@@ -16,7 +16,7 @@ import {
   useRole,
 } from "@floating-ui/react";
 import Image from "next/image";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/components/theme-provider";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type SubmitEvent } from "react";
 import { toast } from "@/lib/toast";
 
