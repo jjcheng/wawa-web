@@ -20,6 +20,7 @@ declare global {
         container: HTMLElement,
         options: {
           sitekey: string;
+          action?: string;
           theme?: "light" | "dark" | "auto";
           size?: "normal" | "flexible";
           callback?: (token: string) => void;
@@ -68,6 +69,7 @@ export function LoginForm({ next }: { next?: string }) {
   // to preserve the phone number when a login attempt fails.
   const [phoneNumber, setPhoneNumber] = useState("");
   const turnstileRef = useRef<HTMLDivElement>(null);
+  const turnstileWidgetIdRef = useRef<string | null>(null);
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   const [turnstileReady, setTurnstileReady] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
@@ -80,24 +82,30 @@ export function LoginForm({ next }: { next?: string }) {
 
   useEffect(() => {
     if (!turnstileSiteKey || !turnstileReady || !turnstileRef.current || !window.turnstile) return;
+    if (turnstileWidgetIdRef.current) return;
 
     const widgetId = window.turnstile.render(turnstileRef.current, {
       sitekey: turnstileSiteKey,
+      action: "login",
       theme: "auto",
       size: "flexible",
       callback: setTurnstileToken,
       "expired-callback": () => setTurnstileToken(""),
       "error-callback": () => setTurnstileToken(""),
     });
+    turnstileWidgetIdRef.current = widgetId;
 
-    return () => window.turnstile?.remove?.(widgetId);
+    return () => {
+      window.turnstile?.remove?.(widgetId);
+      turnstileWidgetIdRef.current = null;
+    };
   }, [turnstileReady, turnstileSiteKey]);
 
   useEffect(() => {
     if (state.message) {
       toast.error(state.message);
       queueMicrotask(() => setTurnstileToken(""));
-      if (turnstileRef.current) window.turnstile?.reset(turnstileRef.current);
+      if (turnstileWidgetIdRef.current) window.turnstile?.reset(turnstileWidgetIdRef.current);
     }
   }, [state.message]);
 
