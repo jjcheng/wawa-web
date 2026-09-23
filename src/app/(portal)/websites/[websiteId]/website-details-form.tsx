@@ -69,7 +69,7 @@ export function WebsiteDetailsForm({
   );
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [values, setValues] = useState(initialValues);
-  const [searchAddress, setSearchAddress] = useState(initialValues.address);
+  const [searchAddress, setSearchAddress] = useState("");
   const [syncPending, setSyncPending] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [pictureFile, setPictureFile] = useState<File | null>(null);
