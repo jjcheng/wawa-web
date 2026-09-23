@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 
 type GoogleLegacyAutocomplete = {
@@ -118,6 +118,7 @@ export function GoogleLocationInput({
   const placeContainerRef = useRef<HTMLDivElement>(null);
   const placeAutocompleteRef = useRef<GooglePlaceAutocompleteElement | null>(null);
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!apiKey || !placeContainerRef.current) return;
@@ -128,6 +129,7 @@ export function GoogleLocationInput({
       try {
         await loadGoogleMaps(apiKey as string);
       } catch {
+        if (!cancelled) setLoadError("Google Maps search could not be loaded.");
         return;
       }
       if (cancelled || !window.google?.maps) return;
@@ -137,12 +139,16 @@ export function GoogleLocationInput({
         try {
           places = (await window.google.maps.importLibrary("places")) as typeof places;
         } catch {
+          if (!cancelled) setLoadError("Google Places search is unavailable for this site.");
           return;
         }
       }
       if (cancelled || !places || !container) return;
 
-      if (!places.PlaceAutocompleteElement) return;
+      if (!places.PlaceAutocompleteElement) {
+        setLoadError("Google Places search is unavailable for this site.");
+        return;
+      }
 
       if (placeAutocompleteRef.current) return;
 
@@ -228,6 +234,8 @@ export function GoogleLocationInput({
         className="border-input focus-within:border-ring focus-within:ring-ring/50 dark:bg-input/30 h-11 w-full rounded-lg border bg-transparent text-sm text-foreground transition-colors outline-none focus-within:ring-3"
         style={{ overflow: "visible", maxWidth: "100%" }}
       />
+      {!apiKey ? <p className="text-destructive mt-2 text-sm">Google Maps key is not configured.</p> : null}
+      {loadError ? <p className="text-destructive mt-2 text-sm">{loadError}</p> : null}
     </div>
   );
 }
