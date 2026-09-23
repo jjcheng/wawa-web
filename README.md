@@ -57,9 +57,30 @@ new header, while keeping the older `x-user-access-token` name as a compatibilit
 | --- | --- |
 | `npm run dev` | Start the dev server |
 | `npm run build` | Production build |
+| `npm run dev:vinext` | Start the Vinext dev server on port 3001 |
+| `npm run build:vinext` | Build the Cloudflare Workers output |
+| `npm run start:vinext` | Run the built Worker locally with Wrangler |
+| `npm run deploy:vinext` | Deploy the built Worker to Cloudflare |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript, no emit |
 | `npm run format` | Prettier write |
+
+## Cloudflare Workers
+
+This app can run on Cloudflare Workers through Vinext. The standard Next.js scripts still
+work for local development and Node-style builds; the Vinext scripts are the Cloudflare
+deployment path.
+
+```bash
+npm run build:vinext
+npm run start:vinext
+npm run deploy:vinext
+```
+
+Set the same environment variables in Cloudflare as in `.env.local`. `API_BASE_URL` must
+be reachable from Cloudflare over HTTPS. For customer storefront domains, route the portal
+Worker for the relevant hostnames so `src/proxy.ts` and the public website loader can use
+the incoming host to resolve the website.
 
 ## Status
 
@@ -74,3 +95,9 @@ mkcert -install
 
 ## in project terminal
 mkcert localhost 127.0.0.1 ::1
+
+Start the HTTPS development server with the generated certificate pair:
+
+```bash
+make local-ssl
+```
