@@ -25,7 +25,6 @@ export default async function ProfilePage() {
       <PageHeader
         title="Settings"
         description="Manage your profile and login password"
-        action={<CloseAccountButton />}
       />
       <SettingsTabs isMaster={user.type === "MASTER"} />
       <Card>
@@ -45,6 +44,9 @@ export default async function ProfilePage() {
           <ProfileForm user={user} />
         </CardContent>
       </Card>
+      <div className="max-w-md">
+        <CloseAccountButton />
+      </div>
     </>
   );
 }

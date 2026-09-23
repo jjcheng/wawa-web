@@ -1,5 +1,6 @@
+import { LocalDateTime } from "@/components/local-date-time";
 import type { Customer } from "@/lib/api/types";
-import { formatDateTime, formatPhoneNumber } from "@/lib/format";
+import { formatPhoneNumber } from "@/lib/format";
 
 export function CustomerInfo({ customer }: { customer: Customer }) {
   return (
@@ -13,7 +14,7 @@ export function CustomerInfo({ customer }: { customer: Customer }) {
       <dt className="text-muted-foreground">Status</dt>
       <dd>{customer.status || "—"}</dd>
       <dt className="text-muted-foreground">Added</dt>
-      <dd>{formatDateTime(customer.added_at)}</dd>
+      <dd><LocalDateTime value={customer.added_at} /></dd>
       <dt className="text-muted-foreground">Remarks</dt>
       <dd className="min-w-0 whitespace-pre-wrap break-words">{customer.remarks || "—"}</dd>
       {Object.keys(customer.additional_data ?? {}).length > 0 ? (

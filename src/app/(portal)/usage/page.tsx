@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { AnalyticsShell } from "@/components/whatsapp/analytics-shell";
 import { AnalyticsViewTabs } from "@/components/whatsapp/analytics-view-tabs";
+import { LocalDateTime } from "@/components/local-date-time";
 import { PhoneNumberListTable } from "@/components/whatsapp/phone-number-list-table";
 import { TemplateUsageTable } from "@/components/whatsapp/template-usage-table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -21,7 +22,6 @@ import { resolveAnalyticsView } from "@/lib/analytics-view";
 import { templateAnalyticsStart } from "@/lib/analytics-range";
 import type { MessageAnalytics, PhoneNumber, TemplateListResponse } from "@/lib/api/types";
 import { requireUser } from "@/lib/auth/session";
-import { formatDateTime } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Usage" };
 
@@ -167,10 +167,10 @@ export default async function UsagePage({ searchParams }: PageProps<"/usage">) {
                   {accountPoints.map((point) => (
                     <TableRow key={`${point.start}-${point.end}`}>
                       <TableCell className="text-xs font-medium">
-                        {formatDateTime(new Date(point.start * 1000))}
+                        <LocalDateTime value={point.start * 1000} />
                       </TableCell>
                       <TableCell className="text-xs">
-                        {formatDateTime(new Date(point.end * 1000))}
+                        <LocalDateTime value={point.end * 1000} />
                       </TableCell>
                       <TableCell className="text-right">
                         {formatCount(point.sent ?? 0)}

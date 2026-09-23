@@ -6,6 +6,7 @@ import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LoadMoreButton } from "@/components/load-more-button";
+import { LocalDateTime } from "@/components/local-date-time";
 import { TableEmptyState } from "@/components/table-empty-state";
 import {
   Dialog,
@@ -26,7 +27,6 @@ import {
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import { formatAnalyticsDate } from "@/lib/analytics-range";
-import { formatDateTime } from "@/lib/format";
 import type { Template } from "@/lib/api/types";
 
 type TemplateListResponse = {
@@ -332,10 +332,10 @@ export function TemplateUsageTable({
                       return (
                         <TableRow key={`${point.start}-${point.end}`}>
                           <TableCell className="text-xs font-medium">
-                            {formatDateTime(new Date(point.start * 1000))}
+                            <LocalDateTime value={point.start * 1000} />
                           </TableCell>
                           <TableCell className="text-xs">
-                            {formatDateTime(new Date(point.end * 1000))}
+                            <LocalDateTime value={point.end * 1000} />
                           </TableCell>
                           <TableCell className="text-right">
                             {(point.sent ?? 0).toLocaleString("en-US")}

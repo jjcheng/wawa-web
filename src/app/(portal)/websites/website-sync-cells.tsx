@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 
+import { LocalDateTime } from "@/components/local-date-time";
 import { TableCell } from "@/components/ui/table";
 import { WebsiteActions } from "@/components/website-actions";
-import { formatDateTime } from "@/lib/format";
 
 export function WebsiteSyncCells({
   websiteId,
@@ -19,8 +19,8 @@ export function WebsiteSyncCells({
 
   return (
     <>
-      <TableCell>{formatDateTime(syncedAt)}</TableCell>
-      <TableCell>{formatDateTime(addedAt)}</TableCell>
+      <TableCell><LocalDateTime value={syncedAt} /></TableCell>
+      <TableCell><LocalDateTime value={addedAt} /></TableCell>
       <TableCell className="text-right">
         <div className="inline-flex">
           <WebsiteActions websiteId={websiteId} compact onSynced={setSyncedAt} />

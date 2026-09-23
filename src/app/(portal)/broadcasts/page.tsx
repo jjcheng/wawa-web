@@ -7,6 +7,7 @@ import { BroadcastCancelButton } from "./broadcast-cancel-button";
 import { BroadcastDeleteButton } from "./broadcast-delete-button";
 import { BroadcastViewButton } from "./broadcast-view-button";
 import { NewBroadcastButton } from "./new-broadcast-button";
+import { LocalDateTime } from "@/components/local-date-time";
 import { PageHeader } from "@/components/page-header";
 import { TableEmptyState } from "@/components/table-empty-state";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type { Broadcast, BroadcastListResponse } from "@/lib/api/types";
-import { formatDateTime } from "@/lib/format";
 import {
   Table,
   TableBody,
@@ -92,7 +92,7 @@ function BroadcastTable({
                   <TableCell>
                     {broadcast.recipient_count ?? broadcast.customer_ids?.length ?? 0}
                   </TableCell>
-                  <TableCell>{formatDateTime(broadcast.send_date)}</TableCell>
+                  <TableCell><LocalDateTime value={broadcast.send_date} /></TableCell>
                   <TableCell>{displayStatus(broadcast.status)}</TableCell>
                   <TableCell className="text-right whitespace-nowrap">
                     <div className="flex items-center justify-end gap-2">

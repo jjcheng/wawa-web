@@ -11,11 +11,11 @@ import {
   type ChatMessageStatus,
   useChatCompose,
 } from "@/components/chat-compose-context";
+import { LocalDateTime } from "@/components/local-date-time";
 import { createAblyConversationProvider } from "@/lib/ably-realtime";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import type { MessageDetail } from "@/lib/api/types";
-import { formatDateTime } from "@/lib/format";
 import { ChatMediaViewer } from "@/components/chat-media-viewer";
 import { TemplatePreviewHtml } from "@/components/template-preview-html";
 import { Button } from "@/components/ui/button";
@@ -536,7 +536,7 @@ function MessageInfoPopover({
                     <div key={event.id || `${event.status}-${event.timestamp}`} className="contents">
                       <dt className="capitalize text-foreground">{event.status}</dt>
                       <dd className="text-muted-foreground">
-                        {formatDateTime(event.timestamp ? new Date(event.timestamp * 1000) : event.added_at)}
+                        <LocalDateTime value={event.timestamp ? event.timestamp * 1000 : event.added_at} />
                         {event.error_message ? (
                           <span className="block text-destructive break-words">
                             {event.error_message}

@@ -85,8 +85,7 @@ export function CloseAccountButton() {
       <Button
         type="button"
         variant="ghost"
-        size="sm"
-        className="text-destructive/80 hover:bg-destructive/10 hover:text-destructive"
+        className="mt-4 ml-3 h-auto p-0 font-normal text-destructive hover:text-destructive/80"
         onClick={() => setOpen(true)}
       >
         Close account

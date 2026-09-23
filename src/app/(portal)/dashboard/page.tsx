@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { DashboardSection } from "./dashboard-section";
+import { LocalDateTime } from "@/components/local-date-time";
 import { PageHeader } from "@/components/page-header";
 import {
   Card,
@@ -20,7 +21,7 @@ import type {
   PhoneNumberListResponse,
 } from "@/lib/api/types";
 import { requireUser } from "@/lib/auth/session";
-import { formatDateTime, formatPhoneNumber } from "@/lib/format";
+import { formatPhoneNumber } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -101,7 +102,7 @@ export default async function DashboardPage() {
                     </p>
                   </div>
                   <span className="text-muted-foreground text-xs">
-                    {formatDateTime(number.last_updated_at)}
+                    <LocalDateTime value={number.last_updated_at} />
                   </span>
                 </div>
               ))
@@ -133,7 +134,7 @@ export default async function DashboardPage() {
             </div>
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground">Member since</span>
-              <span>{formatDateTime(user.added_at)}</span>
+              <span><LocalDateTime value={user.added_at} /></span>
             </div>
           </CardContent>
         </Card>

@@ -7,6 +7,7 @@ import { toast } from "@/lib/toast";
 import { useNavigationProgress } from "@/components/nav/navigation-progress";
 import { NOTIFICATION_EVENT } from "@/components/notifications-realtime-provider";
 import { LoadMoreButton } from "@/components/load-more-button";
+import { LocalDateTime } from "@/components/local-date-time";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,7 @@ import {
 } from "@/components/ui/table";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
-import { formatDateTime, resolveSiteUrl } from "@/lib/format";
+import { resolveSiteUrl } from "@/lib/format";
 import { incrementUnreadNotificationsCount } from "@/lib/unread-notifications-store";
 import type { Notification, NotificationListResponse } from "@/lib/api/types";
 
@@ -212,7 +213,7 @@ export function InboxShell({
                       </Badge>
                     </TableCell>
                     <TableCell>{notification.read ? "Read" : "Unread"}</TableCell>
-                    <TableCell>{formatDateTime(notification.added_at)}</TableCell>
+                    <TableCell><LocalDateTime value={notification.added_at} /></TableCell>
                     <TableCell className="text-right">
                       <NotificationViewButton
                         notification={notification}
@@ -311,7 +312,7 @@ function NotificationViewButton({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{notification.title}</DialogTitle>
-          <DialogDescription>{formatDateTime(notification.added_at)}</DialogDescription>
+          <DialogDescription><LocalDateTime value={notification.added_at} /></DialogDescription>
         </DialogHeader>
         <div className="max-h-[60vh] space-y-3 overflow-y-auto text-sm">
           <Badge variant="secondary" className={TYPE_BADGE_CLASSNAME[notification.type]}>

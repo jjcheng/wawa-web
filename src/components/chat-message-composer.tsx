@@ -521,7 +521,7 @@ export function ChatMessageComposer({
 
   return (
     <form
-      className="bg-background/80 fixed bottom-0 left-3 right-3 z-20 flex flex-col gap-2 pb-3 pt-3 pl-3 backdrop-blur lg:left-[13.5rem] lg:right-3 xl:left-[15rem]"
+      className="bg-background/80 fixed bottom-0 left-4 right-4 z-20 flex flex-col gap-2 pb-3 pt-3 backdrop-blur sm:left-6 sm:right-6 lg:left-[14.5rem] xl:left-[16.5rem]"
       onSubmit={handleSubmit}
     >
       {compressing ? (

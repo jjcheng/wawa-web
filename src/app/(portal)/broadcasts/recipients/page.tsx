@@ -4,6 +4,7 @@ import Link from "next/link";
 import { BroadcastNameFilter } from "../broadcast-name-filter";
 import { BroadcastStatusFilter } from "../broadcast-status-filter";
 import { BackBar } from "@/components/back-bar";
+import { LocalDateTime } from "@/components/local-date-time";
 import { PageHeader } from "@/components/page-header";
 import { TableEmptyState } from "@/components/table-empty-state";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,6 @@ import type {
   BroadcastRecipientListResponse,
   BroadcastStatisticsResponse,
 } from "@/lib/api/types";
-import { formatDateTime } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Broadcast recipients" };
 
@@ -184,9 +184,9 @@ export default async function BroadcastRecipientsPage({
                       <TableCell>{messageAttempts ?? 0}</TableCell>
                       <TableCell>
                         {typeof nextAttemptAt === "string"
-                          ? formatDateTime(nextAttemptAt)
+                          ? <LocalDateTime value={nextAttemptAt} />
                           : nextAttemptAt?.Valid
-                            ? formatDateTime(nextAttemptAt.Time)
+                            ? <LocalDateTime value={nextAttemptAt.Time} />
                             : "—"}
                       </TableCell>
                       <TableCell className="max-w-xs whitespace-pre-wrap break-words">

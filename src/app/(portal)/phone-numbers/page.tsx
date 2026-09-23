@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { PhoneNumberStatusFilter } from "./phone-number-status-filter";
 import { PhoneNumberViewButton } from "./phone-number-view-button";
+import { LocalDateTime } from "@/components/local-date-time";
 import { PageHeader } from "@/components/page-header";
 import { TableEmptyState } from "@/components/table-empty-state";
 import { EmbeddedSignupButton } from "@/components/whatsapp/embedded-signup-button";
@@ -20,7 +21,7 @@ import {
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type { PhoneNumber, PhoneNumberListResponse } from "@/lib/api/types";
-import { formatDateTime, formatPhoneNumber } from "@/lib/format";
+import { formatPhoneNumber } from "@/lib/format";
 import { requireUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Phone numbers" };
@@ -109,7 +110,7 @@ export default async function PhoneNumbersPage({ searchParams }: PageProps<"/pho
                           ? number.status.charAt(0) + number.status.slice(1).toLowerCase()
                           : "—"}
                       </TableCell>
-                      <TableCell>{formatDateTime(number.added_at)}</TableCell>
+                      <TableCell><LocalDateTime value={number.added_at} /></TableCell>
                       <TableCell className="text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-2">
                           <PhoneNumberViewButton
