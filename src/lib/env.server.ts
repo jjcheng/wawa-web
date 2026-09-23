@@ -8,8 +8,6 @@ const serverEnvSchema = z.object({
   NEXT_META_APP_ID: z.string().default(""),
   NEXT_META_EMBEDDED_SIGNUP_CONFIG_ID: z.string().default(""),
   NEXT_PUBLIC_COMMERCE_WEBSITE_DOMAIN: z.string().default(""),
-  TURNSTILE_SECRET_KEY: z.string().default(""),
-  TURNSTILE_HOSTNAMES: z.string().default(""),
 });
 
 const parsed = serverEnvSchema.safeParse({
@@ -18,8 +16,6 @@ const parsed = serverEnvSchema.safeParse({
   NEXT_META_APP_ID: process.env.NEXT_META_APP_ID,
   NEXT_META_EMBEDDED_SIGNUP_CONFIG_ID: process.env.NEXT_META_EMBEDDED_SIGNUP_CONFIG_ID,
   NEXT_PUBLIC_COMMERCE_WEBSITE_DOMAIN: process.env.NEXT_PUBLIC_COMMERCE_WEBSITE_DOMAIN,
-  TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
-  TURNSTILE_HOSTNAMES: process.env.TURNSTILE_HOSTNAMES,
 });
 
 if (!parsed.success) {
