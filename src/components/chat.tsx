@@ -3,7 +3,7 @@
 import EmojiPicker, { EmojiStyle, Theme, type EmojiClickData } from "emoji-picker-react";
 import { ArrowDown, Check, CheckCheck, ContactRound, Info, Loader2, Phone, Reply, SmilePlus } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from "react";
+import { useEffect, useEffectEvent, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { toast } from "@/lib/toast";
 
 import {
@@ -58,21 +58,31 @@ type ChatProps = {
   recipient: string;
 };
 
-function messageDate(timestamp: number) {
+function messageDate(timestamp: number, useLocalTime: boolean) {
   return new Intl.DateTimeFormat("en-US", {
     weekday: "short",
     day: "2-digit",
     month: "short",
     year: "numeric",
+    timeZone: useLocalTime ? undefined : "UTC",
   }).format(new Date(timestamp * 1000));
 }
 
-function messageTime(timestamp: number) {
+function messageTime(timestamp: number, useLocalTime: boolean) {
   return new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
+    timeZone: useLocalTime ? undefined : "UTC",
   }).format(new Date(timestamp * 1000));
+}
+
+function subscribeToHydration() {
+  return () => {};
+}
+
+function useHydrated() {
+  return useSyncExternalStore(subscribeToHydration, () => true, () => false);
 }
 
 function messageBody(message: Message) {
@@ -374,10 +384,10 @@ function isDisplayableMessage(message: Message) {
   return displayableMessageTypes.has(message.type);
 }
 
-function groupMessagesByDate(messages: Message[]) {
+function groupMessagesByDate(messages: Message[], useLocalTime: boolean) {
   const groups: { date: string; messages: Message[] }[] = [];
   for (const message of messages) {
-    const date = messageDate(message.timestamp);
+    const date = messageDate(message.timestamp, useLocalTime);
     const latestGroup = groups[groups.length - 1];
     if (latestGroup?.date === date) {
       latestGroup.messages.push(message);
@@ -694,6 +704,7 @@ export function Chat({
 }: ChatProps) {
   const { appendMessage, appendedMessages, setReplyTarget, updateMessageStatus } = useChatCompose();
   const { resolvedTheme } = useTheme();
+  const hydrated = useHydrated();
   const [messages, setMessages] = useState(() => initialMessages);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -993,7 +1004,7 @@ export function Chat({
     scrollToMessage(messageByReferenceId(replyTargetId(message)), "The previous message is not available");
   }
 
-  const messageGroups = groupMessagesByDate(visibleMessages);
+  const messageGroups = groupMessagesByDate(visibleMessages, hydrated);
   const emojiPickerTheme = resolvedTheme === "dark" ? Theme.DARK : Theme.LIGHT;
 
   return (
@@ -1071,7 +1082,7 @@ export function Chat({
 
                   const timeAndStatus = (
                     <span className="flex items-center gap-1 text-[0.6875rem] leading-none text-[#667781] dark:text-[#aebac1]">
-                      {messageTime(message.timestamp)}
+                      {messageTime(message.timestamp, hydrated)}
                       {message.sending ? (
                         <>
                           {message.status?.toLowerCase() !== "failed" &&
