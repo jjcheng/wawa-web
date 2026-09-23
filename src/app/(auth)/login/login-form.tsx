@@ -77,9 +77,7 @@ function useTurnstileToken() {
 
 export function LoginForm({ next }: { next?: string }) {
   const [state, formAction] = useActionState<LoginState, FormData>(loginAction, {});
-  const [countryCode, setCountryCode] = useState(() =>
-    typeof window === "undefined" ? "65" : window.localStorage.getItem("country_code") ?? "65",
-  );
+  const [countryCode, setCountryCode] = useState<string | undefined>(undefined);
   // React resets uncontrolled <form action> fields after the action runs, so keep this controlled
   // to preserve the phone number when a login attempt fails.
   const [phoneNumber, setPhoneNumber] = useState("");
