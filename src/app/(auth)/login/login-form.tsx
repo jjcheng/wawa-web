@@ -2,7 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import Script from "next/script";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,14 @@ declare global {
 
 function fieldError(state: LoginState, field: string) {
   return state.inputErrors?.find((error) => error.field === field)?.message;
+}
+
+function subscribeToHydration() {
+  return () => {};
+}
+
+function useHydrated() {
+  return useSyncExternalStore(subscribeToHydration, () => true, () => false);
 }
 
 function SignInButton() {
@@ -84,6 +92,7 @@ export function LoginForm({ next }: { next?: string }) {
   const turnstileRef = useRef<HTMLDivElement>(null);
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   const [turnstileReady, setTurnstileReady] = useState(false);
+  const hydrated = useHydrated();
 
   function handleCountryCodeChange(nextCountryCode: string) {
     window.localStorage.setItem("country_code", nextCountryCode);
@@ -150,7 +159,7 @@ export function LoginForm({ next }: { next?: string }) {
         ) : null}
       </div>
 
-      {turnstileSiteKey ? (
+      {hydrated && turnstileSiteKey ? (
         <>
           <Script
             src="https://challenges.cloudflare.com/turnstile/v0/api.js"
