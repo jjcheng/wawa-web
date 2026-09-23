@@ -83,9 +83,7 @@ export function LoginForm({ next }: { next?: string }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const turnstileRef = useRef<HTMLDivElement>(null);
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
-  const [turnstileReady, setTurnstileReady] = useState(() =>
-    typeof window !== "undefined" && Boolean(window.turnstile),
-  );
+  const [turnstileReady, setTurnstileReady] = useState(false);
 
   function handleCountryCodeChange(nextCountryCode: string) {
     window.localStorage.setItem("country_code", nextCountryCode);
@@ -156,6 +154,7 @@ export function LoginForm({ next }: { next?: string }) {
         <>
           <Script
             src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+            strategy="afterInteractive"
             async
             defer
             onReady={() => setTurnstileReady(true)}
