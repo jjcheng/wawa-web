@@ -64,6 +64,11 @@ const ALLOWED: { method: string; pattern: RegExp }[] = [
   { method: "GET", pattern: /^v1\/wa\/product-sets\/[^/]+\/products$/ },
   { method: "GET", pattern: /^v1\/commerce\/websites$/ },
   { method: "GET", pattern: /^v1\/commerce\/websites\/[^/]+$/ },
+  { method: "GET", pattern: /^v1\/commerce\/websites\/[^/]+\/pages$/ },
+  { method: "POST", pattern: /^v1\/commerce\/websites\/[^/]+\/pages$/ },
+  { method: "GET", pattern: /^v1\/commerce\/pages\/[^/]+$/ },
+  { method: "PATCH", pattern: /^v1\/commerce\/pages\/[^/]+$/ },
+  { method: "DELETE", pattern: /^v1\/commerce\/pages\/[^/]+$/ },
   { method: "POST", pattern: /^v1\/commerce\/websites$/ },
   { method: "PATCH", pattern: /^v1\/commerce\/websites\/[^/]+$/ },
   { method: "DELETE", pattern: /^v1\/commerce\/websites\/[^/]+$/ },
@@ -74,6 +79,8 @@ const ALLOWED: { method: string; pattern: RegExp }[] = [
   { method: "GET", pattern: /^v1\/public\/sets$/ },
   { method: "GET", pattern: /^v1\/public\/generic-products$/ },
   { method: "GET", pattern: /^v1\/public\/products\/[^/]+$/ },
+  { method: "GET", pattern: /^v1\/public\/navbar-items$/ },
+  { method: "GET", pattern: /^v1\/public\/page$/ },
   { method: "GET", pattern: /^v1\/public\/wa-link$/ },
 ];
 

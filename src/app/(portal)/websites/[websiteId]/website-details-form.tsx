@@ -2,6 +2,7 @@
 
 import { ExternalLink, Info, Loader2, RefreshCw, Trash2, X } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   startTransition,
   useActionState,
@@ -12,6 +13,7 @@ import {
 } from "react";
 
 import { MediaDropzone } from "@/components/media-dropzone";
+import { TableEmptyState } from "@/components/table-empty-state";
 import {
   GoogleLocationInput,
   type GoogleLocationSelection,
@@ -30,11 +32,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
-import type { BusinessProfile } from "@/lib/api/types";
+import type { BusinessProfile, WebsitePage } from "@/lib/api/types";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { deleteWebsiteAction, updateWebsiteAction, type WebsiteActionState } from "./actions";
@@ -43,6 +46,8 @@ export function WebsiteDetailsForm({
   websiteId,
   url,
   initialValues,
+  initialActiveTab = "profile",
+  initialPages = null,
 }: {
   websiteId: string;
   url?: string;
@@ -58,6 +63,8 @@ export function WebsiteDetailsForm({
     contactText: string;
     copyrightText: string;
   };
+  initialActiveTab?: "profile" | "pages";
+  initialPages?: WebsitePage[] | null;
 }) {
   const [state, formAction, pending] = useActionState<WebsiteActionState, FormData>(
     updateWebsiteAction,
@@ -69,6 +76,10 @@ export function WebsiteDetailsForm({
   );
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [values, setValues] = useState(initialValues);
+  const [activeTab, setActiveTab] = useState<"profile" | "pages">(initialActiveTab);
+  const [pages, setPages] = useState<WebsitePage[] | null>(initialPages);
+  const [pagesLoading, setPagesLoading] = useState(false);
+  const [pagesError, setPagesError] = useState<string | null>(null);
   const [searchAddress, setSearchAddress] = useState("");
   const [syncPending, setSyncPending] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -179,6 +190,22 @@ export function WebsiteDetailsForm({
     }
   }
 
+  async function loadPages() {
+    if (pages || pagesLoading) return;
+
+    setPagesLoading(true);
+    setPagesError(null);
+    try {
+      const response = await apiFetch<WebsitePage[]>(`v1/commerce/websites/${encodeURIComponent(websiteId)}/pages`);
+      const websitePages = Array.isArray(response) ? response : [];
+      setPages([...websitePages].sort((first, second) => first.rank - second.rank));
+    } catch (error) {
+      setPagesError(toApiError(error).message);
+    } finally {
+      setPagesLoading(false);
+    }
+  }
+
   return (
     <div className="max-w-2xl">
       <PageHeader
@@ -223,9 +250,45 @@ export function WebsiteDetailsForm({
           </div>
         }
       />
-      <Card className="rounded-md">
-        <CardContent className="pt-0">
-      <form onSubmit={(event) => void handleSubmit(event)} className="space-y-5">
+      <div className="mb-4 flex border-b" role="tablist" aria-label="Website settings">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "profile"}
+          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
+            activeTab === "profile"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+          onClick={() => setActiveTab("profile")}
+        >
+          Profile
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "pages"}
+          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
+            activeTab === "pages"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+          onClick={() => {
+            setActiveTab("pages");
+            void loadPages();
+          }}
+        >
+          Pages
+        </button>
+        {activeTab === "pages" ? (
+          <Button asChild size="sm" className="ml-auto self-center">
+            <Link href={`/websites/${encodeURIComponent(websiteId)}/pages/new?return_to=${encodeURIComponent(`/websites/${websiteId}?tab=pages`)}`}>Add page</Link>
+          </Button>
+        ) : null}
+      </div>
+      <Card className={activeTab === "pages" ? "rounded-md py-0" : "rounded-md"}>
+        <CardContent className={activeTab === "pages" ? "overflow-x-auto p-0" : "pt-0"}>
+      {activeTab === "profile" ? <form onSubmit={(event) => void handleSubmit(event)} className="space-y-5">
         <input type="hidden" name="website_id" value={websiteId} />
         <input type="hidden" name="profile_picture_url" value={values.profilePictureUrl} />
         <input type="hidden" name="cover_image_url" value={values.coverImageUrl} />
@@ -430,11 +493,46 @@ export function WebsiteDetailsForm({
             {pictureUploading || coverUploading ? "Uploading..." : pending ? "Saving..." : "Save changes"}
           </Button>
         </div>
-      </form>
+      </form> : <>
+        {pagesLoading ? <p className="text-muted-foreground p-4 text-sm">Loading pages...</p> : null}
+        {pagesError ? <p className="text-destructive p-4 text-sm" role="alert">{pagesError}</p> : null}
+        {pages ? (
+          <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Slug</TableHead>
+                  <TableHead>Nav bar</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pages.length === 0 ? (
+                  <TableEmptyState colSpan={4}>No pages found.</TableEmptyState>
+                ) : (
+                  pages.map((page) => (
+                    <TableRow key={`${page.slug}-${page.rank}`}>
+                      <TableCell className="max-w-64 whitespace-normal">
+                        <div className="font-medium">{page.title || "Untitled page"}</div>
+                      </TableCell>
+                      <TableCell className="max-w-48 truncate">/{page.slug}</TableCell>
+                      <TableCell>{page.nav ? "Yes" : "No"}</TableCell>
+                      <TableCell className="text-right">
+                        <Button asChild size="sm" variant="outline">
+                          <Link href={`/websites/${encodeURIComponent(websiteId)}/pages/${encodeURIComponent(page.id)}?return_to=${encodeURIComponent(`/websites/${websiteId}?tab=pages`)}`}>Edit</Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+          </Table>
+        ) : null}
+      </>}
         </CardContent>
       </Card>
 
-      <div className="pt-5">
+      {activeTab === "profile" ? <div className="pt-5">
         <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
           <Button type="button" variant="destructive" onClick={() => setConfirmDelete(true)}>
             <Trash2 className="size-4" />
@@ -468,7 +566,7 @@ export function WebsiteDetailsForm({
             {deleteState.message}
           </p>
         ) : null}
-      </div>
+      </div> : null}
     </div>
   );
 }

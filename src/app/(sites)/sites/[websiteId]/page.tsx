@@ -8,6 +8,7 @@ import type { CatalogSet, GenericProductListResponse, Product, Website } from "@
 import {
   getPublicWebsiteHostname,
   getPublicWebsiteOrigin,
+  loadPublicNavbarItems,
   loadPublicWebsite,
 } from "@/lib/public-website";
 import { serializeJsonLd } from "@/lib/public-seo";
@@ -70,10 +71,12 @@ export default async function PublicWebsitePage({
   let website: Website | null;
   let sets: CatalogSet[] = [];
   let initialProducts: Product[] = [];
+  let navbarItems = [];
 
   try {
     website = await loadPublicWebsite();
     if (!website || String(website.id) !== websiteId) notFound();
+    navbarItems = await loadPublicNavbarItems();
     const hostname = await getPublicWebsiteHostname();
     const setsResponse = await serverFetch<CatalogSet[]>("/v1/public/sets", {
       forwardedHost: hostname,
@@ -95,7 +98,7 @@ export default async function PublicWebsitePage({
     }
   } catch (error) {
     if (error instanceof ApiError) notFound();
-    notFound();
+    throw error;
   }
 
   const address = website.address?.trim();
@@ -132,7 +135,7 @@ export default async function PublicWebsitePage({
   };
 
   return (
-    <StorefrontShell website={website}>
+    <StorefrontShell website={website} navbarItems={navbarItems}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(storeStructuredData) }}

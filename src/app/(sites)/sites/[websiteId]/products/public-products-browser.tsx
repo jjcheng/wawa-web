@@ -70,7 +70,7 @@ export function PublicProductsBrowser({
                 aria-selected={selectedSetId === set.id}
                 size="lg"
                 variant={selectedSetId === set.id ? "default" : "outline"}
-                className="rounded-full px-5 font-bold uppercase tracking-wide"
+                className="rounded-full px-3 font-semibold uppercase tracking-wide"
                 disabled={loading}
                 onClick={() => void selectSet(set.id)}
               >

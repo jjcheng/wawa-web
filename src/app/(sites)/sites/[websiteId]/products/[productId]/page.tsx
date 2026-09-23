@@ -8,6 +8,7 @@ import type { Product } from "@/lib/api/types";
 import {
   getPublicWebsiteHostname,
   getPublicWebsiteOrigin,
+  loadPublicNavbarItems,
   loadPublicWebsite,
 } from "@/lib/public-website";
 import { getProductName, getPublicProductPath, serializeJsonLd } from "@/lib/public-seo";
@@ -108,6 +109,7 @@ export default async function PublicProductDetailPage({
   const { websiteId, productId } = await params;
   const website = await loadPublicWebsite();
   if (!website || String(website.id) !== websiteId) notFound();
+  const navbarItems = await loadPublicNavbarItems();
 
   let product: Product;
   try {
@@ -117,7 +119,7 @@ export default async function PublicProductDetailPage({
     });
   } catch (error) {
     if (error instanceof ApiError) notFound();
-    notFound();
+    throw error;
   }
 
   const productName = getProductName(product);
@@ -151,7 +153,7 @@ export default async function PublicProductDetailPage({
   };
 
   return (
-    <StorefrontShell website={website}>
+    <StorefrontShell website={website} navbarItems={navbarItems}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(productStructuredData) }}

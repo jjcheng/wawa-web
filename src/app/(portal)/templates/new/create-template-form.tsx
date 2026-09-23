@@ -29,6 +29,7 @@ import { toast } from "@/lib/toast";
 
 import { MediaDropzone } from "@/components/media-dropzone";
 import { Button } from "@/components/ui/button";
+import { CharacterCounter } from "@/components/character-counter";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -1124,9 +1125,7 @@ export function CreateTemplateForm({
                   },
                 })}
               />
-              <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
-                {templateName.length}/{TEMPLATE_NAME_MAX_LENGTH}
-              </span>
+              <CharacterCounter value={templateName} maxLength={TEMPLATE_NAME_MAX_LENGTH} />
             </div>
             {errors.name ? (
               <p className="text-destructive text-sm">{errors.name.message}</p>

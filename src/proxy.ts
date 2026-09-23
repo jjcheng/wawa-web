@@ -56,6 +56,10 @@ export async function proxy(request: NextRequest) {
 
   if (pathname.startsWith("/sites/")) return NextResponse.next();
 
+  if (hostname === "www.wawago.app") {
+    return NextResponse.rewrite(new URL(`https://wawa-corporate.pages.dev${pathname}${request.nextUrl.search}`));
+  }
+
   if (!isPortalHost(hostname)) {
     const websiteId = await resolveWebsiteId(host, request.nextUrl.origin);
     if (websiteId) {

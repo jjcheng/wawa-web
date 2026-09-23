@@ -91,6 +91,29 @@ export type Website = {
   added_at?: string;
 };
 
+export type WebsitePage = {
+  id: number | string;
+  website_id: number;
+  title: string;
+  description: string;
+  slug: string;
+  content: string;
+  nav: boolean;
+  rank: number;
+};
+
+export type PublicNavbarItem = {
+  title?: string;
+  slug?: string;
+};
+
+export type PublicWebsitePage = {
+  title?: string;
+  description?: string;
+  slug?: string;
+  content?: string;
+};
+
 export type CatalogSet = {
   id: string;
   name?: string;

@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 
 import { serverFetch } from "@/lib/api/server-client";
-import type { Website } from "@/lib/api/types";
+import type { PublicNavbarItem, Website } from "@/lib/api/types";
 
 function hostFromHeader(value: string | null) {
   return value?.split(",")[0]?.trim() ?? "";
@@ -32,5 +32,20 @@ export async function loadPublicWebsite() {
     });
   } catch {
     return null;
+  }
+}
+
+export async function loadPublicNavbarItems() {
+  const host = await getPublicWebsiteHostname();
+  if (!host) return [];
+
+  try {
+    const items = await serverFetch<PublicNavbarItem[]>("/v1/public/navbar-items", {
+      forwardedHost: host,
+      forwardedOrigin: await getPublicWebsiteOrigin(),
+    });
+    return Array.isArray(items) ? items : [];
+  } catch {
+    return [];
   }
 }

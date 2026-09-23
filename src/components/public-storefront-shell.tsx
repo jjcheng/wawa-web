@@ -1,15 +1,18 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { PublicStorefrontNavigation } from "@/components/public-storefront-navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PublicWhatsAppButton } from "@/components/public-whatsapp-button";
-import type { Website } from "@/lib/api/types";
+import type { PublicNavbarItem, Website } from "@/lib/api/types";
 
 export function StorefrontShell({
   website,
+  navbarItems = [],
   children,
 }: {
   website: Website;
+  navbarItems?: PublicNavbarItem[];
   children: ReactNode;
 }) {
   const storeName = website.business_name || website.catalog_name || "Our Store";
@@ -17,7 +20,7 @@ export function StorefrontShell({
   return (
     <main className="min-h-svh bg-background font-[family-name:var(--font-inter)] text-foreground">
       <header className="sticky top-0 z-50 border-b bg-background">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
+        <div className="mx-auto flex max-w-6xl items-center gap-4 px-5 py-4 sm:px-8">
           <Link href="/" className="flex min-w-0 items-center gap-3" aria-label={`${storeName} home`}>
             {website.profile_picture_url ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -34,7 +37,12 @@ export function StorefrontShell({
             <span className="truncate text-lg font-bold tracking-tight">{storeName}</span>
           </Link>
 
-          <ThemeToggle toggleOnly large />
+          <span className="ml-auto" />
+          <PublicStorefrontNavigation items={navbarItems} mobile={false} />
+          <div className="flex shrink-0 items-center gap-1">
+            <ThemeToggle toggleOnly large />
+            <PublicStorefrontNavigation items={navbarItems} desktop={false} />
+          </div>
         </div>
       </header>
       {children}
