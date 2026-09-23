@@ -70,7 +70,7 @@ export function PublicProductsBrowser({
                 aria-selected={selectedSetId === set.id}
                 size="lg"
                 variant={selectedSetId === set.id ? "default" : "outline"}
-                className="rounded-full px-3 font-semibold uppercase tracking-wide"
+                className="rounded-full px-3 text-xs font-semibold uppercase tracking-wide"
                 disabled={loading}
                 onClick={() => void selectSet(set.id)}
               >
@@ -102,10 +102,10 @@ export function PublicProductsBrowser({
                     <div className="aspect-square" />
                   )}
                   <div className="absolute inset-x-3 bottom-3 rounded-md bg-background/75 p-3 text-foreground shadow-lg backdrop-blur-md">
-                    <h2 className="text-base font-bold leading-tight">{product.name || product.title || "Unnamed product"}</h2>
-                    <div className="mt-1 flex items-baseline gap-2 text-base font-bold">
+                    <h2 className="text-sm font-bold leading-tight">{product.name || product.title || "Unnamed product"}</h2>
+                    <div className="mt-1 flex items-baseline gap-2 text-sm font-bold">
                       {hasSalePrice(product) ? (
-                        <span className="text-muted-foreground text-sm font-semibold line-through">
+                        <span className="text-muted-foreground text-xs font-semibold line-through">
                           {product.price ?? "Price unavailable"}
                         </span>
                       ) : null}

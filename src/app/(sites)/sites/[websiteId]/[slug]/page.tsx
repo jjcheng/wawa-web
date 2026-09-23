@@ -109,8 +109,8 @@ export default async function PublicWebsiteSlugPage({ params }: PublicPageProps)
           </div>
         </div>
         <div className="mt-8 max-w-3xl">
-          <h1 className="text-4xl font-semibold tracking-tight">{title}</h1>
-          {page.description ? <p className="mt-6 whitespace-pre-line text-lg leading-7 text-muted-foreground">{page.description}</p> : null}
+          <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
+          {page.description ? <p className="mt-6 whitespace-pre-line text-base leading-7 text-muted-foreground">{page.description}</p> : null}
         {page.content ? (
           <PublicPageContent html={withLazyImages(stripScriptTags(page.content))} />
         ) : null}

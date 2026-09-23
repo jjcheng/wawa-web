@@ -34,7 +34,7 @@ export function StorefrontShell({
                 {storeName.slice(0, 1).toUpperCase()}
               </span>
             )}
-            <span className="truncate text-lg font-bold tracking-tight">{storeName}</span>
+            <span className="truncate text-base font-bold tracking-tight">{storeName}</span>
           </Link>
 
           <span className="ml-auto" />
@@ -47,7 +47,7 @@ export function StorefrontShell({
       </header>
       {children}
       <footer className="border-t">
-        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-5 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-8">
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-5 py-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <span>{website.copyright_text || storeName}</span>
           {website.email ? <a className="hover:text-foreground" href={`mailto:${website.email}`}>{website.email}</a> : null}
         </div>

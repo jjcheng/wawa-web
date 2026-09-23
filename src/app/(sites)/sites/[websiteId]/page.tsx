@@ -151,7 +151,7 @@ export default async function PublicWebsitePage({
           {website.tagline ? (
             <div className="relative flex min-h-72 items-end bg-black/35 sm:min-h-96">
               <div className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 sm:py-12">
-                <p className="max-w-3xl break-words font-[family-name:var(--font-playfair-display)] text-4xl font-semibold leading-tight text-white sm:text-5xl">
+                <p className="max-w-3xl break-words font-[family-name:var(--font-playfair-display)] text-3xl font-semibold leading-tight text-white sm:text-4xl">
                   {website.tagline}
                 </p>
               </div>
@@ -161,11 +161,11 @@ export default async function PublicWebsitePage({
       ) : null}
       <section className="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
         {hasAboutContent ? (
-          <div className="max-w-3xl space-y-4 text-lg leading-8 text-muted-foreground">
+          <div className="max-w-3xl space-y-4 text-base leading-7 text-muted-foreground">
             {website.about ? <p>{website.about}</p> : null}
           </div>
         ) : null}
-        <h1 className={`text-3xl font-bold tracking-tight sm:text-4xl ${hasAboutContent ? "mt-12" : ""}`}>
+        <h1 className={`text-2xl font-bold tracking-tight sm:text-3xl ${hasAboutContent ? "mt-12" : ""}`}>
           Our Products
         </h1>
         <div className="mt-8">
@@ -179,8 +179,8 @@ export default async function PublicWebsitePage({
       {website.description ? (
         <section className="border-t">
           <div className="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
-            <h2 className="text-2xl font-bold tracking-tight">About Us</h2>
-            <p className="mt-5 max-w-3xl whitespace-pre-line text-lg leading-8 text-muted-foreground">
+            <h2 className="text-xl font-bold tracking-tight">About Us</h2>
+            <p className="mt-5 max-w-3xl whitespace-pre-line text-base leading-7 text-muted-foreground">
               {website.description}
             </p>
           </div>
@@ -188,7 +188,7 @@ export default async function PublicWebsitePage({
       ) : null}
       {mapUrl ? (
         <section className="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
-          <h2 className="text-2xl font-bold tracking-tight">Locate Us</h2>
+          <h2 className="text-xl font-bold tracking-tight">Locate Us</h2>
           <div className="mt-6 aspect-[16/9] max-h-[500px] w-full overflow-hidden">
             <iframe
               src={mapUrl}
@@ -198,7 +198,7 @@ export default async function PublicWebsitePage({
               referrerPolicy="no-referrer-when-downgrade"
             />
           </div>
-          {address ? <p className="mt-5 whitespace-pre-line text-lg leading-8 text-muted-foreground">{address}</p> : null}
+          {address ? <p className="mt-5 whitespace-pre-line text-base leading-7 text-muted-foreground">{address}</p> : null}
         </section>
       ) : null}
     </StorefrontShell>

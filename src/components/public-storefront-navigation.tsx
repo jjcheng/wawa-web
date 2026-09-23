@@ -32,7 +32,7 @@ export function PublicStorefrontNavigation({
       {desktop ? (
         <nav className="hidden h-9 items-center gap-5 lg:flex" aria-label="Storefront navigation">
           {navigationItems.map((item) => (
-            <Link key={item.slug} href={`/${item.slug.replace(/^\/+/, "")}`} className="max-w-40 truncate text-sm font-medium hover:underline">
+            <Link key={item.slug} href={`/${item.slug.replace(/^\/+/, "")}`} className="max-w-40 truncate text-xs font-medium hover:underline">
               {item.title}
             </Link>
           ))}
@@ -48,7 +48,7 @@ export function PublicStorefrontNavigation({
           <nav className="flex flex-col pt-14 p-3" aria-label="Storefront navigation">
             {navigationItems.map((item) => (
               <SheetClose key={item.slug} asChild>
-                <Link href={`/${item.slug.replace(/^\/+/, "")}`} className="rounded-md px-3 py-3 text-base font-medium hover:bg-muted">
+                <Link href={`/${item.slug.replace(/^\/+/, "")}`} className="rounded-md px-3 py-3 text-sm font-medium hover:bg-muted">
                   {item.title}
                 </Link>
               </SheetClose>

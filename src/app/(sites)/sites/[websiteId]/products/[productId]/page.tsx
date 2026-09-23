@@ -169,21 +169,21 @@ export default async function PublicProductDetailPage({
           <ProductImageGallery images={images} productName={productName} />
           <div className="self-start lg:sticky lg:top-24">
             <div className="mb-8 flex flex-wrap items-center gap-3">
-              <span className={`rounded-full px-3 py-1 text-sm font-semibold capitalize ${availabilityClassName(product.availability)}`}>
+              <span className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${availabilityClassName(product.availability)}`}>
                 {availabilityLabel(product.availability)}
               </span>
-              {product.condition ? <span className="text-sm capitalize text-muted-foreground">{product.condition}</span> : null}
+              {product.condition ? <span className="text-xs capitalize text-muted-foreground">{product.condition}</span> : null}
             </div>
-            <h1 className="text-4xl font-semibold tracking-tight">{productName}</h1>
+            <h1 className="text-3xl font-semibold tracking-tight">{productName}</h1>
             <div className="mt-5 flex items-baseline gap-3">
               {hasSalePrice(product) && product.price !== undefined && product.price !== null ? (
-                <span className="text-muted-foreground text-lg font-semibold line-through">{product.price}</span>
+                <span className="text-muted-foreground text-base font-semibold line-through">{product.price}</span>
               ) : null}
-              <p className="text-lg font-semibold">
+              <p className="text-base font-semibold">
                 {hasSalePrice(product) ? product.sale_price : product.price ?? "Price unavailable"}
               </p>
             </div>
-            {product.description ? <p className="mt-6 whitespace-pre-line leading-7 text-muted-foreground text-lg">{product.description}</p> : null}
+            {product.description ? <p className="mt-6 whitespace-pre-line leading-7 text-muted-foreground text-base">{product.description}</p> : null}
           </div>
         </div>
       </section>
