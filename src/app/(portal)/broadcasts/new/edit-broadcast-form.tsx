@@ -1234,7 +1234,7 @@ export function EditBroadcastForm({
                       onValueChange={(value) =>
                         setVariableValues((currentValues) => ({
                           ...currentValues,
-                          [button.key]: value,
+                          [button.key]: button.buttonType === "URL" ? value.replace(/\s+/g, "-") : value,
                         }))
                       }
                       placeholder={button.placeholder}

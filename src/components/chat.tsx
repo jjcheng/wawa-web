@@ -337,6 +337,20 @@ function buttonResponseTargetId(message: Message) {
   );
 }
 
+function replyTargetId(message: Message) {
+  if (message.type !== "text") return undefined;
+  const payload = message.payload as Record<string, unknown> | undefined;
+  const context = (typeof payload?.context === "object" && payload.context
+    ? payload.context
+    : undefined) as Record<string, unknown> | undefined;
+
+  return (
+    toIdString(context?.id) ??
+    toIdString(context?.wa_message_id) ??
+    toIdString(context?.message_id)
+  );
+}
+
 function reactionUserId(message: Message) {
   const payload = message.payload as {
     from_me?: unknown;
@@ -508,7 +522,7 @@ function MessageInfoPopover({
               <div className="mt-2 border-t pt-2 space-y-1">
                 <p className="mb-2 font-semibold text-foreground text-xs">Status History</p>
                 <dl className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-2.5 gap-y-1 text-[11px]">
-                  {details.statuses.map((event) => (
+                  {[...details.statuses].sort((first, second) => first.timestamp - second.timestamp).map((event) => (
                     <div key={event.id || `${event.status}-${event.timestamp}`} className="contents">
                       <dt className="capitalize text-foreground">{event.status}</dt>
                       <dd className="text-muted-foreground">
@@ -534,10 +548,12 @@ function MessageInfoPopover({
 function MessageContent({
   message,
   onButtonResponseClick,
+  onReplyClick,
   buttonResponseContext,
 }: {
   message: Message;
   onButtonResponseClick?: () => void;
+  onReplyClick?: () => void;
   buttonResponseContext?: string;
 }) {
   const payload = message.payload;
@@ -560,7 +576,15 @@ function MessageContent({
 
   return (
     <>
-      {hasReply ? <p className="mb-1.5 rounded-md border-l-4 border-[#06cf9c] bg-black/5 px-2 py-1.5 text-xs text-[#54656f] dark:bg-black/15 dark:text-[#aebac1]">Replying to previous message</p> : null}
+      {hasReply ? (
+        <button
+          type="button"
+          className="mb-1.5 w-full rounded-md border-l-4 border-[#06cf9c] bg-black/5 px-2 py-1.5 text-left text-xs text-[#54656f] dark:bg-black/15 dark:text-[#aebac1]"
+          onClick={onReplyClick}
+        >
+          Replying to previous message
+        </button>
+      ) : null}
       {message.type === "unsupported" ? (
         <div className="space-y-1">
           <p className="font-medium">{typeof errors?.title === "string" ? errors.title : "Unsupported message"}</p>
@@ -931,21 +955,42 @@ export function Chat({
     });
   }
 
-  function scrollToButtonResponseTarget(message: Message) {
-    const targetMessage = buttonResponseTargetMessage(message);
-    if (!targetMessage) {
-      toast.error("Message not loaded in the current window");
+  function messageByReferenceId(referenceId?: string) {
+    if (!referenceId) return undefined;
+    return allMessages.find((candidate) => {
+      const payload = candidate.payload as Record<string, unknown> | undefined;
+      return (
+        String(candidate.id) === referenceId ||
+        candidate.wa_message_id?.trim() === referenceId ||
+        toIdString(payload?.id) === referenceId ||
+        toIdString(payload?.wa_message_id) === referenceId ||
+        toIdString(payload?.message_id) === referenceId
+      );
+    });
+  }
+
+  function scrollToMessage(message: Message | undefined, unavailableMessage: string) {
+    if (!message) {
+      toast.warning(unavailableMessage);
       return;
     }
-    const targetKey = targetMessage.wa_message_id?.trim() || String(targetMessage.id);
+    const targetKey = message.wa_message_id?.trim() || String(message.id);
     const targetElement = messageRefs.current.get(targetKey);
     if (!targetElement) {
-      toast.error("Message not loaded in the current window");
+      toast.warning(unavailableMessage);
       return;
     }
     targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
     setFlashedMessageKey(targetKey);
     window.setTimeout(() => setFlashedMessageKey(null), 1_000);
+  }
+
+  function scrollToButtonResponseTarget(message: Message) {
+    scrollToMessage(buttonResponseTargetMessage(message), "Message not loaded in the current window");
+  }
+
+  function scrollToReplyTarget(message: Message) {
+    scrollToMessage(messageByReferenceId(replyTargetId(message)), "The previous message is not available");
   }
 
   const messageGroups = groupMessagesByDate(visibleMessages);
@@ -1002,6 +1047,7 @@ export function Chat({
                   <MessageContent
                     message={message}
                     onButtonResponseClick={message.type === "button" ? () => scrollToButtonResponseTarget(message) : undefined}
+                    onReplyClick={message.type === "text" ? () => scrollToReplyTarget(message) : undefined}
                     buttonResponseContext={(() => {
                       const targetMessage = buttonResponseTargetMessage(message);
                       if (!targetMessage) return undefined;
