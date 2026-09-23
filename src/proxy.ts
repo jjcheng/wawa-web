@@ -4,8 +4,9 @@ import type { NextRequest } from "next/server";
 const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME ?? "wawa_session";
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:9000";
 const PORTAL_HOST = process.env.NEXT_PUBLIC_PORTAL_HOST ?? "";
+const CORPORATE_HOSTS = new Set(["wawago.app", "www.wawago.app"]);
 
-const PUBLIC_PATHS = ["/login"];
+const PUBLIC_PATHS = ["/login", "/corporate"];
 
 // These routes must stay reachable in both session states.
 const UNGUARDED_PATHS = ["/session/end", "/embedded-signup"];
@@ -55,6 +56,10 @@ export async function proxy(request: NextRequest) {
   const hostname = hostnameFromHost(host);
 
   if (pathname.startsWith("/sites/")) return NextResponse.next();
+
+  if (CORPORATE_HOSTS.has(hostname) && pathname === "/") {
+    return NextResponse.rewrite(new URL("/corporate", request.url));
+  }
 
   if (!isPortalHost(hostname)) {
     const websiteId = await resolveWebsiteId(host, request.nextUrl.origin);
