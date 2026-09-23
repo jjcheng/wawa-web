@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 
 import { ApiError } from "@/lib/api/errors";
 import { embeddedSignupSchema, loginSchema } from "@/lib/api/schemas";
@@ -38,63 +38,10 @@ function safeNextPath(value: FormDataEntryValue | null) {
   return /^\/(?!\/)[\w\-./?%&=]*$/.test(path) ? path : "/dashboard";
 }
 
-async function verifyTurnstileToken(token: FormDataEntryValue | null): Promise<boolean> {
-  if (!serverEnv.TURNSTILE_SECRET_KEY) return true;
-  const expectedHostnames = new Set(
-    serverEnv.TURNSTILE_HOSTNAMES.split(",")
-      .map((hostname) => hostname.trim().toLowerCase())
-      .filter(Boolean),
-  );
-  if (
-    typeof token !== "string" ||
-    token.length === 0 ||
-    token.length > 2048 ||
-    expectedHostnames.size === 0
-  ) {
-    return false;
-  }
-
-  try {
-    const requestHeaders = await headers();
-    const remoteIp =
-      requestHeaders.get("cf-connecting-ip") ??
-      requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim();
-    const body = new URLSearchParams({
-      secret: serverEnv.TURNSTILE_SECRET_KEY,
-      response: token,
-    });
-    if (remoteIp) body.set("remoteip", remoteIp);
-    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body,
-      signal: AbortSignal.timeout(10_000),
-    });
-    const result = (await response.json().catch(() => null)) as {
-      success?: boolean;
-      action?: string;
-      hostname?: string;
-    } | null;
-    return Boolean(
-      result?.success &&
-        result.action === "login" &&
-        result.hostname &&
-        expectedHostnames.has(result.hostname.toLowerCase()),
-    );
-  } catch {
-    return false;
-  }
-}
-
 export async function loginAction(
   _previous: LoginState,
   formData: FormData,
 ): Promise<LoginState> {
-  const turnstileVerified = await verifyTurnstileToken(formData.get("cf-turnstile-response"));
-  if (!turnstileVerified) {
-    return { message: "Verification failed. Please try again." };
-  }
-
   const parsed = loginSchema.safeParse({
     country_code: formData.get("country_code"),
     phone_number: formData.get("phone_number"),
