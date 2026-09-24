@@ -13,7 +13,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { RemovePhoneNumberButton } from "@/components/whatsapp/remove-phone-number-button";
-import { ReconnectPhoneNumberButton } from "@/components/whatsapp/reconnect-phone-number-button";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 
@@ -58,6 +57,7 @@ export function PhoneNumberViewButton({
   const currentStatus = details && !loading ? String(details.status ?? "").toUpperCase() : "";
   const isConnected = currentStatus === "CONNECTED";
   const isDisconnected = currentStatus === "DISCONNECTED";
+  const canDelete = Boolean(error) || isDisconnected;
 
   async function loadDetails() {
     setOpen(true);
@@ -123,7 +123,17 @@ export function PhoneNumberViewButton({
           <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
             <Button variant="outline" onClick={() => setOpen(false)}>Close</Button>
             <div className="flex min-w-0 justify-end">
-              {isMaster && isConnected ? (
+              {isMaster && canDelete ? (
+                <RemovePhoneNumberButton
+                  id={id}
+                  name={name}
+                  phoneNumber={String(details?.display_phone_number || details?.phone_number || "")}
+                  mode="delete"
+                  triggerVariant="destructive"
+                  label="Delete"
+                  onDeleted={() => setOpen(false)}
+                />
+              ) : isMaster && isConnected ? (
                 <RemovePhoneNumberButton
                   id={id}
                   name={name}
@@ -131,13 +141,6 @@ export function PhoneNumberViewButton({
                   triggerVariant="destructive"
                   label="Disconnect"
                   onDeleted={() => setOpen(false)}
-                />
-              ) : isMaster && isDisconnected ? (
-                <ReconnectPhoneNumberButton
-                  id={id}
-                  name={name}
-                  phoneNumber={String(details?.display_phone_number || details?.phone_number || "")}
-                  onReconnected={() => setOpen(false)}
                 />
               ) : null}
             </div>

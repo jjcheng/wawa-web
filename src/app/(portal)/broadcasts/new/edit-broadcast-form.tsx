@@ -1273,7 +1273,7 @@ export function EditBroadcastForm({
         </CardContent>
       </Card>
       {selectedTemplate ? (
-        <div className="min-w-0 self-start lg:col-start-2 lg:row-start-1">
+        <div className="min-w-0 self-start min-[769px]:sticky min-[769px]:top-[6.5rem] min-[769px]:col-start-2 min-[769px]:row-start-1">
           <p className="mb-1 text-sm font-medium tracking-wide">Preview</p>
           <div className="border-border w-full max-w-[425px] overflow-hidden rounded-[7.5px] border bg-white px-3 pt-2 text-sm text-[#111b21] shadow-sm dark:bg-[#202c33] dark:text-[#e9edef]">
             {headerFormat === "IMAGE" && (previewMediaUrl || headerExampleHandle) ? (

@@ -40,7 +40,7 @@ const ALLOWED: { method: string; pattern: RegExp }[] = [
   { method: "POST", pattern: /^v1\/wa\/messages\/chat-token$/ },
   { method: "GET", pattern: /^v1\/wa\/media$/ },
   { method: "POST", pattern: /^v1\/wa\/media$/ },
-  { method: "DELETE", pattern: /^v1\/wa\/phone-numbers$/ },
+  { method: "DELETE", pattern: /^v1\/wa\/phone-numbers\/[^/]+$/ },
   { method: "POST", pattern: /^v1\/wa\/phone-numbers\/\d+\/disconnect$/ },
   { method: "POST", pattern: /^v1\/wa\/phone-numbers\/\d+\/reconnect$/ },
   { method: "GET", pattern: /^v1\/wa\/phone-numbers\/usage$/ },

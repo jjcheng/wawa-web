@@ -24,6 +24,7 @@ export function RemovePhoneNumberButton({
   id,
   name,
   phoneNumber,
+  mode = "disconnect",
   triggerVariant = "outline",
   label = "Disconnect",
   onDeleted,
@@ -31,6 +32,7 @@ export function RemovePhoneNumberButton({
   id: number;
   name: string;
   phoneNumber?: string;
+  mode?: "disconnect" | "delete";
   triggerVariant?: "outline" | "destructive";
   label?: string;
   onDeleted?: () => void;
@@ -40,11 +42,13 @@ export function RemovePhoneNumberButton({
 
   const mutation = useMutation({
     mutationFn: () =>
-      apiFetch(`v1/wa/phone-numbers/${id}/disconnect`, {
-        method: "POST",
-      }),
+      mode === "delete"
+        ? apiFetch(`v1/wa/phone-numbers/${id}`, { method: "DELETE" })
+        : apiFetch(`v1/wa/phone-numbers/${id}/disconnect`, {
+            method: "POST",
+          }),
     onSuccess: () => {
-      toast.success("Phone number disconnected.");
+      toast.success(mode === "delete" ? "Phone number deleted." : "Phone number disconnected.");
       setOpen(false);
       onDeleted?.();
       router.refresh();
@@ -61,9 +65,11 @@ export function RemovePhoneNumberButton({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Disconnect this number?</DialogTitle>
+          <DialogTitle>{mode === "delete" ? "Delete this number?" : "Disconnect this number?"}</DialogTitle>
           <DialogDescription>
-            {name} {phoneNumber ? `(${phoneNumber})` : ""} will be disconnected from WhatsApp. This cannot be undone.
+            {mode === "delete"
+              ? "This would NOT remove your phone number from WhatsApp Business Account. To do so, use WhatsApp Manager."
+              : `${name} ${phoneNumber ? `(${phoneNumber})` : ""} will be disconnected from WhatsApp Business Account.`}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
@@ -76,7 +82,7 @@ export function RemovePhoneNumberButton({
             onClick={() => mutation.mutate()}
           >
             {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-            Disconnect
+            {mode === "delete" ? "Delete" : "Disconnect"}
           </Button>
         </DialogFooter>
       </DialogContent>

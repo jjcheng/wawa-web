@@ -30,7 +30,7 @@ import { toast } from "@/lib/toast";
 import { MediaDropzone } from "@/components/media-dropzone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CharacterCounter } from "@/components/character-counter";
+import { CharacterCounter } from "../../../../components/character-counter";
 import {
   Dialog,
   DialogContent,
@@ -1906,7 +1906,7 @@ export function CreateTemplateForm({
         </CardContent>
       </Card>
 
-      <aside className="min-w-0 space-y-2 md:sticky md:top-0 md:h-fit">
+      <aside className="min-w-0 space-y-2 min-[769px]:sticky min-[769px]:top-[6.5rem] min-[769px]:h-fit">
         <Label>Preview</Label>
         <div
           className={cn(
