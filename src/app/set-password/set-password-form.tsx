@@ -92,7 +92,7 @@ export function SetPasswordForm({ next }: { next: string }) {
 
       <Button type="submit" className={`w-full ${MEDIUM_BUTTON_HEIGHT}`} disabled={mutation.isPending}>
         {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-        Set password
+        Set
       </Button>
       <FormSubmitError message={submitError} />
     </form>

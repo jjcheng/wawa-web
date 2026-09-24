@@ -66,7 +66,7 @@ export function AnalyticsFilters({
   return (
     <div className="flex flex-wrap gap-2">
       <Select value={range} onValueChange={(value) => setParam("range", value)}>
-        <SelectTrigger className="w-40" aria-label="Date range">
+        <SelectTrigger size="sm" className="w-40 px-2" aria-label="Date range">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -78,7 +78,7 @@ export function AnalyticsFilters({
         </SelectContent>
       </Select>
       <Select value={granularity} onValueChange={(value) => setParam("granularity", value)}>
-        <SelectTrigger className="w-32" aria-label="Granularity">
+        <SelectTrigger size="sm" className="w-32 px-2" aria-label="Granularity">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
