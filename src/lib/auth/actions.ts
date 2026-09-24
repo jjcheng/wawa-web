@@ -38,6 +38,22 @@ function safeNextPath(value: FormDataEntryValue | null) {
   return /^\/(?!\/)[\w\-./?%&=]*$/.test(path) ? path : "/dashboard";
 }
 
+async function verifyTurnstile(token: FormDataEntryValue | null) {
+  if (!serverEnv.TURNSTILE_SECRET_KEY) return true;
+  if (typeof token !== "string" || !token.trim()) return false;
+
+  const body = new FormData();
+  body.set("secret", serverEnv.TURNSTILE_SECRET_KEY);
+  body.set("response", token);
+
+  const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    method: "POST",
+    body,
+  });
+  const result = (await response.json().catch(() => null)) as { success?: boolean } | null;
+  return Boolean(response.ok && result?.success);
+}
+
 export async function loginAction(
   _previous: LoginState,
   formData: FormData,
@@ -57,11 +73,20 @@ export async function loginAction(
     };
   }
 
+  const turnstileResponse = formData.get("turnstile_response") ?? formData.get("cf-turnstile-response");
+  const turnstileValid = await verifyTurnstile(turnstileResponse);
+  if (!turnstileValid) {
+    return { message: "Complete the security check before signing in." };
+  }
+
   let upstream: Response;
   try {
     upstream = await rawServerFetch("/v1/auth/login", {
       method: "POST",
-      body: parsed.data,
+      body: {
+        ...parsed.data,
+        turnstile_response: typeof turnstileResponse === "string" ? turnstileResponse : "",
+      },
     });
   } catch {
     return { message: new ApiError("Unable to reach the API.", 0).message };
