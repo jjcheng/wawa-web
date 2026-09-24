@@ -42,7 +42,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Customer, SendTemplateParameter, Template } from "@/lib/api/types";
-import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
+import { cn, MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 
 const SCHEDULES = ["Send now", "Send later"] as const;
@@ -559,6 +559,7 @@ export function EditBroadcastForm({
         return [{ type, text: replacePreviewVariables(text, previewValues) }];
       })
     : [];
+  const hasPreviewButtons = previewButtons.length > 0;
   const previewJson = {
     name: broadcastName.trim(),
     send_date: schedule === "Send later" && sendDate ? new Date(sendDate).toISOString() : null,
@@ -1273,9 +1274,14 @@ export function EditBroadcastForm({
         </CardContent>
       </Card>
       {selectedTemplate ? (
-        <div className="min-w-0 self-start min-[769px]:sticky min-[769px]:top-[6.5rem] min-[769px]:col-start-2 min-[769px]:row-start-1">
+        <aside className="min-w-0 space-y-2 self-start min-[769px]:sticky min-[769px]:top-[6.5rem] min-[769px]:col-start-2 min-[769px]:row-start-1 min-[769px]:h-fit">
           <p className="mb-1 text-sm font-medium tracking-wide">Preview</p>
-          <div className="border-border w-full max-w-[425px] overflow-hidden rounded-[7.5px] border bg-white px-3 pt-2 text-sm text-[#111b21] shadow-sm dark:bg-[#202c33] dark:text-[#e9edef]">
+          <div
+            className={cn(
+              "border-border w-full max-w-[425px] overflow-hidden rounded-[7.5px] border bg-white px-3 pt-2 text-sm text-[#111b21] shadow-sm dark:bg-[#202c33] dark:text-[#e9edef]",
+              hasPreviewButtons ? "pb-0" : "pb-2",
+            )}
+          >
             {headerFormat === "IMAGE" && (previewMediaUrl || headerExampleHandle) ? (
               <div className="-mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1358,7 +1364,7 @@ export function EditBroadcastForm({
                 {previewText(footerComponent.text)}
               </p>
             ) : null}
-            {previewButtons.length > 0 ? (
+            {hasPreviewButtons ? (
               <div className="-mx-3 mt-2 divide-y divide-black/10 border-t border-black/10 text-[#008f72] dark:divide-white/10 dark:border-white/10 dark:text-[#53bdeb]">
                 {previewButtons.map((button, index) => {
                   const Icon =
@@ -1396,7 +1402,7 @@ export function EditBroadcastForm({
               </pre>
             </div>
           ) : null}
-        </div>
+        </aside>
       ) : null}
     </form>
   );
