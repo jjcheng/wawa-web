@@ -487,10 +487,10 @@ export function WebsiteDetailsForm({
         {syncError ? <p className="text-destructive text-sm" role="alert">{syncError}</p> : null}
         {state.message ? <p className="text-destructive text-sm" role="alert">{state.message}</p> : null}
 
-        <div className="flex justify-end">
+        <div className="flex justify-start">
           <Button type="submit" disabled={pending || syncPending || pictureUploading || coverUploading}>
             {pending || pictureUploading || coverUploading ? <Loader2 className="size-4 animate-spin" /> : null}
-            {pictureUploading || coverUploading ? "Uploading..." : pending ? "Saving..." : "Save changes"}
+            {pictureUploading || coverUploading ? "Uploading..." : pending ? "Saving..." : "Save"}
           </Button>
         </div>
       </form> : <>
@@ -535,7 +535,6 @@ export function WebsiteDetailsForm({
       {activeTab === "profile" ? <div className="pt-5">
         <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
           <Button type="button" variant="destructive" onClick={() => setConfirmDelete(true)}>
-            <Trash2 className="size-4" />
             Delete website
           </Button>
           <DialogContent>
@@ -547,7 +546,7 @@ export function WebsiteDetailsForm({
             </DialogHeader>
             <form action={deleteAction}>
               <input type="hidden" name="website_id" value={websiteId} />
-              <DialogFooter>
+              <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
                 <DialogClose asChild>
                   <Button type="button" variant="outline">
                     Cancel

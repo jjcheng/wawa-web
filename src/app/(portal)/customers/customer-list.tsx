@@ -414,7 +414,7 @@ export function CustomerList({
               permanently removed.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
             <Button
               variant="outline"
               onClick={() => setDeleteConfirmOpen(false)}

@@ -62,7 +62,7 @@ export function ReconnectPhoneNumberButton({
             {name} {phoneNumber ? `(${phoneNumber})` : ""} will be reconnected to WhatsApp.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter>
+        <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>

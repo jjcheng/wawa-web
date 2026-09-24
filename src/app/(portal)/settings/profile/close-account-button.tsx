@@ -148,7 +148,7 @@ export function CloseAccountButton() {
             </label>
             {submitError ? <p className="text-destructive text-sm">{submitError}</p> : null}
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
             <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>
               Cancel
             </Button>

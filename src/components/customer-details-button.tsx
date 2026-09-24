@@ -285,10 +285,9 @@ export function CustomerDetailsButton({
           </div>
         </div> : <CustomerInfo customer={customer} />}
         </div>
-        <DialogFooter className="shrink-0">
+        <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between shrink-0">
           <Button
             variant="destructive"
-            className="sm:mr-auto"
             onClick={() => setConfirmOpen(true)}
           >
             Delete
@@ -309,7 +308,7 @@ export function CustomerDetailsButton({
               {customer.display_name} will be permanently removed from your customers.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
             <Button
               variant="outline"
               onClick={() => setConfirmOpen(false)}

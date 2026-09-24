@@ -124,7 +124,7 @@ export function ProfileForm({ user }: { user: User }) {
 
       <Button type="submit" disabled={mutation.isPending}>
         {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-        Save changes
+        Save
       </Button>
       <FormSubmitError message={submitError} />
     </form>

@@ -66,7 +66,7 @@ export function RemovePhoneNumberButton({
             {name} {phoneNumber ? `(${phoneNumber})` : ""} will be disconnected from WhatsApp. This cannot be undone.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter>
+        <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>

@@ -168,7 +168,7 @@ function UserRow({ user, currentUserId }: { user: User; currentUserId: number })
               <strong className="text-foreground">{pendingChange?.value}</strong>?
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
             <Button
               type="button"
               variant="outline"

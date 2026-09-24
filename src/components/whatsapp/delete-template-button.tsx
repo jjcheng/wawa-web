@@ -2,6 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "@/lib/toast";
 
@@ -23,15 +24,20 @@ export function DeleteTemplateButton({
   id,
   wabaId,
   name,
+  label = "Delete",
   triggerVariant = "outline",
   onDeleted,
+  redirectTo,
 }: {
   id: string;
   wabaId: string;
   name: string;
+  label?: string;
   triggerVariant?: "outline" | "destructive";
   onDeleted?: () => void;
+  redirectTo?: string;
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
 
   const mutation = useMutation({
@@ -44,6 +50,10 @@ export function DeleteTemplateButton({
       toast.success("Template deleted.");
       setOpen(false);
       onDeleted?.();
+      if (redirectTo) {
+        router.push(redirectTo);
+        router.refresh();
+      }
     },
     onError: (error) => toast.error(toApiError(error).message),
   });
@@ -52,7 +62,7 @@ export function DeleteTemplateButton({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant={triggerVariant} size="sm" className={SMALL_BUTTON_HEIGHT}>
-          Delete
+          {label}
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -63,7 +73,7 @@ export function DeleteTemplateButton({
             against it may fail.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter>
+        <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>

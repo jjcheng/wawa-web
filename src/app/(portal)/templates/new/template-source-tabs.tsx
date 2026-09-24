@@ -198,7 +198,7 @@ export function TemplateSourceTabs({
             </div>
           )}
           {!createdTemplateUrl ? (
-            <DialogFooter>
+            <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
               <Button
                 variant="outline"
                 onClick={() => setCreateDialogOpen(false)}

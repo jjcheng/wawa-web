@@ -38,6 +38,7 @@ export function PublicPageContent({ html }: { html: string }) {
         index={selectedIndex ?? 0}
         close={() => setSelectedIndex(null)}
         carousel={{ finite: true }}
+        controller={{ closeOnPullDown: true }}
         slides={images.map((src) => ({ src }))}
       />
     </>

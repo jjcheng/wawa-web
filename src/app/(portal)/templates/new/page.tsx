@@ -4,6 +4,7 @@ import { BackBar } from "@/components/back-bar";
 import { PageHeader } from "@/components/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
+import { DeleteTemplateButton } from "@/components/whatsapp/delete-template-button";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type { BusinessAccount, Template } from "@/lib/api/types";
@@ -80,11 +81,25 @@ export default async function CreateTemplatePage({
       ) : null}
 
       {waba && !loadError ? (
-        <Card>
-          <CardContent>
-            <CreateTemplateForm waba={waba} initialTemplate={editTemplate} />
-          </CardContent>
-        </Card>
+        <>
+          <Card>
+            <CardContent>
+              <CreateTemplateForm waba={waba} initialTemplate={editTemplate} />
+            </CardContent>
+          </Card>
+          {editTemplate ? (
+            <div className="pt-5">
+              <DeleteTemplateButton
+                id={editTemplate.id}
+                wabaId={editTemplate.waba_id ?? waba.wabaId}
+                name={editTemplate.name ?? ""}
+                label="Delete template"
+                triggerVariant="destructive"
+                redirectTo="/templates"
+              />
+            </div>
+          ) : null}
+        </>
       ) : (
         <Card>
           <CardContent>

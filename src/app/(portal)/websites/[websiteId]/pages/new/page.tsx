@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 
 import { BackBar } from "@/components/back-bar";
 import { PageHeader } from "@/components/page-header";
-import { Card, CardContent } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth/session";
 import { serverFetch } from "@/lib/api/server-client";
 import type { Website } from "@/lib/api/types";
@@ -31,11 +30,7 @@ export default async function NewWebsitePage({
     <>
       <BackBar href={safeReturnTo} />
       <PageHeader title="Create page" description="Add/Edit a page for your website." />
-      <Card className="max-w-2xl rounded-md">
-        <CardContent className="space-y-5">
-          <WebsitePageForm websiteId={websiteId} websiteUrl={website.url} returnTo={safeReturnTo} />
-        </CardContent>
-      </Card>
+      <WebsitePageForm websiteId={websiteId} websiteUrl={website.url} returnTo={safeReturnTo} />
     </>
   );
 }

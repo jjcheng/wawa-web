@@ -120,25 +120,27 @@ export function PhoneNumberViewButton({
               </dl>
             ) : null}
           </div>
-          <DialogFooter className="flex items-center justify-between sm:justify-between">
-            {isMaster && isConnected ? (
-              <RemovePhoneNumberButton
-                id={id}
-                name={name}
-                phoneNumber={String(details?.display_phone_number || details?.phone_number || "")}
-                triggerVariant="destructive"
-                label="Disconnect"
-                onDeleted={() => setOpen(false)}
-              />
-            ) : isMaster && isDisconnected ? (
-              <ReconnectPhoneNumberButton
-                id={id}
-                name={name}
-                phoneNumber={String(details?.display_phone_number || details?.phone_number || "")}
-                onReconnected={() => setOpen(false)}
-              />
-            ) : <div />}
+          <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
             <Button variant="outline" onClick={() => setOpen(false)}>Close</Button>
+            <div className="flex min-w-0 justify-end">
+              {isMaster && isConnected ? (
+                <RemovePhoneNumberButton
+                  id={id}
+                  name={name}
+                  phoneNumber={String(details?.display_phone_number || details?.phone_number || "")}
+                  triggerVariant="destructive"
+                  label="Disconnect"
+                  onDeleted={() => setOpen(false)}
+                />
+              ) : isMaster && isDisconnected ? (
+                <ReconnectPhoneNumberButton
+                  id={id}
+                  name={name}
+                  phoneNumber={String(details?.display_phone_number || details?.phone_number || "")}
+                  onReconnected={() => setOpen(false)}
+                />
+              ) : null}
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

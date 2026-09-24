@@ -303,7 +303,7 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
             <Button
               variant="outline"
               onClick={() => setOpen(false)}
@@ -333,7 +333,7 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
               Select a .vcf file exported from the phone book on your iPhone or Android phone.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
             <Button variant="outline" onClick={() => setImportInfoOpen(false)}>
               Cancel
             </Button>
@@ -492,7 +492,7 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
               </Table>
             </div>
           ) : null}
-          <DialogFooter>
+          <DialogFooter className={importResult ? undefined : "flex-row items-center justify-between gap-3 sm:justify-between"}>
             {importResult ? (
               <Button onClick={() => setImportOpen(false)}>Done</Button>
             ) : (

@@ -54,7 +54,7 @@ export function ProductWhatsAppButton() {
       disabled={loading}
     >
       {loading ? <Loader2 className="size-4 animate-spin" /> : <WhatsappIcon className="size-4" />}
-      {loading ? "Opening WhatsApp..." : "Ask on WhatsApp"}
+      {loading ? "Opening WhatsApp..." : "Chat on WhatsApp"}
     </Button>
   );
 }

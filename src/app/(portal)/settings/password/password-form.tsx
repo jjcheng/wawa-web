@@ -81,10 +81,12 @@ export function PasswordForm() {
 
       <PasswordStrengthIndicator password={newPassword} />
 
-      <Button type="submit" disabled={mutation.isPending}>
-        {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-        Change password
-      </Button>
+      <div className="flex justify-start">
+        <Button type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+          Change
+        </Button>
+      </div>
       <FormSubmitError message={submitError} />
     </form>
   );

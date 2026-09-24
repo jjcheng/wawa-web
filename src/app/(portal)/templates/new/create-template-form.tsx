@@ -30,6 +30,14 @@ import { toast } from "@/lib/toast";
 import { MediaDropzone } from "@/components/media-dropzone";
 import { Button } from "@/components/ui/button";
 import { CharacterCounter } from "@/components/character-counter";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -603,6 +611,7 @@ export function CreateTemplateForm({
   const [templateButtons, setTemplateButtons] = useState<TemplateButton[]>(() =>
     initialTemplate ? templateButtonsFromTemplate(initialTemplate) : [],
   );
+  const [pendingEditValues, setPendingEditValues] = useState<CreateTemplateInput | null>(null);
   const [previewMediaUrl, setPreviewMediaUrl] = useState<string | null>(null);
   const [bodyVariableTextAttempted, setBodyVariableTextAttempted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -1083,17 +1092,28 @@ export function CreateTemplateForm({
     ) {
       return;
     }
+    if (isEditing) {
+      setPendingEditValues(values);
+      return;
+    }
     mutation.mutate(values);
+  }
+
+  function confirmEditSubmit() {
+    if (!pendingEditValues) return;
+    mutation.mutate(pendingEditValues);
+    setPendingEditValues(null);
   }
 
   const bodyTextField = register("body_text");
   const headerTextField = register("header_text");
 
   return (
-    <form
-      onSubmit={handleSubmit(submitTemplate)}
-      className="grid w-full max-w-full min-w-0 items-start gap-6 min-[769px]:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]"
-    >
+    <>
+      <form
+        onSubmit={handleSubmit(submitTemplate)}
+        className="grid w-full max-w-full min-w-0 items-start gap-6 min-[769px]:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]"
+      >
       <div className="w-full min-w-0 space-y-4">
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2 sm:col-span-2">
@@ -1380,7 +1400,7 @@ export function CreateTemplateForm({
           ) : (
             <p className="text-muted-foreground text-sm">{""}</p>
           )}
-          <div className="flex items-center justify-end gap-0.5">
+          <div className="flex items-center justify-end -space-x-1">
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -1856,7 +1876,7 @@ export function CreateTemplateForm({
 
         <Button type="submit" className={MEDIUM_BUTTON_HEIGHT} disabled={mutation.isPending}>
           {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-          {isEditing ? "Edit template" : "Create template"}
+          {isEditing ? "Save" : "Create"}
         </Button>
         {submitError ? (
           <div className="flex items-start justify-between gap-2">
@@ -2040,5 +2060,25 @@ export function CreateTemplateForm({
         ) : null}
       </aside>
     </form>
+      <Dialog open={pendingEditValues !== null} onOpenChange={(open) => !open && setPendingEditValues(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Submit template changes?</DialogTitle>
+            <DialogDescription>
+              Your changes will be reviewed by Meta before this template can be sent.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
+            <Button type="button" variant="outline" onClick={() => setPendingEditValues(null)}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={confirmEditSubmit} disabled={mutation.isPending}>
+              {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+              Submit for review
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

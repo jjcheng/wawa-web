@@ -335,18 +335,17 @@ function NotificationViewButton({
               })()
             : null}
         </div>
-        <DialogFooter>
+        <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
+          <DialogClose asChild>
+            <Button variant="outline">Close</Button>
+          </DialogClose>
           <Button
             variant="destructive"
-            className="sm:mr-auto"
             onClick={handleDelete}
             disabled={isDeleting}
           >
             {isDeleting ? "Deleting..." : "Delete"}
           </Button>
-          <DialogClose asChild>
-            <Button variant="outline">Close</Button>
-          </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>

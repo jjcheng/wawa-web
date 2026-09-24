@@ -71,7 +71,10 @@ export function BroadcastCancelButton({ broadcastId }: { broadcastId: number }) 
               onChange={(event) => setReason(event.target.value)}
             />
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
+            <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={loading}>
+              Cancel
+            </Button>
             <Button
               variant="destructive"
               onClick={cancelBroadcast}
@@ -79,9 +82,6 @@ export function BroadcastCancelButton({ broadcastId }: { broadcastId: number }) 
             >
               {loading ? <Loader2 className="size-4 animate-spin" /> : null}
               Continue
-            </Button>
-            <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={loading}>
-              Cancel
             </Button>
           </DialogFooter>
         </DialogContent>

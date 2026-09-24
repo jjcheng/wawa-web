@@ -8,6 +8,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { CharacterCounter } from "@/components/character-counter";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -173,7 +174,9 @@ export function WebsitePageForm({
   }
 
   return (
-    <div className="space-y-5">
+    <>
+      <Card className="max-w-2xl rounded-md">
+        <CardContent className="space-y-5">
       <div className="space-y-2">
         <Label htmlFor="website-page-title">Title</Label>
         <div className="relative">
@@ -216,18 +219,21 @@ export function WebsitePageForm({
         {fullUrl ? <p className="text-muted-foreground text-sm">Full URL: {fullUrl}</p> : null}
       </div>
       <div className="space-y-2">
-        <div className="flex items-center justify-between gap-3">
-          <Label htmlFor="website-page-description">Description (optional)</Label>
-          <span className="text-muted-foreground text-xs">{description.length}/255</span>
+        <Label htmlFor="website-page-description">Description (optional)</Label>
+        <div className="relative">
+          <Textarea
+            id="website-page-description"
+            rows={3}
+            maxLength={255}
+            value={description}
+            placeholder="Enter page description"
+            className="pr-16"
+            onChange={(event) => setDescription(event.target.value)}
+          />
+          <span className="text-muted-foreground pointer-events-none absolute top-2 right-3 text-sm">
+            {description.length}/255
+          </span>
         </div>
-        <Textarea
-          id="website-page-description"
-          rows={3}
-          maxLength={255}
-          value={description}
-          placeholder="Enter page description"
-          onChange={(event) => setDescription(event.target.value)}
-        />
       </div>
       <label className="flex items-center gap-2 text-sm font-medium">
         <Checkbox checked={showInNavigation} onChange={(event) => setShowInNavigation(event.target.checked)} />
@@ -276,8 +282,16 @@ export function WebsitePageForm({
         {fieldErrors.content ? <p className="text-destructive text-sm">{fieldErrors.content}</p> : null}
       </div>
       {saveError ? <p className="text-destructive text-sm" role="alert">{saveError}</p> : null}
-      <div className="flex items-center justify-between gap-3">
-        {page ? (
+      <div className="flex justify-start">
+        <Button type="button" onClick={() => void savePage()} disabled={saving || !editor}>
+          {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+          {saving ? "Saving..." : "Save"}
+        </Button>
+      </div>
+        </CardContent>
+      </Card>
+      {page ? (
+        <div className="pt-5">
           <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
             <Button type="button" variant="destructive" onClick={() => setConfirmDelete(true)} disabled={saving || deleting}>
               Delete page
@@ -287,7 +301,7 @@ export function WebsitePageForm({
                 <DialogTitle>Delete page?</DialogTitle>
                 <DialogDescription>This action permanently deletes the page and cannot be undone.</DialogDescription>
               </DialogHeader>
-              <DialogFooter>
+              <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
                 <DialogClose asChild>
                   <Button type="button" variant="outline" disabled={deleting}>Cancel</Button>
                 </DialogClose>
@@ -298,12 +312,8 @@ export function WebsitePageForm({
               </DialogFooter>
             </DialogContent>
           </Dialog>
-        ) : <span />}
-        <Button type="button" onClick={() => void savePage()} disabled={saving || !editor}>
-          {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-          {saving ? "Saving..." : "Save"}
-        </Button>
-      </div>
-    </div>
+        </div>
+      ) : null}
+    </>
   );
 }
