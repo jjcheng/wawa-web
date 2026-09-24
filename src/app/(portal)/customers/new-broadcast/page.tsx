@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 
 import { BackBar } from "@/components/back-bar";
 import { PageHeader } from "@/components/page-header";
-import { Card, CardContent } from "@/components/ui/card";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type { BusinessAccount, TemplateListResponse } from "@/lib/api/types";
@@ -38,11 +37,7 @@ export default async function NewBroadcastPage({
         description="Broadcasts are a preview and are not yet backed by the API."
       />
 
-      <Card>
-        <CardContent>
-          <NewBroadcastContent broadcastId={broadcastId} templates={templates} />
-        </CardContent>
-      </Card>
+      <NewBroadcastContent broadcastId={broadcastId} templates={templates} />
     </>
   );
 }

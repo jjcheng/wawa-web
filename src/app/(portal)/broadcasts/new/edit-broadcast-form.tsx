@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/select";
 import type { Customer, SendTemplateParameter, Template } from "@/lib/api/types";
 import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
 
 const SCHEDULES = ["Send now", "Send later"] as const;
 const GOOGLE_STATIC_MAPS_URL = "https://maps.googleapis.com/maps/api/staticmap";
@@ -772,7 +773,8 @@ export function EditBroadcastForm({
       onSubmit={handleSubmit(submitBroadcast)}
       className="grid w-full max-w-full min-w-0 items-start gap-6 min-[769px]:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]"
     >
-      <div className="w-full min-w-0 space-y-4">
+      <Card className="w-full min-w-0">
+        <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="name">Broadcast name</Label>
           <Input
@@ -1265,10 +1267,11 @@ export function EditBroadcastForm({
 
         <Button type="submit" className={MEDIUM_BUTTON_HEIGHT} disabled={mutation.isPending}>
           {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-          {broadcastId ? "Save broadcast" : "Start broadcast"}
+          {schedule === "Send later" ? "Send later" : "Send now"}
         </Button>
         <FormSubmitError message={submitError} />
-      </div>
+        </CardContent>
+      </Card>
       {selectedTemplate ? (
         <div className="min-w-0 self-start lg:col-start-2 lg:row-start-1">
           <p className="mb-1 text-sm font-medium tracking-wide">Preview</p>

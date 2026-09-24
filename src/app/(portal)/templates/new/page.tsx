@@ -82,11 +82,7 @@ export default async function CreateTemplatePage({
 
       {waba && !loadError ? (
         <>
-          <Card>
-            <CardContent>
-              <CreateTemplateForm waba={waba} initialTemplate={editTemplate} />
-            </CardContent>
-          </Card>
+          <CreateTemplateForm waba={waba} initialTemplate={editTemplate} />
           {editTemplate ? (
             <div className="pt-5">
               <DeleteTemplateButton

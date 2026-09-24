@@ -29,6 +29,7 @@ import { toast } from "@/lib/toast";
 
 import { MediaDropzone } from "@/components/media-dropzone";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { CharacterCounter } from "@/components/character-counter";
 import {
   Dialog,
@@ -1114,7 +1115,8 @@ export function CreateTemplateForm({
         onSubmit={handleSubmit(submitTemplate)}
         className="grid w-full max-w-full min-w-0 items-start gap-6 min-[769px]:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]"
       >
-      <div className="w-full min-w-0 space-y-4">
+      <Card className="w-full min-w-0">
+        <CardContent className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="name">Name</Label>
@@ -1901,7 +1903,8 @@ export function CreateTemplateForm({
             </Button>
           </div>
         ) : null}
-      </div>
+        </CardContent>
+      </Card>
 
       <aside className="min-w-0 space-y-2 md:sticky md:top-0 md:h-fit">
         <Label>Preview</Label>
