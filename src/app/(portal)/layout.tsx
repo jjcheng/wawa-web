@@ -1,8 +1,19 @@
+import type { Metadata } from "next";
+
 import { NavigationProgressProvider } from "@/components/nav/navigation-progress";
 import { SidebarNav } from "@/components/nav/sidebar-nav";
 import { Topbar } from "@/components/nav/topbar";
 import { NotificationsRealtimeProvider } from "@/components/notifications-realtime-provider";
 import { requireUser } from "@/lib/auth/session";
+
+export const metadata: Metadata = {
+  title: {
+    default: "WAWAGO Portal",
+    template: "%s · WAWAGO Portal",
+  },
+  description: "Authenticated WAWAGO portal for WhatsApp CRM, broadcasts, contacts, templates, catalogs, and website management.",
+  robots: { index: false, follow: false },
+};
 
 export default async function PortalLayout({ children }: LayoutProps<"/">) {
   const user = await requireUser();

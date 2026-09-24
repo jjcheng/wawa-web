@@ -13,7 +13,11 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { LoginForm } from "./login-form";
 
-export const metadata: Metadata = { title: "Sign in" };
+export const metadata: Metadata = {
+  title: "Sign in",
+  description: "Sign in to the authenticated WAWAGO portal for WhatsApp CRM management.",
+  robots: { index: false, follow: false },
+};
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const { next } = await searchParams;

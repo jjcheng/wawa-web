@@ -5,7 +5,7 @@ import { StorefrontShell } from "@/components/public-storefront-shell";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type { PublicWebsitePage } from "@/lib/api/types";
-import { stripScriptTags, withLazyImages } from "@/lib/html";
+import { excerptText, htmlToPlainText, stripScriptTags, withLazyImages } from "@/lib/html";
 import { serializeJsonLd } from "@/lib/public-seo";
 import {
   getPublicWebsiteHostname,
@@ -36,8 +36,9 @@ export async function generateMetadata({ params }: PublicPageProps): Promise<Met
 
   try {
     const page = await loadPageBySlug(slug);
+    const pageText = page.content ? htmlToPlainText(page.content) : "";
     const title = page.title || website.business_name || website.catalog_name || "Page";
-    const description = page.description || website.description || "";
+    const description = page.description || (pageText ? excerptText(pageText) : website.description || "");
     const origin = await getPublicWebsiteOrigin();
     const image = website.cover_image_url || website.profile_picture_url;
     return {
@@ -81,17 +82,46 @@ export default async function PublicWebsiteSlugPage({ params }: PublicPageProps)
   const navbarItems = await loadPublicNavbarItems();
   const publicOrigin = await getPublicWebsiteOrigin();
   const title = page.title || "Page";
-  const description = page.description || website.description || "";
+  const pageText = page.content ? htmlToPlainText(page.content) : "";
+  const description = page.description || (pageText ? excerptText(pageText) : website.description || "");
+  const pageUrl = publicOrigin ? new URL(`/${slug}`, publicOrigin).toString() : `/${slug}`;
+  const siteName = website.business_name || website.catalog_name || "Our Store";
   const pageStructuredData = {
     "@context": "https://schema.org",
     "@type": "WebPage",
     name: title,
     description,
-    url: publicOrigin ? new URL(`/${slug}`, publicOrigin).toString() : `/${slug}`,
+    url: pageUrl,
+    text: pageText || undefined,
+    mainEntity: pageText
+      ? {
+          "@type": "Article",
+          headline: title,
+          description,
+          articleBody: pageText,
+        }
+      : undefined,
     isPartOf: {
       "@type": "WebSite",
-      name: website.business_name || website.catalog_name || "Our Store",
+      name: siteName,
       url: publicOrigin || undefined,
+    },
+    breadcrumb: {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: siteName,
+          item: publicOrigin || undefined,
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: title,
+          item: pageUrl,
+        },
+      ],
     },
   };
 

@@ -6,6 +6,7 @@ const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:9000";
 const PORTAL_HOST = process.env.NEXT_PUBLIC_PORTAL_HOST ?? "";
 
 const PUBLIC_PATHS = ["/login"];
+const PUBLIC_METADATA_PATHS = ["/robots.txt", "/sitemap.xml", "/llms.txt"];
 
 // These routes must stay reachable in both session states.
 const UNGUARDED_PATHS = ["/session/end", "/embedded-signup"];
@@ -53,6 +54,8 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const host = requestHost(request);
   const hostname = hostnameFromHost(host);
+
+  if (PUBLIC_METADATA_PATHS.includes(pathname)) return NextResponse.next();
 
   if (pathname.startsWith("/sites/")) return NextResponse.next();
 
