@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 
+import { CookieNotice } from "@/components/cookie-notice";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -26,6 +27,7 @@ export function Providers({ children }: { children: ReactNode }) {
         disableTransitionOnChange
       >
         <TooltipProvider>{children}</TooltipProvider>
+        <CookieNotice />
         <Toaster richColors position="top-right" />
       </ThemeProvider>
     </QueryClientProvider>
