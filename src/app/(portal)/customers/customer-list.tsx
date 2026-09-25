@@ -276,7 +276,7 @@ export function CustomerList({
                     aria-label="Select all customers"
                   />
                 </TableHead>
-                <TableHead>
+                <TableHead className="w-56">
                   <div className="relative">
                     <Search className="text-muted-foreground pointer-events-none absolute inset-y-0 left-0 my-auto box-content size-3.5 pl-1" />
                     <Input
@@ -344,7 +344,14 @@ export function CustomerList({
                         aria-label={`Select ${row.display_name}`}
                       />
                     </TableCell>
-                    <TableCell className="font-medium">{row.display_name}</TableCell>
+                    <TableCell className="max-w-56 font-medium">
+                      <p className="truncate">{row.display_name}</p>
+                      {row.latest_message_content ? (
+                        <p className="text-muted-foreground line-clamp-2 text-xs font-normal">
+                          {row.latest_message_content}
+                        </p>
+                      ) : null}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <span>{formatPhoneNumber(row.phone_number, row.country_code)}</span>

@@ -207,6 +207,7 @@ export type Customer = {
   bsuid?: string;
   token?: string;
   tags?: string[];
+  latest_message_content?: string;
   additional_data?: Record<string, unknown>;
 };
 

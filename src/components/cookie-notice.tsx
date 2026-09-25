@@ -1,8 +1,11 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
 
+import { MAIN_ROUTES } from "@/components/nav/main-routes";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const COOKIE_NOTICE_STORAGE_KEY = "wawago_cookie_notice_dismissed";
 const COOKIE_NOTICE_CHANGE_EVENT = "wawago-cookie-notice-change";
@@ -25,6 +28,7 @@ function getServerSnapshot() {
 }
 
 export function CookieNotice() {
+  const pathname = usePathname();
   const visible = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   function dismiss() {
@@ -35,7 +39,12 @@ export function CookieNotice() {
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 px-4 pb-4 sm:px-6">
+    <div
+      className={cn(
+        "fixed inset-x-0 z-50 px-4 pb-4 sm:px-6",
+        MAIN_ROUTES.includes(pathname) ? "bottom-[var(--tab-bar-height)] lg:bottom-0" : "bottom-0",
+      )}
+    >
       <div className="bg-popover text-popover-foreground ring-foreground/10 mx-auto flex max-w-3xl flex-col gap-3 rounded-lg p-4 text-sm shadow-lg ring-1 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-muted-foreground leading-6">
          We use cookies only to authenticate your session after signing in. We do not use them for ads, remarketing or cross-site tracking whatsoever. Learn more in our{" "}

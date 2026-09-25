@@ -1,11 +1,10 @@
 "use client";
 
-import { ExternalLink, LogOut, Menu, RefreshCw, Settings } from "lucide-react";
+import { ExternalLink, LogOut, RefreshCw, Settings } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "@/lib/toast";
 
-import { SidebarNav } from "@/components/nav/sidebar-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +17,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import { logoutAction } from "@/lib/auth/actions";
@@ -75,7 +73,6 @@ function hasBusinessContextIds(context: BusinessContext) {
 }
 
 export function Topbar({ user }: { user: User }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [businessContext, setBusinessContext] = useState<BusinessContext | null>(null);
   const [refreshingBusinessContext, setRefreshingBusinessContext] = useState(false);
   const logoutFormRef = useRef<HTMLFormElement>(null);
@@ -139,24 +136,7 @@ export function Topbar({ user }: { user: User }) {
   }
 
   return (
-    <header className="bg-background/80 sticky top-0 z-30 flex h-14 items-center gap-2 border-b px-4 backdrop-blur">
-      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden"
-            aria-label="Open navigation"
-          >
-            <Menu className="size-4" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="data-[side=left]:w-[260px] p-0">
-          <SheetTitle className="sr-only">Navigation</SheetTitle>
-          <SidebarNav user={user} onNavigate={() => setMobileOpen(false)} />
-        </SheetContent>
-      </Sheet>
-
+    <header className="glass-surface sticky top-0 z-30 flex h-14 items-center gap-2 px-4">
       {businessContext && hasBusinessContextIds(businessContext) ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -229,13 +209,10 @@ export function Topbar({ user }: { user: User }) {
         <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="gap-2 px-2">
+            <Button variant="ghost" size="icon" className="rounded-full" aria-label="Account menu">
               <Avatar className="size-7">
                 <AvatarFallback className="text-xs">{initials(user)}</AvatarFallback>
               </Avatar>
-              <span className="hidden text-sm sm:inline">
-                {user.name || formatPhoneNumber(user.phone_number, user.country_code)}
-              </span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">

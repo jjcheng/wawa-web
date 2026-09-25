@@ -16,6 +16,7 @@ function isPortalHost(hostname: string) {
     hostname === "localhost" ||
     hostname === "127.0.0.1" ||
     hostname === "::1" ||
+    hostname === "192.168.5.109" ||
     hostname.endsWith(".workers.dev") ||
     (PORTAL_HOST && hostname === PORTAL_HOST)
   );

@@ -1,12 +1,13 @@
 "use client";
 
 import {
+  ChevronDown,
   FileText,
   Gauge,
-  // Globe2,
-  Inbox,
-  LayoutDashboard,
+  LayoutGrid,
+  ListChecks,
   Loader2,
+  MessageCircle,
   MessageSquareText,
   Megaphone,
   Phone,
@@ -37,35 +38,19 @@ import { toast } from "@/lib/toast";
 import { useUnreadNotificationsCount } from "@/lib/unread-notifications-store";
 import { cn } from "@/lib/utils";
 
-const SECTIONS = [
-  {
-    label: "Overview",
-    items: [
-      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { href: "/inbox", label: "Inbox", icon: Inbox },
-    ],
-  },
-  {
-    label: "MESSAGING",
-    items: [
-      { href: "/customers", label: "Customers", icon: Users },
-      { href: "/broadcasts", label: "Broadcasts", icon: Megaphone },
-    ],
-  },
-  {
-    label: "Assets",
-    items: [
-      { href: "/users", label: "Users", icon: UsersRound },
-      { href: "/phone-numbers", label: "Phone Numbers", icon: Phone },
-      { href: "/templates", label: "Templates", icon: FileText },
-      { href: "/catalogs", label: "Catalogs", icon: Store },
-      // { href: "/websites", label: "Websites", icon: Globe2 },
-    ],
-  },
-  {
-    label: "Analytics",
-    items: [{ href: "/usage", label: "Usage", icon: Gauge }],
-  },
+const MAIN_ITEMS = [
+  { href: "/chats", label: "Chats", icon: MessageCircle },
+  { href: "/todos", label: "TO-DOs", icon: ListChecks },
+  { href: "/catalogs", label: "Catalogs", icon: Store, masterOnly: true },
+];
+
+const ASSET_ITEMS = [
+  { href: "/customers", label: "Customers", icon: Users },
+  { href: "/phone-numbers", label: "Phone Numbers", icon: Phone },
+  { href: "/users", label: "Users", icon: UsersRound, masterOnly: true },
+  { href: "/templates", label: "Templates", icon: FileText },
+  { href: "/broadcasts", label: "Broadcasts", icon: Megaphone },
+  { href: "/usage", label: "Analytics", icon: Gauge, masterOnly: true },
 ];
 
 export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user: User }) {
@@ -100,49 +85,91 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
     }
   }
 
+  const assetItems = ASSET_ITEMS.filter((item) => !item.masterOnly || user.type === "MASTER");
+  const assetsActive =
+    pathname.startsWith("/websites/") || assetItems.some((item) => pathname.startsWith(item.href));
+  const [assetsOpen, setAssetsOpen] = useState(assetsActive);
+
   return (
-    <nav className="flex h-svh flex-col gap-5 overflow-y-auto p-3">
-      <Brand className="px-2" />
-      {SECTIONS.filter((section) => user.type === "MASTER" || section.label !== "Analytics").map((section) => (
-        <div key={section.label} className="space-y-1">
-          <p className="text-muted-foreground px-2 text-xs font-medium tracking-wide uppercase">
-            {section.label}
-          </p>
-          {section.items
-            .filter(
-              (item) =>
-                (!["/catalogs", "/websites", "/users"].includes(item.href) || user.type === "MASTER"),
-            )
-            .map((item) => {
-              const active =
-                pathname === item.href ||
-                pathname.startsWith(`${item.href}/`) ||
-                (item.href === "/catalogs" && pathname.startsWith("/websites/"));
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onNavigate}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "flex items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors",
-                    active
-                      ? "bg-accent text-accent-foreground font-medium"
-                      : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
-                  )}
-                >
-                  <item.icon className="size-4" />
-                  {item.label}
-                  {item.href === "/inbox" && unreadNotificationsCount > 0 ? (
-                    <span className="bg-primary text-primary-foreground ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-medium">
-                      {unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount}
-                    </span>
-                  ) : null}
-                </Link>
-              );
-            })}
+    <nav className="flex h-svh flex-col gap-1 overflow-y-auto p-3">
+      <Brand className="mb-4 px-2" />
+      {MAIN_ITEMS.filter((item) => !item.masterOnly || user.type === "MASTER").map((item) => {
+        const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onNavigate}
+            aria-current={active ? "page" : undefined}
+            className={cn(
+              "flex items-center gap-2.5 rounded-2xl px-2.5 py-2 text-sm transition-colors",
+              active
+                ? "bg-primary/10 text-foreground font-medium shadow-[inset_0_1px_0_0_var(--glass-highlight)]"
+                : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+            )}
+          >
+            <item.icon className="size-4.5" />
+            {item.label}
+            {item.href === "/chats" && unreadNotificationsCount > 0 ? (
+              <span className="bg-primary text-primary-foreground ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-medium">
+                {unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount}
+              </span>
+            ) : null}
+          </Link>
+        );
+      })}
+
+      <div className="mt-1">
+        <button
+          type="button"
+          onClick={() => setAssetsOpen((open) => !open)}
+          aria-expanded={assetsOpen}
+          className={cn(
+            "flex w-full items-center gap-2.5 rounded-2xl px-2.5 py-2 text-sm transition-colors",
+            assetsActive && !assetsOpen
+              ? "bg-primary/10 text-foreground font-medium shadow-[inset_0_1px_0_0_var(--glass-highlight)]"
+              : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+          )}
+        >
+          <LayoutGrid className="size-4.5" />
+          Assets
+          <ChevronDown
+            className={cn("ml-auto size-4 transition-transform", assetsOpen && "rotate-180")}
+          />
+        </button>
+        <div
+          className={cn(
+            "grid transition-[grid-template-rows] duration-200 ease-out",
+            assetsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+          )}
+        >
+          <div className="overflow-hidden">
+            <div className="mt-1 space-y-1 pl-3.5">
+              {assetItems.map((item) => {
+                const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={onNavigate}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-sm transition-colors",
+                      active
+                        ? "bg-primary/10 text-foreground font-medium shadow-[inset_0_1px_0_0_var(--glass-highlight)]"
+                        : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+                    )}
+                  >
+                    <item.icon className="size-4" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
         </div>
-      ))}
+      </div>
+
       <Dialog
         open={feedbackOpen}
         onOpenChange={(open) => {

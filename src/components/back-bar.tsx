@@ -22,7 +22,7 @@ export function BackBar({
 
   return (
     <>
-      <div className="fixed top-14 right-0 left-0 z-20 flex h-12 items-center justify-between bg-background px-2 pt-1 pb-1 lg:left-52 xl:left-60 sm:px-4">
+      <div className="fixed top-14 right-0 left-0 z-20 flex h-12 items-center justify-between px-2 pt-1 pb-1 lg:left-52 xl:left-60 sm:px-4">
         {history ? (
           <Button type="button" variant="ghost" onClick={() => router.back()}>
             <ArrowLeft className="size-4" />
