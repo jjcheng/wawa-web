@@ -1,6 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
 import { CookieNotice } from "@/components/cookie-notice";
@@ -9,6 +10,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 export function Providers({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const isCustomWebsite = pathname.startsWith("/sites/");
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -27,7 +30,7 @@ export function Providers({ children }: { children: ReactNode }) {
         disableTransitionOnChange
       >
         <TooltipProvider>{children}</TooltipProvider>
-        <CookieNotice />
+        {!isCustomWebsite ? <CookieNotice /> : null}
         <Toaster richColors position="top-right" />
       </ThemeProvider>
     </QueryClientProvider>

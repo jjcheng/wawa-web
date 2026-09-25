@@ -113,7 +113,7 @@ export default async function PhoneNumbersPage({ searchParams }: PageProps<"/pho
                       </TableCell>
                       <TableCell><LocalDateTime value={number.added_at} /></TableCell>
                       {isMaster ? (
-                        <TableCell>
+                        <TableCell className="w-[220px] max-w-[220px] align-top">
                           <AssignedUsersButton users={number.assigned_users ?? []} />
                         </TableCell>
                       ) : null}

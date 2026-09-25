@@ -1142,6 +1142,7 @@ export function CreateTemplateForm({
                 {...register("name", {
                   onChange: (event) => {
                     event.target.value = event.target.value
+                      .toLowerCase()
                       .replaceAll(" ", "_")
                       .replace(TEMPLATE_NAME_INVALID_CHARACTER_PATTERN, "");
                   },

@@ -15,21 +15,25 @@ export function SettingsTabs() {
   const tabs = TABS;
 
   return (
-    <div className="mb-4 flex gap-1 border-b">
-      {tabs.map((tab) => (
-        <Link
-          key={tab.href}
-          href={tab.href}
-          className={cn(
-            "-mb-px border-b-2 px-3 py-2 text-sm transition-colors",
-            pathname === tab.href
-              ? "border-primary text-foreground font-medium"
-              : "text-muted-foreground hover:text-foreground border-transparent",
-          )}
-        >
-          {tab.label}
-        </Link>
-      ))}
+    <div className="mb-4 inline-flex w-fit items-center rounded-lg bg-muted p-[3px]">
+      {tabs.map((tab) => {
+        const isActive = pathname === tab.href;
+
+        return (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            className={cn(
+              "rounded-md px-3 py-1.5 text-sm font-medium transition-all",
+              isActive
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {tab.label}
+          </Link>
+        );
+      })}
     </div>
   );
 }

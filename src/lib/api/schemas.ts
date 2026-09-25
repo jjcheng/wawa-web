@@ -24,6 +24,7 @@ export const loginSchema = z.object({
 export type LoginInput = z.infer<typeof loginSchema>;
 
 export const updateProfileSchema = z.object({
+  name: z.string().trim().min(1, "Enter a name"),
   description: z.string().trim().min(1, "Enter a description"),
   email: z.union([z.literal(""), z.email("Enter a valid email address")]),
 });

@@ -51,6 +51,7 @@ export function ProfileForm({ user }: { user: User }) {
   } = useForm<UpdateProfileInput>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
+      name: user.name ?? "",
       description: user.description ?? "",
       email: user.email ?? "",
     },
@@ -61,7 +62,11 @@ export function ProfileForm({ user }: { user: User }) {
     mutationFn: (values: UpdateProfileInput) =>
       apiFetch<User>("v1/account/users/me/profile", {
         method: "PATCH",
-        body: { description: values.description, email: values.email || null },
+        body: {
+          name: values.name.trim(),
+          description: values.description,
+          email: values.email || null,
+        },
       }),
     onSuccess: () => {
       setSubmitError(null);
@@ -72,7 +77,11 @@ export function ProfileForm({ user }: { user: User }) {
       const apiError = toApiError(error);
       if (apiError instanceof ApiError && apiError.inputErrors.length > 0) {
         for (const inputError of apiError.inputErrors) {
-          if (inputError.field === "description" || inputError.field === "email") {
+          if (
+            inputError.field === "name" ||
+            inputError.field === "description" ||
+            inputError.field === "email"
+          ) {
             setError(inputError.field, { message: inputError.message });
           }
         }
@@ -89,15 +98,33 @@ export function ProfileForm({ user }: { user: User }) {
       className="max-w-md space-y-4"
     >
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input id="email" type="email" autoComplete="email" {...register("email")} />
+        <Label htmlFor="name">Name</Label>
+        <Input
+          id="name"
+          type="text"
+          autoComplete="name"
+          placeholder="Enter your name"
+          {...register("name")}
+        />
+        {errors.name ? <p className="text-destructive text-sm">{errors.name.message}</p> : null}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="email">Email (optional)</Label>
+        <Input
+          id="email"
+          type="email"
+          autoComplete="email"
+          placeholder="Enter your email"
+          {...register("email")}
+        />
         {errors.email ? (
           <p className="text-destructive text-sm">{errors.email.message}</p>
         ) : null}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">Description (optional)</Label>
         <Textarea id="description" {...register("description")} />
         {errors.description ? (
           <p className="text-destructive text-sm">{errors.description.message}</p>

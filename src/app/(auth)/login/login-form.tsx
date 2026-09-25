@@ -102,10 +102,11 @@ export function LoginForm({ next }: { next?: string }) {
       {turnstileSiteKey ? (
         <>
           <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
-          <div className="flex justify-center">
+          <div className="flex w-full justify-center">
             <div
-              className="cf-turnstile"
+              className="cf-turnstile w-full max-w-[350px]"
               data-sitekey={turnstileSiteKey}
+              data-size="flexible"
               data-callback="wawaTurnstileSuccess"
               data-expired-callback="wawaTurnstileReset"
               data-error-callback="wawaTurnstileReset"

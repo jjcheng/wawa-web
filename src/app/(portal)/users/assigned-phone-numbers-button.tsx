@@ -1,53 +1,49 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { PhoneNumber } from "@/lib/api/types";
 
+function phoneNumberLabel(phoneNumber: PhoneNumber) {
+  return phoneNumber.name || "Unnamed number";
+}
+
+function phoneNumberEntry(phoneNumber: PhoneNumber) {
+  const name = phoneNumberLabel(phoneNumber);
+  const display = phoneNumber.display_phone_number;
+  return display ? `${name} (${display})` : name;
+}
+
 export function AssignedPhoneNumbersButton({ phoneNumbers }: { phoneNumbers: PhoneNumber[] }) {
+  if (phoneNumbers.length === 0) return <span className="text-muted-foreground">—</span>;
+
+  const visiblePhoneNumbers = phoneNumbers.slice(0, 5);
+  const additionalCount = phoneNumbers.length - visiblePhoneNumbers.length;
+  const compactText = [
+    ...visiblePhoneNumbers.map((phoneNumber) => phoneNumberLabel(phoneNumber)),
+    ...(additionalCount > 0 ? [`and ${additionalCount} more`] : []),
+  ].join(", ");
+
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button
-          variant="link"
-          size="sm"
-          className="h-auto cursor-pointer px-0 font-semibold text-primary underline underline-offset-2"
-          aria-label={`View ${phoneNumbers.length} assigned phone number${phoneNumbers.length === 1 ? "" : "s"}`}
-          disabled={phoneNumbers.length === 0}
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="block max-w-[190px] cursor-pointer text-left text-sm text-primary underline underline-offset-2 decoration-from-font"
+          aria-label={`View assigned phone numbers: ${phoneNumbers.map(phoneNumberEntry).join(", ")}`}
         >
-          {phoneNumbers.length}
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Assigned phone numbers</DialogTitle>
-          <DialogDescription>WhatsApp phone numbers this user can manage.</DialogDescription>
-        </DialogHeader>
-        <ul className="list-disc space-y-1 pl-5">
-          {phoneNumbers.map((phoneNumber) => (
-            <li key={phoneNumber.id}>
-              <span>{phoneNumber.name || "Unnamed number"}</span>
-              <span className="ml-2 text-muted-foreground">
-                {phoneNumber.display_phone_number ?? "—"}
-              </span>
-            </li>
-          ))}
-        </ul>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Close</Button>
-          </DialogClose>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          {compactText}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-72 p-3">
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Assigned phone numbers</p>
+          <ul className="list-disc space-y-1 pl-5 text-sm">
+            {phoneNumbers.map((phoneNumber) => (
+              <li key={phoneNumber.id}>{phoneNumberEntry(phoneNumber)}</li>
+            ))}
+          </ul>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

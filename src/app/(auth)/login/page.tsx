@@ -23,7 +23,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const { next } = await searchParams;
 
   return (
-    <div className="flex min-h-svh min-w-[375px] flex-col items-center justify-center gap-6 p-6">
+    <div className="flex min-h-svh w-full flex-col items-center justify-center gap-6 overflow-x-hidden p-6">
       <div className="fixed top-4 right-4">
         <ThemeToggle />
       </div>

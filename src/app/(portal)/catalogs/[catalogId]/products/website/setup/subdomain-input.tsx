@@ -7,7 +7,10 @@ import { Input } from "@/components/ui/input";
 const MAX_SUBDOMAIN_LENGTH = 60;
 
 function normalizeSubdomain(value: string) {
-  return value.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9-]/g, "");
+  return value
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "");
 }
 
 export function SubdomainInput({ domain }: { domain: string }) {

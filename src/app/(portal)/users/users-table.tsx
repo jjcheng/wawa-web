@@ -48,7 +48,7 @@ function UserRow({
       <TableCell>{user.email || "—"}</TableCell>
       <TableCell>{user.type || "—"}</TableCell>
       <TableCell>{user.status || "—"}</TableCell>
-      <TableCell>
+      <TableCell className="w-[220px] max-w-[220px] align-top">
         <AssignedPhoneNumbersButton phoneNumbers={user.assigned_phone_numbers ?? []} />
       </TableCell>
       <TableCell className="text-right">
