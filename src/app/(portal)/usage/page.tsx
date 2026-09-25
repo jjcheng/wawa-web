@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { AnalyticsShell } from "@/components/whatsapp/analytics-shell";
 import { AnalyticsViewTabs } from "@/components/whatsapp/analytics-view-tabs";
+import { BackBar } from "@/components/back-bar";
 import { LocalDateTime } from "@/components/local-date-time";
 import { PhoneNumberListTable } from "@/components/whatsapp/phone-number-list-table";
 import { TemplateUsageTable } from "@/components/whatsapp/template-usage-table";
@@ -80,17 +81,19 @@ export default async function UsagePage({ searchParams }: PageProps<"/usage">) {
     { label: "Messages delivered", value: account.data?.total_delivered ?? 0 },
   ];
   return (
-    <AnalyticsShell
-      title="Usage"
-      description="Message volume reported by Meta for your WhatsApp Business Accounts."
-      wabaError={context.wabaError}
-      selected={context.selected}
-      rangeDays={context.rangeDays}
-      granularity={context.granularity}
-      maxRangeDays={view === "template" ? 90 : undefined}
-      allowHalfHour={view !== "template"}
-      allowMonth={view !== "template"}
-    >
+    <>
+      <BackBar href="/assets" />
+      <AnalyticsShell
+        title="Usage"
+        description="Message volume reported by Meta for your WhatsApp Business Accounts."
+        wabaError={context.wabaError}
+        selected={context.selected}
+        rangeDays={context.rangeDays}
+        granularity={context.granularity}
+        maxRangeDays={view === "template" ? 90 : undefined}
+        allowHalfHour={view !== "template"}
+        allowMonth={view !== "template"}
+      >
       <AnalyticsViewTabs value={view} />
 
       {view === "template" ? (
@@ -218,5 +221,6 @@ export default async function UsagePage({ searchParams }: PageProps<"/usage">) {
         </div>
       ) : null}
     </AnalyticsShell>
+    </>
   );
 }

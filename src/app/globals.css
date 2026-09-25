@@ -134,6 +134,8 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  .dark body {
     background-image:
       radial-gradient(circle at 15% -10%, color-mix(in oklch, var(--primary) 16%, transparent), transparent 45%),
       radial-gradient(circle at 100% 0%, color-mix(in oklch, var(--primary) 10%, transparent), transparent 40%);

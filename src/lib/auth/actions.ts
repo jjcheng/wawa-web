@@ -35,7 +35,7 @@ export type EmbeddedSignupState = {
 function safeNextPath(value: FormDataEntryValue | null) {
   const path = typeof value === "string" ? value : "";
   // Only allow same-origin relative paths to avoid open-redirects.
-  return /^\/(?!\/)[\w\-./?%&=]*$/.test(path) ? path : "/dashboard";
+  return /^\/(?!\/)[\w\-./?%&=]*$/.test(path) ? path : "/chats";
 }
 
 async function verifyTurnstile(token: FormDataEntryValue | null) {

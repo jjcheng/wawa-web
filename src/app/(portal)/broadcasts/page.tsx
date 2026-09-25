@@ -7,6 +7,7 @@ import { BroadcastCancelButton } from "./broadcast-cancel-button";
 import { BroadcastDeleteButton } from "./broadcast-delete-button";
 import { BroadcastViewButton } from "./broadcast-view-button";
 import { NewBroadcastButton } from "./new-broadcast-button";
+import { BackBar } from "@/components/back-bar";
 import { LocalDateTime } from "@/components/local-date-time";
 import { PageHeader } from "@/components/page-header";
 import { TableEmptyState } from "@/components/table-empty-state";
@@ -137,6 +138,7 @@ export default async function BroadcastsPage({ searchParams }: PageProps<"/broad
   }
   return (
     <>
+      <BackBar href="/assets" />
       <PageHeader
         title="Broadcasts"
         description={

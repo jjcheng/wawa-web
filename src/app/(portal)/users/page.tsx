@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { BackBar } from "@/components/back-bar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
@@ -29,6 +30,7 @@ export default async function UsersPage() {
 
   return (
     <>
+      <BackBar href="/assets" />
       <PageHeader
         title="Users"
         description="Manage users in your account."

@@ -14,25 +14,26 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
 
 const relativeTimeFormatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
-function toDate(value: string | Date) {
-  const date = typeof value === "string" ? new Date(value) : value;
+function toDate(value: string | number | Date) {
+  // Numeric timestamps from the API are epoch seconds (WhatsApp-style), not milliseconds.
+  const date = typeof value === "number" ? new Date(value * 1000) : new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-export function formatDateTime(value?: string | Date | null) {
+export function formatDateTime(value?: string | number | Date | null) {
   if (!value) return "—";
   const date = toDate(value);
   return date ? dateTimeFormatter.format(date) : "—";
 }
 
-export function formatDate(value?: string | Date | null) {
+export function formatDate(value?: string | number | Date | null) {
   if (!value) return "—";
   const date = toDate(value);
   return date ? dateFormatter.format(date) : "—";
 }
 
 export function formatRelativeTime(
-  value?: string | Date | null,
+  value?: string | number | Date | null,
   now: string | Date | number = Date.now(),
 ) {
   if (!value) return "—";

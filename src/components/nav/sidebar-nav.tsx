@@ -12,7 +12,6 @@ import {
   Megaphone,
   Phone,
   Store,
-  Users,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -45,7 +44,6 @@ const MAIN_ITEMS = [
 ];
 
 const ASSET_ITEMS = [
-  { href: "/customers", label: "Customers", icon: Users },
   { href: "/phone-numbers", label: "Phone Numbers", icon: Phone },
   { href: "/users", label: "Users", icon: UsersRound, masterOnly: true },
   { href: "/templates", label: "Templates", icon: FileText },

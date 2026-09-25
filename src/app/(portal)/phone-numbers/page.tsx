@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PhoneNumberStatusFilter } from "./phone-number-status-filter";
 import { AssignedUsersButton } from "./assigned-users-button";
 import { PhoneNumberViewButton } from "./phone-number-view-button";
+import { BackBar } from "@/components/back-bar";
 import { LocalDateTime } from "@/components/local-date-time";
 import { PageHeader } from "@/components/page-header";
 import { TableEmptyState } from "@/components/table-empty-state";
@@ -53,6 +54,7 @@ export default async function PhoneNumbersPage({ searchParams }: PageProps<"/pho
 
   return (
     <>
+      <BackBar href="/assets" />
       <PageHeader
         title="Phone numbers"
         description={

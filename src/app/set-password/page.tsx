@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Set your password" };
 
 function safeNextPath(value: string | string[] | undefined) {
   const path = typeof value === "string" ? value : "";
-  return /^\/(?!\/)[\w\-./?%&=]*$/.test(path) ? path : "/dashboard";
+  return /^\/(?!\/)[\w\-./?%&=]*$/.test(path) ? path : "/chats";
 }
 
 export default async function SetPasswordPage({ searchParams }: PageProps<"/set-password">) {

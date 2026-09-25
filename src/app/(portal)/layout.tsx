@@ -6,6 +6,7 @@ import { PortalMain } from "@/components/nav/portal-main";
 import { SidebarNav } from "@/components/nav/sidebar-nav";
 import { Topbar } from "@/components/nav/topbar";
 import { NotificationsRealtimeProvider } from "@/components/notifications-realtime-provider";
+import { PhoneNumberMessagesProvider } from "@/components/phone-number-messages-provider";
 import { requireUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
@@ -23,8 +24,9 @@ export default async function PortalLayout({ children }: LayoutProps<"/">) {
   return (
     <NavigationProgressProvider>
       <NotificationsRealtimeProvider user={user} />
+      <PhoneNumberMessagesProvider user={user} />
       <div className="flex min-h-svh">
-        <aside className="glass-surface-float hidden w-52 shrink-0 lg:block xl:w-60">
+        <aside className="glass-surface hidden w-52 shrink-0 border-r lg:block xl:w-60">
           <div className="sticky top-0">
             <SidebarNav user={user} />
           </div>

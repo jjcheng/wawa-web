@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { BackBar } from "@/components/back-bar";
 import { PageHeader } from "@/components/page-header";
 import { SettingsTabs } from "@/components/settings-tabs";
 import {
@@ -22,6 +23,7 @@ export default async function ProfilePage() {
 
   return (
     <>
+      <BackBar href="/assets" />
       <PageHeader
         title="Settings"
         description="Manage your profile and login password"

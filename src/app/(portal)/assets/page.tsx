@@ -1,4 +1,4 @@
-import { FileText, Gauge, Megaphone, Phone, Users, UsersRound } from "lucide-react";
+import { FileText, Gauge, Megaphone, Phone, UsersRound } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -10,12 +10,6 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = { title: "Assets" };
 
 const ASSET_LINKS = [
-  {
-    href: "/customers",
-    label: "Customers",
-    description: "Manage customer records, tags, and broadcasts.",
-    icon: Users,
-  },
   {
     href: "/phone-numbers",
     label: "Phone Numbers",

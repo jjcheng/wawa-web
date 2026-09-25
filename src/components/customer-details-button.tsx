@@ -2,7 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { Loader2, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { toast } from "@/lib/toast";
 
 import { Button } from "@/components/ui/button";
@@ -42,10 +42,14 @@ export function CustomerDetailsButton({
   customer,
   onDeleted,
   onUpdated,
+  trigger,
+  startInEditMode = false,
 }: {
   customer: Customer;
   onDeleted?: () => void;
   onUpdated?: (customer: Customer) => void;
+  trigger?: ReactNode;
+  startInEditMode?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -112,7 +116,6 @@ export function CustomerDetailsButton({
       }),
     onSuccess: (updatedCustomer) => {
       onUpdated?.(updatedCustomer);
-      setEditing(false);
       setOpen(false);
       toast.success("Customer details updated.");
     },
@@ -135,7 +138,7 @@ export function CustomerDetailsButton({
 
   function handleOpenChange(nextOpen: boolean) {
     if (nextOpen) {
-      setEditing(false);
+      setEditing(startInEditMode);
       setSaveErrors({});
       setDisplayName(customer.display_name);
       setCountryCode(customer.country_code);
@@ -170,9 +173,11 @@ export function CustomerDetailsButton({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
-          View
-        </Button>
+        {trigger ?? (
+          <Button size="sm" variant="outline">
+            View
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent
         className="flex max-h-[80vh] min-w-0 flex-col overflow-hidden sm:max-w-lg"

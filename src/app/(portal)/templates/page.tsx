@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 
+import { BackBar } from "@/components/back-bar";
 import { PageHeader } from "@/components/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -105,6 +106,7 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
 
   return (
     <>
+      <BackBar href="/assets" />
       <PageHeader
         title="Templates"
         description={

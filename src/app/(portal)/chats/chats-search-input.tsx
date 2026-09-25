@@ -2,17 +2,17 @@
 
 import { Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function ChatsSearchButton({ initialName }: { initialName: string }) {
-  const [open, setOpen] = useState(Boolean(initialName));
+export function ChatsSearchInput({ initialName }: { initialName: string }) {
   const [nameInput, setNameInput] = useState(initialName);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  useEffect(() => setNameInput(initialName), [initialName]);
 
   function submitSearch(value: string) {
     const params = new URLSearchParams(searchParams);
@@ -21,25 +21,10 @@ export function ChatsSearchButton({ initialName }: { initialName: string }) {
     router.push(`${pathname}?${params.toString()}`);
   }
 
-  if (!open) {
-    return (
-      <Button
-        type="button"
-        variant="secondary"
-        size="icon-sm"
-        className="shrink-0 rounded-full"
-        aria-label="Search chats"
-        onClick={() => setOpen(true)}
-      >
-        <Search className="size-4" />
-      </Button>
-    );
-  }
-
   return (
-    <div className="flex shrink-0 items-center gap-1">
+    <div className="relative min-w-0 flex-1">
+      <Search className="text-muted-foreground pointer-events-none absolute inset-y-0 left-2.5 my-auto size-3.5" />
       <Input
-        autoFocus
         value={nameInput}
         onChange={(event) => setNameInput(event.target.value)}
         onKeyDown={(event) => {
@@ -50,21 +35,21 @@ export function ChatsSearchButton({ initialName }: { initialName: string }) {
         }}
         placeholder="Search chats by name"
         aria-label="Search chats by name"
-        className="h-8 w-40 sm:w-56"
+        className="h-8 border-none bg-transparent pr-7 pl-7 shadow-none focus-visible:ring-0"
       />
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        aria-label="Close search"
-        onClick={() => {
-          setOpen(false);
-          setNameInput("");
-          if (initialName) submitSearch("");
-        }}
-      >
-        <X className="size-4" />
-      </Button>
+      {nameInput ? (
+        <button
+          type="button"
+          onClick={() => {
+            setNameInput("");
+            submitSearch("");
+          }}
+          aria-label="Clear search"
+          className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-2 flex items-center"
+        >
+          <X className="size-3.5" />
+        </button>
+      ) : null}
     </div>
   );
 }
