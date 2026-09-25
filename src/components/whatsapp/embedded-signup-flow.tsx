@@ -89,17 +89,6 @@ export function EmbeddedSignupFlow({
       return completeEmbeddedSignup(parsed.data);
     },
     onSuccess: (result) => {
-      if (result.wa_activated === false) {
-        const message =
-          result.wa_error || result.message || "Meta could not activate the WhatsApp account.";
-        signupActiveRef.current = false;
-        isSubmittingRef.current = false;
-        setSignupStarted(false);
-        setSignupError(message);
-        setSignupAborted(true);
-        toast.error(`${message} Please retry.`);
-        return;
-      }
       if (result.message) {
         signupActiveRef.current = false;
         isSubmittingRef.current = false;
@@ -107,6 +96,12 @@ export function EmbeddedSignupFlow({
         setSignupError(result.message);
         setSignupAborted(true);
         toast.error(result.message);
+        return;
+      }
+      if (result.phoneNumberId !== undefined) {
+        showConnectedToast("Final step: assign this phone number to one or more users.");
+        router.push(`/assign-users?phone_number_id=${encodeURIComponent(String(result.phoneNumberId))}`);
+        router.refresh();
         return;
       }
       const destination = redirectTo ?? "/dashboard";

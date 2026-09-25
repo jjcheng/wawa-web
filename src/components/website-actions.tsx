@@ -59,13 +59,13 @@ export function WebsiteActions({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
+        <DropdownMenuItem className="justify-center" asChild>
           <Link href={`/websites/${encodeURIComponent(websiteId)}`}>Customize</Link>
         </DropdownMenuItem>
-        <DropdownMenuItem disabled={syncing} onSelect={() => void syncProducts()}>
+        <DropdownMenuItem className="justify-center" disabled={syncing} onSelect={() => void syncProducts()}>
           Sync products
         </DropdownMenuItem>
-        <DropdownMenuItem disabled>View statistics</DropdownMenuItem>
+        <DropdownMenuItem className="justify-center" disabled>View statistics</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

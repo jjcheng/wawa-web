@@ -19,7 +19,7 @@ type DtoBase = {
   last_updated_at: string;
 };
 
-export type UserStatus = "ACTIVE" | "PENDING_PASSWORD" | "INACTIVE";
+export type UserStatus = "ACTIVE" | "PENDING_PASSWORD" | "PENDING_ASSIGNMENT" | "INACTIVE";
 export type UserType = "MASTER" | "OPERATOR" | "ACCOUNT";
 
 export type User = DtoBase & {
@@ -34,6 +34,8 @@ export type User = DtoBase & {
   access_token_expiry?: string;
   wa_activated?: boolean;
   wa_error?: string;
+  phone_number_ids?: number[];
+  assigned_phone_numbers?: PhoneNumber[];
 };
 
 export type Dashboard = {
@@ -165,6 +167,7 @@ export type PhoneNumber = DtoBase & {
   name?: string;
   user_name?: string;
   status?: string;
+  assigned_users?: User[];
   business_portfolio?: BusinessPortfolio | null;
   business_account?: BusinessAccount | null;
 };
@@ -185,8 +188,9 @@ export type PhoneNumberListResponse = {
 };
 
 export type EmbeddedSignupResult = {
-  user?: User;
-  phone_number?: PhoneNumber;
+  user: User | null;
+  phone_number: PhoneNumber | null;
+  wa_error: string;
 };
 
 export type Customer = {

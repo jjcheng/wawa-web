@@ -3,12 +3,14 @@ import type { Metadata } from "next";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type { CustomerListResponse } from "@/lib/api/types";
+import { requireUser } from "@/lib/auth/session";
 import { CustomersShell } from "./customers-shell";
 
 export const metadata: Metadata = { title: "Customers" };
 const PAGE_SIZES = ["10", "25", "50", "100", "500"];
 
 export default async function CustomersPage({ searchParams }: PageProps<"/customers">) {
+  const currentUser = await requireUser();
   const params = await searchParams;
   const requestedStatus = typeof params.status === "string" ? params.status : "ACTIVE";
   const status = requestedStatus === "INACTIVE" ? "INACTIVE" : "ACTIVE";
@@ -29,6 +31,7 @@ export default async function CustomersPage({ searchParams }: PageProps<"/custom
   return (
     <>
       <CustomersShell
+        currentUserId={currentUser.id}
         initialRows={customers.items}
         initialNumberOfPages={customers.number_of_pages ?? 1}
         name={name}

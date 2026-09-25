@@ -175,7 +175,7 @@ export function CustomerDetailsButton({
         </Button>
       </DialogTrigger>
       <DialogContent
-        className="flex max-h-[90vh] !w-[90vw] !max-w-[90vw] flex-col overflow-hidden sm:!w-[50vw] sm:!max-w-[50vw]"
+        className="flex max-h-[80vh] min-w-0 flex-col overflow-hidden sm:max-w-lg"
         showCloseButton={false}
       >
         <ModalHeader

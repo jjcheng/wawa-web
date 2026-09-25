@@ -41,6 +41,34 @@ export const changePasswordSchema = z
   });
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
+export const createUserSchema = z
+  .object({
+    name: z.string().trim().min(1, "Enter a name"),
+    country_code: z.string().trim().min(1, "Select a country code"),
+    phone_number: phoneNumber,
+    email: z.union([z.literal(""), z.email("Enter a valid email address")]),
+    type: z.enum(["OPERATOR", "MASTER"], { message: "Select a user type" }),
+    description: z.string().trim().optional().default(""),
+    password,
+    confirm_password: z.string().min(1, "Confirm the password"),
+  })
+  .refine((values) => values.password === values.confirm_password, {
+    path: ["confirm_password"],
+    message: "Passwords do not match",
+  });
+export type CreateUserInput = z.infer<typeof createUserSchema>;
+
+export const updateUserSchema = z.object({
+  name: z.string().trim().min(1, "Enter a name"),
+  email: z.union([z.literal(""), z.email("Enter a valid email address")]),
+  type: z.enum(["OPERATOR", "MASTER"], { message: "Select a user type" }),
+  status: z.enum(["ACTIVE", "PENDING_PASSWORD", "PENDING_ASSIGNMENT", "INACTIVE"], {
+    message: "Select a user status",
+  }),
+  description: z.string().trim().optional().default(""),
+});
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+
 export const setInitialPasswordSchema = z
   .object({
     new_password: password,

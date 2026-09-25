@@ -250,14 +250,14 @@ export function WebsiteDetailsForm({
           </div>
         }
       />
-      <div className="mb-4 flex border-b" role="tablist" aria-label="Website settings">
+      <div className="mb-4 flex gap-1 border-b" role="tablist" aria-label="Website settings">
         <button
           type="button"
           role="tab"
           aria-selected={activeTab === "profile"}
-          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
+          className={`-mb-px border-b-2 px-3 py-2 text-sm transition-colors ${
             activeTab === "profile"
-              ? "border-primary text-foreground"
+              ? "border-primary text-foreground font-medium"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
           onClick={() => setActiveTab("profile")}
@@ -268,9 +268,9 @@ export function WebsiteDetailsForm({
           type="button"
           role="tab"
           aria-selected={activeTab === "pages"}
-          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
+          className={`-mb-px border-b-2 px-3 py-2 text-sm transition-colors ${
             activeTab === "pages"
-              ? "border-primary text-foreground"
+              ? "border-primary text-foreground font-medium"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
           onClick={() => {

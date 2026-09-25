@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { PhoneNumberStatusFilter } from "./phone-number-status-filter";
+import { AssignedUsersButton } from "./assigned-users-button";
 import { PhoneNumberViewButton } from "./phone-number-view-button";
 import { LocalDateTime } from "@/components/local-date-time";
 import { PageHeader } from "@/components/page-header";
@@ -36,11 +37,12 @@ export default async function PhoneNumbersPage({ searchParams }: PageProps<"/pho
     requestedStatus === "CONNECTED" || requestedStatus === "DISCONNECTED"
       ? requestedStatus
       : "ALL";
+  const isMaster = user.type === "MASTER";
   let loadError: string | null = null;
   try {
     phoneNumbers =
       (
-        await serverFetch<PhoneNumberListResponse>("/v1/wa/user-phone-numbers", {
+        await serverFetch<PhoneNumberListResponse>("/v1/wa/phone-numbers", {
           query: { page: "1", page_size: "10", status: status === "ALL" ? undefined : status },
         })
       ).items ?? [];
@@ -73,20 +75,20 @@ export default async function PhoneNumbersPage({ searchParams }: PageProps<"/pho
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User Name</TableHead>
                   <TableHead>WhatsApp Name</TableHead>
                   <TableHead>Number</TableHead>
                   <TableHead>
                     <PhoneNumberStatusFilter value={status} />
                   </TableHead>
                   <TableHead>Added</TableHead>
+                  {isMaster ? <TableHead>Assigned to</TableHead> : null}
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {phoneNumbers.length === 0 ? (
                   <TableEmptyState
-                    colSpan={6}
+                    colSpan={isMaster ? 6 : 5}
                     action={
                       status !== "ALL" ? (
                         <Button asChild size="sm" variant="outline">
@@ -100,7 +102,6 @@ export default async function PhoneNumbersPage({ searchParams }: PageProps<"/pho
                 ) : (
                   phoneNumbers.map((number) => (
                     <TableRow key={number.id}>
-                      <TableCell className="font-medium">{number.user_name || "—"}</TableCell>
                       <TableCell>{number.name || "Unnamed number"}</TableCell>
                       <TableCell>
                         {formatPhoneNumber(number.display_phone_number || number.phone_number)}
@@ -111,6 +112,11 @@ export default async function PhoneNumbersPage({ searchParams }: PageProps<"/pho
                           : "—"}
                       </TableCell>
                       <TableCell><LocalDateTime value={number.added_at} /></TableCell>
+                      {isMaster ? (
+                        <TableCell>
+                          <AssignedUsersButton users={number.assigned_users ?? []} />
+                        </TableCell>
+                      ) : null}
                       <TableCell className="text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-2">
                           <PhoneNumberViewButton

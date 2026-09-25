@@ -58,7 +58,7 @@ export default async function UsagePage({ searchParams }: PageProps<"/usage">) {
       : { data: null, error: null };
   const phoneNumbers =
     view === "phone" && context.selected
-      ? await loadAnalytics<PhoneNumberListResponse>("/v1/wa/user-phone-numbers", {
+      ? await loadAnalytics<PhoneNumberListResponse>("/v1/wa/phone-numbers", {
           page: "1",
           page_size: "10",
         })

@@ -16,6 +16,7 @@ import type { Customer, CustomerListResponse } from "@/lib/api/types";
 const PAGE_SIZES = ["10", "25", "50", "100", "500"];
 
 export function CustomersShell({
+  currentUserId,
   initialRows,
   initialNumberOfPages,
   name,
@@ -23,6 +24,7 @@ export function CustomersShell({
   tags,
   status,
 }: {
+  currentUserId: number;
   initialRows: Customer[];
   initialNumberOfPages: number;
   name: string;
@@ -79,6 +81,7 @@ export function CustomersShell({
         action={
           <div>
             <AddCustomerMenu
+              currentUserId={currentUserId}
               onCreated={(customer) => {
                 setRows((currentRows) => [customer, ...currentRows]);
                 setNewTags((currentTags) => [

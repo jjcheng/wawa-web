@@ -15,12 +15,12 @@ import { requireUser } from "@/lib/auth/session";
 export const metadata: Metadata = { title: "Password" };
 
 export default async function PasswordPage() {
-  const user = await requireUser();
+  await requireUser();
 
   return (
     <>
       <PageHeader title="Settings" description="Manage your profile and login password" />
-      <SettingsTabs isMaster={user.type === "MASTER"} />
+      <SettingsTabs />
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Change password</CardTitle>

@@ -135,7 +135,7 @@ export function PhoneNumberListTable({
     setLoading(true);
     setError(null);
     try {
-      const response = await apiFetch<PhoneNumberListResponse>("/v1/wa/user-phone-numbers", {
+      const response = await apiFetch<PhoneNumberListResponse>("/v1/wa/phone-numbers", {
         query: { page: String(page + 1), page_size: "10" },
       });
       const items = response.items ?? [];

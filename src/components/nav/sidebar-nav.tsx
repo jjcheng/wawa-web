@@ -12,6 +12,7 @@ import {
   Phone,
   Store,
   Users,
+  UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -54,6 +55,7 @@ const SECTIONS = [
   {
     label: "Assets",
     items: [
+      { href: "/users", label: "Users", icon: UsersRound },
       { href: "/phone-numbers", label: "Phone Numbers", icon: Phone },
       { href: "/templates", label: "Templates", icon: FileText },
       { href: "/catalogs", label: "Catalogs", icon: Store },
@@ -109,7 +111,7 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
           {section.items
             .filter(
               (item) =>
-                (!["/catalogs", "/websites"].includes(item.href) || user.type === "MASTER"),
+                (!["/catalogs", "/websites", "/users"].includes(item.href) || user.type === "MASTER"),
             )
             .map((item) => {
               const active =

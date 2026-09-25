@@ -36,7 +36,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
-import type { Customer, CustomerImportResult } from "@/lib/api/types";
+import type { Customer, CustomerImportResult, PhoneNumber, User } from "@/lib/api/types";
 
 type ImportedContact = {
   id: string;
@@ -140,23 +140,35 @@ function parseVCardContacts(value: string): ImportedContact[] {
     .filter((contact): contact is ImportedContact => contact !== null);
 }
 
-export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer) => void }) {
+export function AddCustomerMenu({
+  currentUserId,
+  onCreated,
+}: {
+  currentUserId: number;
+  onCreated?: (customer: Customer) => void;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [countryCode, setCountryCode] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [tags, setTags] = useState<string[]>([]);
+  const [assignedPhoneNumbers, setAssignedPhoneNumbers] = useState<PhoneNumber[]>([]);
+  const [selectedAssignedPhoneNumberId, setSelectedAssignedPhoneNumberId] = useState<number | null>(null);
+  const [assignedPhoneNumbersLoading, setAssignedPhoneNumbersLoading] = useState(false);
   const [importInfoOpen, setImportInfoOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [importedContacts, setImportedContacts] = useState<ImportedContact[]>([]);
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
   const [importResult, setImportResult] = useState<CustomerImportResult | null>(null);
+  const [importStep, setImportStep] = useState<"contacts" | "phone-number">("contacts");
+  const [selectedImportPhoneNumberId, setSelectedImportPhoneNumberId] = useState<number | null>(null);
   const importMutation = useMutation({
     mutationFn: () =>
       apiFetch<CustomerImportResult>("v1/customers/import", {
         method: "POST",
         body: {
+          phone_number_id: selectedImportPhoneNumberId,
           contacts: importedContacts
             .filter((contact) => selectedContacts.has(contact.id))
             .map((contact) => ({
@@ -197,6 +209,35 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
   const importInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (!open && !importOpen) return;
+
+    let active = true;
+    setAssignedPhoneNumbersLoading(true);
+    void apiFetch<User>(`v1/admin/users/${currentUserId}`)
+      .then((user) => {
+        if (!active) return;
+        const phoneNumbers = user.assigned_phone_numbers ?? [];
+        setAssignedPhoneNumbers(phoneNumbers);
+        const firstPhoneNumberId = phoneNumbers[0] ? Number(phoneNumbers[0].id) : null;
+        if (open) setSelectedAssignedPhoneNumberId(firstPhoneNumberId);
+        if (importOpen) setSelectedImportPhoneNumberId(firstPhoneNumberId);
+      })
+      .catch((error) => {
+        if (active) {
+          setAssignedPhoneNumbers([]);
+          toast.error(toApiError(error).message);
+        }
+      })
+      .finally(() => {
+        if (active) setAssignedPhoneNumbersLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [currentUserId, importOpen, open]);
+
+  useEffect(() => {
     if (importOpen) {
       const handleResize = () => {
         const content = document.querySelector(
@@ -226,6 +267,7 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
           display_name: displayName.trim(),
           country_code: countryCode.trim(),
           phone_number: phoneNumber.trim(),
+          phone_number_id: selectedAssignedPhoneNumberId,
           tags,
         },
       }),
@@ -236,6 +278,8 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
       setCountryCode("");
       setPhoneNumber("");
       setTags([]);
+      setAssignedPhoneNumbers([]);
+      setSelectedAssignedPhoneNumberId(null);
       toast.success("Customer created.");
     },
     onError: (error) => toast.error(toApiError(error).message),
@@ -251,15 +295,16 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={() => setOpen(true)}>
-            Create customer
+          <DropdownMenuItem className="justify-center" onSelect={() => setOpen(true)}>
+            Create
           </DropdownMenuItem>
           <DropdownMenuItem
+            className="justify-center"
             onSelect={() => {
               setImportInfoOpen(true);
             }}
           >
-            Import customers
+            Import
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -267,12 +312,12 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
         open={open}
         onOpenChange={(nextOpen) => !mutation.isPending && setOpen(nextOpen)}
       >
-        <DialogContent>
+        <DialogContent className="flex max-h-[90vh] flex-col">
           <DialogHeader>
             <DialogTitle>Add customer</DialogTitle>
             <DialogDescription>Add a customer to your account.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="min-h-0 space-y-3 overflow-y-auto pr-1">
             <div className="space-y-2">
               <Label htmlFor="customer-name">Name</Label>
               <Input
@@ -302,6 +347,39 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
                 disabled={mutation.isPending}
               />
             </div>
+            <div className="space-y-2">
+              <Label>Assign to</Label>
+              {assignedPhoneNumbersLoading ? (
+                <p className="text-muted-foreground text-sm">Loading phone numbers...</p>
+              ) : assignedPhoneNumbers.length === 0 ? (
+                <p className="text-muted-foreground text-sm">No assigned WhatsApp phone numbers available.</p>
+              ) : (
+                <div className="space-y-2">
+                  {assignedPhoneNumbers.map((assignedPhoneNumber) => {
+                    const assignedPhoneNumberId = Number(assignedPhoneNumber.id);
+
+                    return (
+                      <label key={assignedPhoneNumber.id} className="flex cursor-pointer items-center gap-2">
+                        <input
+                          type="radio"
+                          name="assigned-phone-number"
+                          value={assignedPhoneNumberId}
+                          checked={selectedAssignedPhoneNumberId === assignedPhoneNumberId}
+                          onChange={() => setSelectedAssignedPhoneNumberId(assignedPhoneNumberId)}
+                          className="accent-primary size-4"
+                        />
+                        <span className="text-sm">
+                          {assignedPhoneNumber.name || "Unnamed number"}
+                          {assignedPhoneNumber.display_phone_number
+                            ? ` (${assignedPhoneNumber.display_phone_number})`
+                            : ""}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
           <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
             <Button
@@ -317,6 +395,7 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
                 !displayName.trim() ||
                 !countryCode.trim() ||
                 !phoneNumber.trim() ||
+                selectedAssignedPhoneNumberId === null ||
                 mutation.isPending
               }
             >
@@ -366,6 +445,8 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
             setImportResult(null);
             setImportedContacts(contacts);
             setSelectedContacts(new Set(contacts.map((contact) => contact.id)));
+            setImportStep("contacts");
+            setSelectedImportPhoneNumberId(null);
             setImportOpen(true);
           });
         }}
@@ -390,7 +471,7 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
               All contacts imported
             </div>
           ) : null}
-          {!importResult ? (
+          {!importResult && importStep === "contacts" ? (
             <div className="max-h-[60vh] !overflow-auto">
               <Table containerClassName="overflow-visible">
                 <TableHeader>
@@ -465,6 +546,43 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
               </Table>
             </div>
           ) : null}
+          {!importResult && importStep === "phone-number" ? (
+            <div className="max-h-[60vh] space-y-3 overflow-y-auto">
+              <p className="text-muted-foreground text-sm">
+                Assign the {selectedContacts.size} selected {selectedContacts.size === 1 ? "customer" : "customers"} to a WhatsApp phone number.
+              </p>
+              {assignedPhoneNumbersLoading ? (
+                <p className="text-muted-foreground text-sm">Loading phone numbers...</p>
+              ) : assignedPhoneNumbers.length === 0 ? (
+                <p className="text-muted-foreground text-sm">No assigned WhatsApp phone numbers available.</p>
+              ) : (
+                <div className="space-y-2">
+                  {assignedPhoneNumbers.map((assignedPhoneNumber) => {
+                    const assignedPhoneNumberId = Number(assignedPhoneNumber.id);
+
+                    return (
+                      <label key={assignedPhoneNumber.id} className="flex cursor-pointer items-center gap-2">
+                        <input
+                          type="radio"
+                          name="import-assigned-phone-number"
+                          value={assignedPhoneNumberId}
+                          checked={selectedImportPhoneNumberId === assignedPhoneNumberId}
+                          onChange={() => setSelectedImportPhoneNumberId(assignedPhoneNumberId)}
+                          className="accent-primary size-4"
+                        />
+                        <span className="text-sm">
+                          {assignedPhoneNumber.name || "Unnamed number"}
+                          {assignedPhoneNumber.display_phone_number
+                            ? ` (${assignedPhoneNumber.display_phone_number})`
+                            : ""}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : null}
           {importResult?.skipped.length ? (
             <div className="max-h-[30vh] !overflow-auto">
               <h3 className="mb-2 text-sm font-medium">Skipped contacts</h3>
@@ -495,16 +613,32 @@ export function AddCustomerMenu({ onCreated }: { onCreated?: (customer: Customer
           <DialogFooter className={importResult ? undefined : "flex-row items-center justify-between gap-3 sm:justify-between"}>
             {importResult ? (
               <Button onClick={() => setImportOpen(false)}>Done</Button>
+            ) : importStep === "phone-number" ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => setImportStep("contacts")}
+                  disabled={importMutation.isPending}
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={() => importMutation.mutate()}
+                  disabled={selectedImportPhoneNumberId === null || importMutation.isPending}
+                >
+                  {importMutation.isPending ? "Importing..." : "Import"}
+                </Button>
+              </>
             ) : (
               <>
                 <Button variant="outline" onClick={() => setImportOpen(false)}>
                   Cancel
                 </Button>
                 <Button
-                  onClick={() => importMutation.mutate()}
-                  disabled={selectedContacts.size === 0 || importMutation.isPending}
+                  onClick={() => setImportStep("phone-number")}
+                  disabled={selectedContacts.size === 0}
                 >
-                  {importMutation.isPending ? "Importing..." : "Import"}
+                  Next
                 </Button>
               </>
             )}

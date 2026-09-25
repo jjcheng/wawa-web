@@ -10,11 +10,9 @@ const TABS = [
   { href: "/settings/password", label: "Password" },
 ];
 
-export function SettingsTabs({ isMaster = false }: { isMaster?: boolean }) {
+export function SettingsTabs() {
   const pathname = usePathname();
-  const tabs = isMaster
-    ? [...TABS, { href: "/settings/users", label: "Users" }]
-    : TABS;
+  const tabs = TABS;
 
   return (
     <div className="mb-4 flex gap-1 border-b">

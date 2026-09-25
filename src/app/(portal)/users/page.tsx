@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { PageHeader } from "@/components/page-header";
-import { SettingsTabs } from "@/components/settings-tabs";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { PageHeader } from "@/components/page-header";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type { User } from "@/lib/api/types";
@@ -14,7 +15,7 @@ export const metadata: Metadata = { title: "Users" };
 
 export default async function UsersPage() {
   const currentUser = await requireUser();
-  if (currentUser.type !== "MASTER") redirect("/settings/profile");
+  if (currentUser.type !== "MASTER") redirect("/dashboard");
 
   let users: User[] = [];
   let loadError: string | null = null;
@@ -28,8 +29,15 @@ export default async function UsersPage() {
 
   return (
     <>
-      <PageHeader title="Settings" description="Manage users in your account." />
-      <SettingsTabs isMaster />
+      <PageHeader
+        title="Users"
+        description="Manage users in your account."
+        action={
+          <Button asChild size="sm">
+            <Link href="/users/new">Add user</Link>
+          </Button>
+        }
+      />
 
       {loadError ? (
         <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
@@ -39,10 +47,14 @@ export default async function UsersPage() {
         <>
           <Card className="rounded-md py-0">
             <CardContent className="overflow-x-auto p-0">
-              <UsersTable users={users} currentUserId={currentUser.id} />
+              <UsersTable
+                users={users}
+                currentUserId={currentUser.id}
+                currentUserIsMaster={currentUser.type === "MASTER"}
+              />
             </CardContent>
           </Card>
-          <p className="mt-3 text-sm text-muted-foreground">MASTER users cannot be updated.</p>
+          <p className="mt-3 text-sm text-muted-foreground">MASTER users cannot be edited.</p>
         </>
       )}
     </>

@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 import { ApiError } from "@/lib/api/errors";
 import { embeddedSignupSchema, loginSchema } from "@/lib/api/schemas";
 import { rawServerFetch, serverFetch } from "@/lib/api/server-client";
-import type { ApiEnvelope, InputError, User } from "@/lib/api/types";
+import type { ApiEnvelope, EmbeddedSignupResult, InputError, User } from "@/lib/api/types";
 import {
   MASTER_SESSION_RETURN_COOKIE,
   MASTER_SESSION_RETURN_MAX_AGE_SECONDS,
@@ -25,8 +25,8 @@ export type EmbeddedSignupState = {
   message?: string;
   inputErrors?: InputError[];
   status?: User["status"];
-  wa_activated?: boolean;
   wa_error?: string;
+  phoneNumberId?: number;
   /** Set when the API did not issue an access token; tells the client where to send the user. */
   redirectTo?: string;
   loggedIn?: boolean;
@@ -156,7 +156,7 @@ export async function completeEmbeddedSignup(input: unknown): Promise<EmbeddedSi
     return { message: new ApiError("Unable to reach the API.", 0).message };
   }
 
-  const envelope = (await upstream.json().catch(() => null)) as ApiEnvelope<User> | null;
+  const envelope = (await upstream.json().catch(() => null)) as ApiEnvelope<EmbeddedSignupResult> | null;
   if (!upstream.ok || !envelope?.success) {
     return {
       message: envelope?.message ?? "WhatsApp onboarding failed. Please try again.",
@@ -164,16 +164,25 @@ export async function completeEmbeddedSignup(input: unknown): Promise<EmbeddedSi
     };
   }
 
-  if (envelope.data?.wa_activated === false) {
+  const result = envelope.data;
+  if (!result) return { message: "WhatsApp onboarding returned no result. Please try again." };
+
+  if (result.wa_error) {
     return {
-      message: envelope.data.wa_error || "Meta could not activate the WhatsApp account, please try again.",
-      wa_activated: false,
-      wa_error: envelope.data.wa_error,
+      message: result.wa_error,
+      wa_error: result.wa_error,
     };
   }
 
-  const needsPassword = envelope.data?.status === "PENDING_PASSWORD";
-  const accessToken = envelope.data?.access_token;
+  if (!result.user) {
+    if (!result.phone_number) {
+      return { message: "WhatsApp onboarding returned no phone number to assign." };
+    }
+    return { phoneNumberId: result.phone_number.id };
+  }
+
+  const needsPassword = result.user.status === "PENDING_PASSWORD";
+  const accessToken = result.user.access_token;
 
   if (accessToken) {
     // The API issued a token for the signed-up account: auto-login as that account.
@@ -188,8 +197,7 @@ export async function completeEmbeddedSignup(input: unknown): Promise<EmbeddedSi
     }
     cookieStore.set(serverEnv.SESSION_COOKIE_NAME, accessToken, sessionCookieOptions());
     return {
-      status: envelope.data?.status,
-      wa_activated: envelope.data?.wa_activated,
+      status: result.user.status,
       loggedIn: true,
     };
   }
@@ -199,8 +207,7 @@ export async function completeEmbeddedSignup(input: unknown): Promise<EmbeddedSi
   }
 
   return {
-    status: envelope.data?.status,
-    wa_activated: envelope.data?.wa_activated,
+    status: result.user.status,
     redirectTo: masterSessionToken ? "/phone-numbers" : "/login",
   };
 }

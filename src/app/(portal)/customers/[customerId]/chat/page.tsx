@@ -1,6 +1,6 @@
 import { Info } from "lucide-react";
-import { notFound } from "next/navigation";
 
+import { ApiErrorToast } from "@/components/api-error-toast";
 import { BackBar } from "@/components/back-bar";
 import { Chat } from "@/components/chat";
 import { ChatComposeProvider, type ChatMessage } from "@/components/chat-compose-context";
@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ApiError } from "@/lib/api/errors";
+import { ApiError, toApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type { Customer, PhoneNumberListResponse } from "@/lib/api/types";
 
@@ -31,14 +31,24 @@ export default async function CustomerChatPage({
   const { customerId } = await params;
   const { return_to: returnTo } = await searchParams;
   const backHref = returnTo?.startsWith("/customers") ? returnTo : "/customers";
-  let customer: Customer;
+  let customer: Customer | null = null;
+  let customerLoadError: string | null = null;
   try {
     customer = await serverFetch<Customer>(`/v1/customers/${encodeURIComponent(customerId)}`, {
       query: { id: customerId },
     });
   } catch (error) {
-    if (error instanceof ApiError && error.statusCode === 404) notFound();
-    throw error;
+    customerLoadError = toApiError(error).message;
+  }
+
+  if (!customer) {
+    return (
+      <>
+        <BackBar href={backHref} />
+        <PageHeader title="Customer chat" />
+        <ApiErrorToast message={customerLoadError} />
+      </>
+    );
   }
 
   let messages: ChatMessage[] = [];
@@ -46,7 +56,7 @@ export default async function CustomerChatPage({
   let phoneNumberId = "";
   let loadError: string | null = null;
   try {
-    const phoneNumbers = await serverFetch<PhoneNumberListResponse>("/v1/wa/user-phone-numbers", {
+    const phoneNumbers = await serverFetch<PhoneNumberListResponse>("/v1/wa/phone-numbers", {
       query: { page: "1", page_size: "10" },
     });
     phoneNumberId = phoneNumbers.items[0]?.meta_phone_number_id ?? "";

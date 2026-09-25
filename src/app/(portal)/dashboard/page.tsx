@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { DashboardSection } from "./dashboard-section";
+import { DashboardTabs } from "./dashboard-tabs";
 import { LocalDateTime } from "@/components/local-date-time";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -16,6 +17,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type {
+  Broadcast,
+  BroadcastListResponse,
   Dashboard,
   PhoneNumber,
   PhoneNumberListResponse,
@@ -25,10 +28,47 @@ import { formatPhoneNumber } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
+function PendingBroadcastCards({ broadcasts }: { broadcasts: Broadcast[] }) {
+  if (broadcasts.length === 0) {
+    return (
+      <div className="flex min-h-32 items-center justify-center text-center">
+        <p className="text-muted-foreground text-sm">No pending tasks</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {broadcasts.map((broadcast) => (
+        <Card key={broadcast.id} size="sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 px-3 py-2">
+            <CardDescription>Pending broadcast</CardDescription>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/broadcasts">View</Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-2 px-3 pb-2">
+            <div>
+              <p className="truncate text-2xl font-semibold">{broadcast.name}</p>
+              <p className="text-muted-foreground text-sm">
+                <LocalDateTime value={broadcast.send_date} />
+              </p>
+            </div>
+            <p className="text-muted-foreground text-sm">
+              {broadcast.recipient_count ?? broadcast.customer_ids?.length ?? 0} recipients
+            </p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 export default async function DashboardPage() {
   const user = await requireUser();
 
   let phoneNumbers: PhoneNumber[] = [];
+  let pendingBroadcasts: Broadcast[] = [];
   const emptyDashboard: Dashboard = {
     active_phone_numbers: undefined,
     active_customers: undefined,
@@ -38,10 +78,14 @@ export default async function DashboardPage() {
   let loadError: string | null = null;
   try {
     const phoneNumberResponse = await serverFetch<PhoneNumberListResponse>(
-      "/v1/wa/user-phone-numbers",
+      "/v1/wa/phone-numbers",
       { query: { page: "1", page_size: "10" } },
     );
     phoneNumbers = phoneNumberResponse.items ?? [];
+    const broadcastsResponse = await serverFetch<BroadcastListResponse>("/v1/broadcasts", {
+      query: { page: "1", page_size: "100", status: "PENDING" },
+    });
+    pendingBroadcasts = broadcastsResponse.items ?? [];
   } catch (error) {
     loadError =
       error instanceof ApiError ? error.message : "Could not load your WhatsApp numbers.";
@@ -54,22 +98,28 @@ export default async function DashboardPage() {
         description="Your WhatsApp CRM at a glance."
       />
 
-      {user.type === "MASTER" ? (
-        <Tabs defaultValue="business-account" className="space-y-4">
-          <TabsList aria-label="Dashboard overview">
-            <TabsTrigger value="business-account">Business Account</TabsTrigger>
-            <TabsTrigger value="my-number">My Number</TabsTrigger>
-          </TabsList>
-          <TabsContent value="business-account">
-            <DashboardSection dashboard={businessDashboard} businessAccount showUsageLinks />
-          </TabsContent>
-          <TabsContent value="my-number">
-            <DashboardSection dashboard={personalDashboard} showUsageLinks />
-          </TabsContent>
-        </Tabs>
-      ) : (
-        <DashboardSection dashboard={personalDashboard} />
-      )}
+      <DashboardTabs
+        todos={
+          <PendingBroadcastCards broadcasts={pendingBroadcasts} />
+        }
+        stats={user.type === "MASTER" ? (
+            <Tabs defaultValue="business-account" className="space-y-4">
+              <TabsList aria-label="Dashboard overview">
+                <TabsTrigger value="business-account">Business Account</TabsTrigger>
+                <TabsTrigger value="my-number">My Number</TabsTrigger>
+              </TabsList>
+              <TabsContent value="business-account">
+                <DashboardSection dashboard={businessDashboard} businessAccount showUsageLinks />
+              </TabsContent>
+              <TabsContent value="my-number">
+                <DashboardSection dashboard={personalDashboard} showUsageLinks />
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <DashboardSection dashboard={personalDashboard} />
+          )
+        }
+      />
 
       <div className="mt-6 grid hidden gap-4 lg:grid-cols-2">
         <Card>
