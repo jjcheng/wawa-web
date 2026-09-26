@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import { requireUser } from "@/lib/auth/session";
-import type { Website, WebsitePage } from "@/lib/api/types";
+import type { PhoneNumber, PhoneNumberListResponse, Website, WebsitePage } from "@/lib/api/types";
 import { WebsiteDetailsForm } from "./website-details-form";
 import { WebsiteStatusSwitch } from "./website-status-switch";
 
@@ -27,6 +27,7 @@ export default async function WebsitePage({
   const showPages = tab === "pages";
   let website: Website | null = null;
   let initialPages: WebsitePage[] | null = null;
+  let phoneNumbers: PhoneNumber[] = [];
   let loadError: string | null = null;
 
   try {
@@ -39,6 +40,10 @@ export default async function WebsitePage({
       );
       initialPages = Array.isArray(pages) ? [...pages].sort((first, second) => first.rank - second.rank) : [];
     }
+    const phoneNumberResponse = await serverFetch<PhoneNumberListResponse>("/v1/wa/phone-numbers", {
+      query: { page: "1", page_size: "100" },
+    });
+    phoneNumbers = phoneNumberResponse.items ?? [];
   } catch (error) {
     loadError = error instanceof ApiError ? error.message : "Could not load this website.";
   }
@@ -46,8 +51,7 @@ export default async function WebsitePage({
   return (
     <>
       <BackBar
-        href="/websites"
-        history
+        href="/catalogs"
         actions={
           website ? (
             <WebsiteStatusSwitch
@@ -67,6 +71,7 @@ export default async function WebsitePage({
           url={website.url}
           initialActiveTab={showPages ? "pages" : "profile"}
           initialPages={initialPages}
+          phoneNumbers={phoneNumbers}
           initialValues={{
             about: website.about ?? "",
             description: website.description ?? "",

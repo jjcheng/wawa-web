@@ -63,7 +63,7 @@ export default async function EmbeddedSignupPage({ searchParams }: PageProps<"/e
             <EmbeddedSignupFlow
               appId={serverEnv.NEXT_META_APP_ID}
               configId={serverEnv.NEXT_META_EMBEDDED_SIGNUP_CONFIG_ID}
-              redirectTo={safeNextPath(next) ?? "/dashboard"}
+              redirectTo={safeNextPath(next) ?? "/chats"}
               className="w-full"
             />
         </CardContent>

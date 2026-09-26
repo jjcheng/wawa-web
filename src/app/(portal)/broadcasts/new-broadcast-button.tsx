@@ -13,7 +13,7 @@ export function NewBroadcastButton() {
       type="button"
       onClick={() => {
         toast.info("Select at least one customer to start a broadcast.");
-        router.push("/customers");
+        router.push("/chats");
       }}
     >
       New broadcast

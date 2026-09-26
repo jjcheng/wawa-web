@@ -104,10 +104,10 @@ export function EmbeddedSignupFlow({
         router.refresh();
         return;
       }
-      const destination = redirectTo ?? "/dashboard";
+      const destination = redirectTo ?? "/chats";
       if (result.status === "PENDING_PASSWORD") {
         showConnectedToast("Final step: set your password and you're all good to go!");
-        router.push(`/set-password?next=${encodeURIComponent(destination)}`);
+        router.push(`/set-password?next=${encodeURIComponent("/chats")}`);
         return;
       }
       if (!result.loggedIn) {

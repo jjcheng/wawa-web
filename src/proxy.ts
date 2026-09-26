@@ -30,6 +30,14 @@ function hostnameFromHost(host: string) {
   return host.replace(/^\[/, "").replace(/\]$/, "").split(":")[0];
 }
 
+function rewriteCustomWebsite(request: NextRequest, destination: string) {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-wawago-custom-website", "true");
+  return NextResponse.rewrite(new URL(destination, request.url), {
+    request: { headers: requestHeaders },
+  });
+}
+
 async function resolveWebsiteId(hostname: string, origin: string) {
   try {
     const url = new URL("/v1/public/ping", `${API_BASE_URL}/`);
@@ -67,11 +75,12 @@ export async function proxy(request: NextRequest) {
   if (!isPortalHost(hostname)) {
     const websiteId = await resolveWebsiteId(host, request.nextUrl.origin);
     if (websiteId) {
-      return NextResponse.rewrite(
-        new URL(`/sites/${encodeURIComponent(websiteId)}${pathname}`, request.url),
+      return rewriteCustomWebsite(
+        request,
+        `/sites/${encodeURIComponent(websiteId)}${pathname}`,
       );
     }
-            return NextResponse.rewrite(new URL("/sites/not-found", request.url));
+    return rewriteCustomWebsite(request, "/sites/not-found");
   }
 
   if (UNGUARDED_PATHS.includes(pathname)) return NextResponse.next();

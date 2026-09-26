@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, Info, Loader2, RefreshCw, Trash2, X } from "lucide-react";
+import { ChevronDown, ExternalLink, Info, Loader2, RefreshCw, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -30,14 +30,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
-import type { BusinessProfile, WebsitePage } from "@/lib/api/types";
+import type { BusinessProfile, PhoneNumber, WebsitePage } from "@/lib/api/types";
+import { formatPhoneNumber } from "@/lib/format";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { deleteWebsiteAction, updateWebsiteAction, type WebsiteActionState } from "./actions";
@@ -48,6 +56,7 @@ export function WebsiteDetailsForm({
   initialValues,
   initialActiveTab = "profile",
   initialPages = null,
+  phoneNumbers = [],
 }: {
   websiteId: string;
   url?: string;
@@ -65,6 +74,7 @@ export function WebsiteDetailsForm({
   };
   initialActiveTab?: "profile" | "pages";
   initialPages?: WebsitePage[] | null;
+  phoneNumbers?: PhoneNumber[];
 }) {
   const [state, formAction, pending] = useActionState<WebsiteActionState, FormData>(
     updateWebsiteAction,
@@ -89,6 +99,10 @@ export function WebsiteDetailsForm({
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverUploading, setCoverUploading] = useState(false);
   const [coverError, setCoverError] = useState<string | null>(null);
+  const syncablePhoneNumbers = phoneNumbers.map((phoneNumber) => ({
+    ...phoneNumber,
+    syncPhoneNumberId: String(phoneNumber.id),
+  }));
 
   // Local preview for a selected-but-not-yet-uploaded file.
   const pictureFilePreviewUrl = useMemo(
@@ -171,11 +185,13 @@ export function WebsiteDetailsForm({
     startTransition(() => formAction(formData));
   }
 
-  async function syncBusinessProfile() {
+  async function syncBusinessProfile(phoneNumberId: string) {
     setSyncPending(true);
     setSyncError(null);
     try {
-      const profile = await apiFetch<BusinessProfile>("v1/wa/phone-numbers/business-profile");
+      const profile = await apiFetch<BusinessProfile>("v1/wa/phone-numbers/business-profile", {
+        query: { phone_number_id: phoneNumberId },
+      });
       setValues((current) => ({
         ...current,
         about: profile.about ?? "",
@@ -238,50 +254,65 @@ export function WebsiteDetailsForm({
                 This will pull the business profile data from your WhatsApp Business app
               </TooltipContent>
             </Tooltip>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => void syncBusinessProfile()}
-              disabled={pending || syncPending}
-            >
-              {syncPending ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-              {syncPending ? "Syncing..." : "Sync"}
-            </Button>
+            {syncablePhoneNumbers.length > 1 ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button type="button" variant="outline" disabled={pending || syncPending}>
+                    {syncPending ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="size-4" />
+                    )}
+                    {syncPending ? "Syncing..." : "Sync"}
+                    <ChevronDown className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {syncablePhoneNumbers.map((phoneNumber) => (
+                    <DropdownMenuItem
+                      key={phoneNumber.id}
+                      disabled={syncPending}
+                      onSelect={() => void syncBusinessProfile(phoneNumber.syncPhoneNumberId)}
+                    >
+                      {phoneNumber.name ||
+                        formatPhoneNumber(phoneNumber.phone_number) ||
+                        phoneNumber.display_phone_number}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  const phoneNumberId = syncablePhoneNumbers[0]?.syncPhoneNumberId;
+                  if (phoneNumberId) void syncBusinessProfile(phoneNumberId);
+                }}
+                disabled={pending || syncPending || syncablePhoneNumbers.length === 0}
+              >
+                {syncPending ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+                {syncPending ? "Syncing..." : "Sync"}
+              </Button>
+            )}
           </div>
         }
       />
-      <div className="mb-4 flex gap-1 border-b" role="tablist" aria-label="Website settings">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "profile"}
-          className={`-mb-px border-b-2 px-3 py-2 text-sm transition-colors ${
-            activeTab === "profile"
-              ? "border-primary text-foreground font-medium"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-          onClick={() => setActiveTab("profile")}
-        >
-          Profile
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "pages"}
-          className={`-mb-px border-b-2 px-3 py-2 text-sm transition-colors ${
-            activeTab === "pages"
-              ? "border-primary text-foreground font-medium"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-          onClick={() => {
-            setActiveTab("pages");
-            void loadPages();
+      <div className="mb-4 flex items-center gap-2">
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => {
+            setActiveTab(value as "profile" | "pages");
+            if (value === "pages") void loadPages();
           }}
         >
-          Pages
-        </button>
+          <TabsList>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="pages">Pages</TabsTrigger>
+          </TabsList>
+        </Tabs>
         {activeTab === "pages" ? (
-          <Button asChild size="sm" className="ml-auto self-center">
+          <Button asChild size="sm" className="ml-auto">
             <Link href={`/websites/${encodeURIComponent(websiteId)}/pages/new?return_to=${encodeURIComponent(`/websites/${websiteId}?tab=pages`)}`}>Add page</Link>
           </Button>
         ) : null}

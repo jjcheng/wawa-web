@@ -144,8 +144,8 @@ export default async function BroadcastsPage({ searchParams }: PageProps<"/broad
         description={
           <>
             Broadcast template messages to your customers. Start new broadcast in{" "}
-            <Link href="/customers" className="text-primary hover:underline">
-              Customers
+            <Link href="/chats" className="text-primary hover:underline">
+              Chats
             </Link>{" "}
             page.
           </>

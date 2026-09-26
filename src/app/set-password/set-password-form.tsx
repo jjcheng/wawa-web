@@ -51,7 +51,7 @@ export function SetPasswordForm({ next }: { next: string }) {
       setSubmitError(null);
       const restoredMaster = await restoreMasterSession();
       toast.success("New WhatsApp number connected.");
-      router.push(restoredMaster ? "/phone-numbers" : next);
+      router.push(restoredMaster ? "/chats" : next);
       router.refresh();
     },
     onError: (error) => {

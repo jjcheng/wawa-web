@@ -30,7 +30,7 @@ export default async function NewBroadcastPage({
 
   return (
     <>
-      <BackBar href="/customers" />
+      <BackBar href="/chats" />
 
       <PageHeader
         title={broadcastId ? "Edit broadcast" : "New broadcast"}

@@ -9,9 +9,15 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-export function Providers({ children }: { children: ReactNode }) {
+export function Providers({
+  children,
+  isCustomWebsite: isCustomWebsiteRequest,
+}: {
+  children: ReactNode;
+  isCustomWebsite: boolean;
+}) {
   const pathname = usePathname();
-  const isCustomWebsite = pathname.startsWith("/sites/");
+  const isCustomWebsite = isCustomWebsiteRequest || pathname.startsWith("/sites/");
   const [queryClient] = useState(
     () =>
       new QueryClient({

@@ -53,20 +53,20 @@ export default async function AssetsPage() {
       <PageHeader title="Assets" description="Manage the resources connected to your account." />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {links.map((link) => (
-          <Link key={link.href} href={link.href}>
+          <Link key={link.href} href={link.href} className="min-w-0">
             <Card
               className={cn(
                 "h-full transition-colors hover:bg-accent/60",
                 "rounded-2xl",
               )}
             >
-              <CardContent className="flex items-center gap-3 px-4">
+              <CardContent className="flex min-w-0 items-center gap-3 px-4">
                 <span className="bg-accent flex size-10 shrink-0 items-center justify-center rounded-full">
                   <link.icon className="size-5" />
                 </span>
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{link.label}</p>
-                  <p className="text-muted-foreground truncate text-sm">{link.description}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">{link.label}</p>
+                  <p className="text-muted-foreground text-sm">{link.description}</p>
                 </div>
               </CardContent>
             </Card>

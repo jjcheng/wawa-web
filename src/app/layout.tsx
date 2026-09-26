@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Geist, Geist_Mono, Inter, Playfair_Display } from "next/font/google";
 
 import { Providers } from "./providers";
@@ -53,7 +54,9 @@ export const metadata: Metadata = {
   manifest: "/favicons/site.webmanifest",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const isCustomWebsite = (await headers()).get("x-wawago-custom-website") === "true";
+
   return (
     <html
       lang="en"
@@ -64,7 +67,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="flex min-h-full flex-col">
-        <Providers>{children}</Providers>
+        <Providers isCustomWebsite={isCustomWebsite}>{children}</Providers>
       </body>
     </html>
   );

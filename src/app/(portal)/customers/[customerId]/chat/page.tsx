@@ -30,8 +30,7 @@ export default async function CustomerChatPage({
 }) {
   const { customerId } = await params;
   const { return_to: returnTo } = await searchParams;
-  const backHref =
-    returnTo?.startsWith("/customers") || returnTo?.startsWith("/chats") ? returnTo : "/chats";
+  const backHref = returnTo?.startsWith("/chats") ? returnTo : "/chats";
   let customer: Customer | null = null;
   let customerLoadError: string | null = null;
   try {
