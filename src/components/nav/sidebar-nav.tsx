@@ -108,7 +108,15 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
                 : "text-foreground hover:text-blue-600 dark:hover:text-blue-400",
             )}
           >
-            <item.icon className={cn("size-5 transition-colors", active ? "text-blue-600 dark:text-blue-400" : "group-hover:text-blue-600 dark:group-hover:text-blue-400")} />
+            <item.icon
+              width={17}
+              height={17}
+              strokeWidth={item.href === "/chats" ? 2 : undefined}
+              className={cn(
+                "transition-colors",
+                active ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400",
+              )}
+            />
             {item.label}
             {item.href === "/tasks" && unreadNotificationsCount > 0 ? (
               <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-medium text-white">
@@ -131,10 +139,23 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
               : "text-foreground hover:text-blue-600 dark:hover:text-blue-400",
           )}
         >
-          <LayoutGrid className={cn("size-5 transition-colors", assetsActive ? "text-blue-600 dark:text-blue-400" : "group-hover:text-blue-600 dark:group-hover:text-blue-400")} />
+          <LayoutGrid
+            width={17}
+            height={17}
+            className={cn(
+              "transition-colors",
+              assetsActive ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400",
+            )}
+          />
           Assets
           <ChevronDown
-            className={cn("ml-auto size-4.5 transition-[color,transform]", assetsOpen && "rotate-180", !assetsActive && "group-hover:text-blue-600 dark:group-hover:text-blue-400")}
+            width={17}
+            height={17}
+            className={cn(
+              "ml-auto transition-colors",
+              assetsOpen && "rotate-180",
+              assetsActive ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400",
+            )}
           />
         </button>
         <div
@@ -160,7 +181,14 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
                         : "text-foreground hover:text-blue-600 dark:hover:text-blue-400",
                     )}
                   >
-                    <item.icon className={cn("size-4.5 transition-colors", active ? "text-blue-600 dark:text-blue-400" : "group-hover:text-blue-600 dark:group-hover:text-blue-400")} />
+                    <item.icon
+                      width={16}
+                      height={16}
+                      className={cn(
+                        "transition-colors",
+                        active ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400",
+                      )}
+                    />
                     {item.label}
                   </Link>
                 );
@@ -181,7 +209,7 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
             type="button"
             className="group text-foreground mt-auto flex w-full items-center gap-2.5 px-3 py-2 text-base font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400"
           >
-            <MessageSquareText className="size-4.5 transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+            <MessageSquareText width={17} height={17} className="text-muted-foreground" />
             Feedback
           </button>
         </DialogTrigger>
