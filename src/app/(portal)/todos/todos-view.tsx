@@ -20,8 +20,8 @@ import {
   Info,
   ListChecks,
   MessageCircle,
+  Megaphone,
   ShieldUser,
-  Speaker,
   TriangleAlert,
   UserRound,
   type LucideIcon,
@@ -48,7 +48,7 @@ const TYPE_STYLES: Record<Notification["type"], string> = {
 };
 const NOTIFICATION_ICONS = {
   CUSTOMER: UserRound,
-  BROADCAST: Speaker,
+  BROADCAST: Megaphone,
   WEBSITE: Globe2,
   CHAT: MessageCircle,
   JOIN: ShieldUser,
@@ -213,9 +213,6 @@ function NotificationRow({
           <div className={`flex size-12 items-center justify-center rounded-xl ${TYPE_STYLES[notification.type]}`}>
             <Icon aria-hidden="true" className="size-6" strokeWidth={2} />
           </div>
-          {!isRead ? (
-            <span aria-label="Unread" className="absolute -right-0.5 -top-0.5 size-3 rounded-full border-2 border-card bg-red-500" />
-          ) : null}
         </div>
         <div className="min-w-0 flex-1">
           <h2 className={`break-words text-base font-medium ${isRead ? "text-muted-foreground" : "text-foreground"}`}>

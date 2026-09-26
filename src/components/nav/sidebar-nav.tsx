@@ -109,8 +109,8 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
             )}
           >
             <item.icon
-              width={17}
-              height={17}
+              width={16}
+              height={16}
               strokeWidth={item.href === "/chats" ? 2 : undefined}
               className={cn(
                 "transition-colors",
@@ -140,8 +140,8 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
           )}
         >
           <LayoutGrid
-            width={17}
-            height={17}
+            width={16}
+            height={16}
             className={cn(
               "transition-colors",
               assetsActive ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400",
@@ -182,8 +182,8 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
                     )}
                   >
                     <item.icon
-                      width={16}
-                      height={16}
+                      width={15}
+                      height={15}
                       className={cn(
                         "transition-colors",
                         active ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400",
