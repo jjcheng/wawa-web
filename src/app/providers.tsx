@@ -37,7 +37,7 @@ export function Providers({
       >
         <TooltipProvider>{children}</TooltipProvider>
         {!isCustomWebsite ? <CookieNotice /> : null}
-        <Toaster richColors position="top-right" />
+        <Toaster richColors={false} position="top-center" />
       </ThemeProvider>
     </QueryClientProvider>
   );

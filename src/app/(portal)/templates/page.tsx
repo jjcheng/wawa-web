@@ -12,7 +12,6 @@ import { TEMPLATE_CATEGORIES } from "@/lib/api/schemas";
 import type { BusinessAccount, Template, TemplateListResponse } from "@/lib/api/types";
 import { metaManageTemplatesUrl } from "@/lib/meta-links";
 import { toWabaOptions, type WabaOption } from "@/lib/waba-options";
-import { WHATSAPP_LANGUAGE_CODES } from "@/lib/whatsapp-languages";
 import { MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 import { requireUser } from "@/lib/auth/session";
 import { TemplatesTable } from "./templates-table";
@@ -29,8 +28,7 @@ const STATUS_OPTIONS = [
   "IN_APPEAL",
   "PENDING_DELETION",
 ];
-const QUALITY_SCORE_OPTIONS = ["ALL", "GREEN", "YELLOW", "RED", "UNKNOWN"];
-
+const CATEGORY_OPTIONS = ["ALL", ...TEMPLATE_CATEGORIES];
 export default async function TemplatesPage({ searchParams }: PageProps<"/templates">) {
   const user = await requireUser();
   let wabas: WabaOption[] = [];
@@ -58,25 +56,13 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
       : wabas[0]?.wabaId) ?? "";
   const limit = typeof params.limit === "string" ? params.limit : "25";
   const requestedCategory = typeof params.category === "string" ? params.category : undefined;
-  const category =
-    requestedCategory && (TEMPLATE_CATEGORIES as readonly string[]).includes(requestedCategory)
-      ? requestedCategory
-      : "ALL";
+  const category = requestedCategory && CATEGORY_OPTIONS.includes(requestedCategory)
+    ? requestedCategory
+    : "ALL";
   const nameOrContent =
     typeof params.name_or_content === "string" ? params.name_or_content : "";
   const requestedStatus = typeof params.status === "string" ? params.status : undefined;
   const status = requestedStatus && STATUS_OPTIONS.includes(requestedStatus) ? requestedStatus : "ALL";
-  const requestedQualityScore =
-    typeof params.quality_score === "string" ? params.quality_score : undefined;
-  const qualityScore =
-    requestedQualityScore && QUALITY_SCORE_OPTIONS.includes(requestedQualityScore)
-      ? requestedQualityScore
-      : "ALL";
-  const requestedLanguage = typeof params.language === "string" ? params.language : undefined;
-  const language =
-    requestedLanguage && (WHATSAPP_LANGUAGE_CODES as readonly string[]).includes(requestedLanguage)
-      ? requestedLanguage
-      : "ALL";
   let afterCursor: string | undefined;
 
   try {
@@ -88,8 +74,6 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
           category: category === "ALL" ? undefined : category,
           name_or_content: nameOrContent || undefined,
           status: status === "ALL" ? undefined : status,
-          quality_score: qualityScore === "ALL" ? undefined : qualityScore,
-          language: language === "ALL" ? undefined : language,
         },
       });
       templates = response?.items ?? [];
@@ -111,7 +95,7 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
         title="Templates"
         description={
           user.type === "MASTER"
-            ? "WhatsApp message templates from your business account. Use WhatsApp Manager to create or edit."
+            ? "For full template creation experience, use WhatsApp Manager."
             : "WhatsApp message templates from your business account."
         }
         action={
@@ -145,14 +129,12 @@ export default async function TemplatesPage({ searchParams }: PageProps<"/templa
 
       {!loadError && selected ? (
         <TemplatesTable
-          key={`${limit}-${category}-${nameOrContent}-${status}-${qualityScore}-${language}`}
+          key={`${limit}-${category}-${nameOrContent}-${status}`}
           wabaId={selected}
           limit={limit}
           category={category}
           nameOrContent={nameOrContent}
           status={status}
-          qualityScore={qualityScore}
-          language={language}
           initialTemplates={templates}
           initialAfterCursor={afterCursor}
           isMaster={user.type === "MASTER"}

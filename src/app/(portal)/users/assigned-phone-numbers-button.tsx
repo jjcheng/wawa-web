@@ -16,12 +16,8 @@ function phoneNumberEntry(phoneNumber: PhoneNumber) {
 export function AssignedPhoneNumbersButton({ phoneNumbers }: { phoneNumbers: PhoneNumber[] }) {
   if (phoneNumbers.length === 0) return <span className="text-muted-foreground">—</span>;
 
-  const visiblePhoneNumbers = phoneNumbers.slice(0, 5);
-  const additionalCount = phoneNumbers.length - visiblePhoneNumbers.length;
-  const compactText = [
-    ...visiblePhoneNumbers.map((phoneNumber) => phoneNumberLabel(phoneNumber)),
-    ...(additionalCount > 0 ? [`and ${additionalCount} more`] : []),
-  ].join(", ");
+  const firstPhoneNumber = phoneNumberLabel(phoneNumbers[0]);
+  const compactText = `${firstPhoneNumber}${phoneNumbers.length > 1 ? ` and ${phoneNumbers.length - 1} more` : ""}`;
 
   return (
     <Popover>
@@ -36,7 +32,7 @@ export function AssignedPhoneNumbersButton({ phoneNumbers }: { phoneNumbers: Pho
       </PopoverTrigger>
       <PopoverContent align="start" className="w-72 p-3">
         <div className="space-y-2">
-          <p className="text-sm font-medium">Assigned phone numbers</p>
+          <p className="text-sm font-medium">Managing phone numbers</p>
           <ul className="list-disc space-y-1 pl-5 text-sm">
             {phoneNumbers.map((phoneNumber) => (
               <li key={phoneNumber.id}>{phoneNumberEntry(phoneNumber)}</li>

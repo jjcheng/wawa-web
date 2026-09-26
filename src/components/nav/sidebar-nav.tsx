@@ -89,8 +89,8 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
   const [assetsOpen, setAssetsOpen] = useState(assetsActive);
 
   return (
-    <nav className="flex h-svh flex-col gap-1 overflow-y-auto p-3">
-      <Brand className="mb-4 px-2" />
+    <nav className="flex h-svh flex-col gap-1 overflow-y-auto px-3 py-4">
+      <Brand className="mb-5 px-2" />
       {MAIN_ITEMS.filter((item) => !item.masterOnly || user.type === "MASTER").map((item) => {
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (
@@ -100,16 +100,16 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex items-center gap-2.5 rounded-2xl px-2.5 py-2 text-sm transition-colors",
+              "group relative flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-base font-medium transition-colors duration-200",
               active
-                ? "bg-primary/10 text-foreground font-medium shadow-[inset_0_1px_0_0_var(--glass-highlight)]"
-                : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+                ? "bg-transparent font-semibold text-blue-600 dark:text-blue-400"
+                : "text-foreground hover:text-blue-600 dark:hover:text-blue-400",
             )}
           >
-            <item.icon className="size-4.5" />
+            <item.icon className={cn("size-5 transition-colors", active ? "text-blue-600 dark:text-blue-400" : "group-hover:text-blue-600 dark:group-hover:text-blue-400")} />
             {item.label}
-            {item.href === "/chats" && unreadNotificationsCount > 0 ? (
-              <span className="bg-primary text-primary-foreground ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-medium">
+            {item.href === "/todos" && unreadNotificationsCount > 0 ? (
+              <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-medium text-white">
                 {unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount}
               </span>
             ) : null}
@@ -117,22 +117,22 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
         );
       })}
 
-      <div className="mt-1">
+      <div>
         <button
           type="button"
           onClick={() => setAssetsOpen((open) => !open)}
           aria-expanded={assetsOpen}
           className={cn(
-            "flex w-full items-center gap-2.5 rounded-2xl px-2.5 py-2 text-sm transition-colors",
-            assetsActive && !assetsOpen
-              ? "bg-primary/10 text-foreground font-medium shadow-[inset_0_1px_0_0_var(--glass-highlight)]"
-              : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+            "group flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-base font-medium transition-colors duration-200",
+            assetsActive
+              ? "bg-transparent font-semibold text-blue-600 dark:text-blue-400"
+              : "text-foreground hover:text-blue-600 dark:hover:text-blue-400",
           )}
         >
-          <LayoutGrid className="size-4.5" />
+          <LayoutGrid className={cn("size-5 transition-colors", assetsActive ? "text-blue-600 dark:text-blue-400" : "group-hover:text-blue-600 dark:group-hover:text-blue-400")} />
           Assets
           <ChevronDown
-            className={cn("ml-auto size-4 transition-transform", assetsOpen && "rotate-180")}
+            className={cn("ml-auto size-4.5 transition-[color,transform]", assetsOpen && "rotate-180", !assetsActive && "group-hover:text-blue-600 dark:group-hover:text-blue-400")}
           />
         </button>
         <div
@@ -142,7 +142,7 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
           )}
         >
           <div className="overflow-hidden">
-            <div className="mt-1 space-y-1 pl-3.5">
+            <div className="border-border/70 mt-1.5 ml-5 space-y-1 border-l pl-3">
               {assetItems.map((item) => {
                 const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return (
@@ -152,13 +152,13 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
                     onClick={onNavigate}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-sm transition-colors",
+                      "group relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[0.9375rem] font-medium transition-colors duration-200",
                       active
-                        ? "bg-primary/10 text-foreground font-medium shadow-[inset_0_1px_0_0_var(--glass-highlight)]"
-                        : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+                        ? "bg-transparent font-semibold text-blue-600 dark:text-blue-400"
+                        : "text-foreground hover:text-blue-600 dark:hover:text-blue-400",
                     )}
                   >
-                    <item.icon className="size-4" />
+                    <item.icon className={cn("size-4.5 transition-colors", active ? "text-blue-600 dark:text-blue-400" : "group-hover:text-blue-600 dark:group-hover:text-blue-400")} />
                     {item.label}
                   </Link>
                 );
@@ -177,9 +177,9 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
         <DialogTrigger asChild>
           <button
             type="button"
-            className="text-muted-foreground mt-auto flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors hover:bg-accent/60 hover:text-foreground"
+            className="group text-foreground mt-auto flex w-full items-center gap-2.5 px-3 py-2 text-base font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400"
           >
-            <MessageSquareText className="size-4" />
+            <MessageSquareText className="size-4.5 transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400" />
             Feedback
           </button>
         </DialogTrigger>

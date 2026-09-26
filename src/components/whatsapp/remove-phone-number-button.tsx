@@ -26,6 +26,7 @@ export function RemovePhoneNumberButton({
   phoneNumber,
   mode = "disconnect",
   triggerVariant = "outline",
+  triggerSize = "sm",
   label = "Disconnect",
   onDeleted,
 }: {
@@ -34,6 +35,7 @@ export function RemovePhoneNumberButton({
   phoneNumber?: string;
   mode?: "disconnect" | "delete";
   triggerVariant?: "outline" | "destructive";
+  triggerSize?: "sm" | "default";
   label?: string;
   onDeleted?: () => void;
 }) {
@@ -59,7 +61,7 @@ export function RemovePhoneNumberButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant={triggerVariant} size="sm" className={SMALL_BUTTON_HEIGHT}>
+        <Button variant={triggerVariant} size={triggerSize} className={triggerSize === "sm" ? SMALL_BUTTON_HEIGHT : undefined}>
           {label}
         </Button>
       </DialogTrigger>

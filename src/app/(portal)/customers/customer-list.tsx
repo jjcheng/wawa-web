@@ -2,7 +2,7 @@
 
 import { Info, Loader2, Search, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "@/lib/toast";
 
@@ -73,7 +73,10 @@ export function CustomerList({
     NO_TAGS_OPTION,
     ...[...new Set([...tags, ...newTags])].filter((tag) => tag !== NO_TAGS_OPTION).sort(),
   ];
-  const filteredRows = rows;
+  const filteredRows = useMemo(() => {
+    const query = nameInput.trim().toLowerCase();
+    return rows.filter((row) => (row.display_name ?? "").toLowerCase().includes(query));
+  }, [nameInput, rows]);
   const allFilteredRowsSelected =
     filteredRows.length > 0 && filteredRows.every((row) => selectedRows.has(row.id));
 
@@ -126,16 +129,8 @@ export function CustomerList({
     router.push(`${pathname}?${params.toString()}`);
   }
 
-  function submitSearch(field: "name", value: string) {
-    const params = new URLSearchParams(searchParams);
-    if (value.trim()) params.set(field, value.trim());
-    else params.delete(field);
-    router.push(`${pathname}?${params.toString()}`);
-  }
-
-  function clearSearch(field: "name") {
+  function clearSearch() {
     setNameInput("");
-    submitSearch(field, "");
   }
 
   function resetFilters() {
@@ -282,20 +277,14 @@ export function CustomerList({
                     <Input
                       value={nameInput}
                       onChange={(event) => setNameInput(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") {
-                          event.preventDefault();
-                          submitSearch("name", nameInput);
-                        }
-                      }}
-                      placeholder="Name"
+                      placeholder="Search by name"
                       aria-label="Search customers by name"
                       className="h-7 border-none pr-6 pl-6 font-medium shadow-none focus-visible:ring-0"
                     />
                     {nameInput ? (
                       <button
                         type="button"
-                        onClick={() => clearSearch("name")}
+                        onClick={clearSearch}
                         aria-label="Clear name search"
                         className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 flex items-center pr-1"
                       >

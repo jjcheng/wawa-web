@@ -21,7 +21,7 @@ export default async function ChatsPage({ searchParams }: PageProps<"/chats">) {
 
   const [customers, tags] = await Promise.all([
     serverFetch<CustomerListResponse>("/v1/customers", {
-      query: { page: "1", page_size: "50", status, name, tags: selectedTags },
+      query: { page: "1", page_size: "50", status, tags: selectedTags },
     }).catch((error) => {
       if (error instanceof ApiError) return { items: [], number_of_pages: 1 };
       throw error;

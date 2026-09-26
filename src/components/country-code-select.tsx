@@ -1,14 +1,18 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 
+import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { COUNTRY_CODES } from "@/lib/country-codes";
 import { cn, MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 
@@ -39,6 +43,7 @@ export function CountryCodeSelect({
   className?: string;
   "aria-invalid"?: boolean;
 }) {
+  const [open, setOpen] = useState(false);
   const storedValue = useSyncExternalStore(
     subscribeToCountryCode,
     () => getStoredCountryCode(defaultValue),
@@ -50,32 +55,64 @@ export function CountryCodeSelect({
     if (savedValue && !value) onValueChange?.(savedValue);
   }, [onValueChange, value]);
 
-  function handleValueChange(nextValue: string) {
+  const selectedCode = value ?? storedValue;
+  const selectedCountry = useMemo(
+    () => COUNTRY_CODES.find((country) => country.code === selectedCode),
+    [selectedCode],
+  );
+
+  function handleSelect(nextValue: string) {
     window.localStorage.setItem(COUNTRY_CODE_STORAGE_KEY, nextValue);
     window.dispatchEvent(new Event(COUNTRY_CODE_CHANGE_EVENT));
     onValueChange?.(nextValue);
+    setOpen(false);
   }
 
   return (
-    <Select
-      name={name}
-      value={value ?? storedValue}
-      onValueChange={handleValueChange}
-    >
-      <SelectTrigger
-        className={cn("w-24", MEDIUM_BUTTON_HEIGHT, className)}
-        aria-label="Country code"
-        aria-invalid={ariaInvalid}
-      >
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {COUNTRY_CODES.map(({ code }) => (
-          <SelectItem key={code} value={code}>
-            {code}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <Popover open={open} onOpenChange={setOpen}>
+      <input type="hidden" name={name} value={selectedCode} />
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          aria-invalid={ariaInvalid}
+          aria-label="Country code"
+          title={selectedCountry?.name}
+          className={cn("w-24 justify-between font-normal", MEDIUM_BUTTON_HEIGHT, className)}
+        >
+          <span className="truncate">{selectedCode || "Code"}</span>
+          <ChevronsUpDown className="text-muted-foreground size-3.5 shrink-0" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search country or code" />
+          <CommandList>
+            <CommandEmpty>No country found.</CommandEmpty>
+            <CommandGroup>
+              {COUNTRY_CODES.map((country) => (
+                <CommandItem
+                  key={country.country}
+                  value={`${country.code} ${country.name} ${country.country}`}
+                  onSelect={() => handleSelect(country.code)}
+                >
+                  <Check
+                    className={cn(
+                      "size-4 shrink-0",
+                      selectedCode === country.code ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                  <span className="text-muted-foreground w-9 shrink-0">{country.code}</span>
+                  <span className="truncate">{country.name}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
+

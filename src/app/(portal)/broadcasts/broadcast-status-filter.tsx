@@ -33,9 +33,11 @@ function displayStatus(status: string) {
 export function BroadcastStatusFilter({
   value,
   options = DEFAULT_STATUS_OPTIONS,
+  popoverStyle = false,
 }: {
   value: string;
   options?: string[];
+  popoverStyle?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -50,17 +52,19 @@ export function BroadcastStatusFilter({
   }
 
   function optionLabel(option: string) {
-    if (option === "ALL") return "Status";
+    if (option === "ALL") return popoverStyle ? "All statuses" : "Status";
     return displayStatus(option);
   }
 
   return (
     <Select value={safeValue} onValueChange={setStatus}>
       <SelectTrigger
-        className="h-7 border-none px-0 pl-1 font-medium shadow-none"
+        className={popoverStyle
+          ? "h-8 w-full"
+          : "h-7 border-none px-0 pl-1 font-medium shadow-none"}
         aria-label="Filter broadcasts by status"
       >
-        <SelectValue />
+        <SelectValue placeholder={popoverStyle ? "All statuses" : undefined} />
       </SelectTrigger>
       <SelectContent>
         {options.map((option) => (

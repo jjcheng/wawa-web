@@ -26,7 +26,7 @@ export default async function PortalLayout({ children }: LayoutProps<"/">) {
       <NotificationsRealtimeProvider user={user} />
       <PhoneNumberMessagesProvider user={user} />
       <div className="flex min-h-svh">
-        <aside className="glass-surface hidden w-52 shrink-0 border-r lg:block xl:w-60">
+        <aside className="glass-surface hidden w-56 shrink-0 shadow-[12px_0_28px_-24px_var(--glass-shadow)] lg:block xl:w-64">
           <div className="sticky top-0">
             <SidebarNav user={user} />
           </div>

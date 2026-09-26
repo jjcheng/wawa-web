@@ -23,7 +23,7 @@ export default async function CustomersPage({ searchParams }: PageProps<"/custom
       ? [params.tags]
       : [];
   const customers = await serverFetch<CustomerListResponse>("/v1/customers", {
-    query: { page: "1", page_size: pageSize, status, name, tags },
+    query: { page: "1", page_size: pageSize, status, tags },
   }).catch((error) => {
     if (error instanceof ApiError) return { items: [], number_of_pages: 0 };
     throw error;

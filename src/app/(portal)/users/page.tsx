@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 
 import { BackBar } from "@/components/back-bar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
@@ -47,15 +46,11 @@ export default async function UsersPage() {
         </div>
       ) : (
         <>
-          <Card className="rounded-md py-0">
-            <CardContent className="overflow-x-auto p-0">
-              <UsersTable
-                users={users}
-                currentUserId={currentUser.id}
-                currentUserIsMaster={currentUser.type === "MASTER"}
-              />
-            </CardContent>
-          </Card>
+          <UsersTable
+            users={users}
+            currentUserId={currentUser.id}
+            currentUserIsMaster={currentUser.type === "MASTER"}
+          />
           <p className="mt-3 text-sm text-muted-foreground">MASTER users cannot be edited.</p>
         </>
       )}

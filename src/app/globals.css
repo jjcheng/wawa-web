@@ -180,6 +180,92 @@
       inset 0 0 0 1px var(--glass-border),
       0 12px 32px -12px var(--glass-shadow);
   }
+
+  .glass-surface-float-subtle {
+    background:
+      linear-gradient(265deg, color-mix(in oklch, var(--glass-sheen) 25%, transparent), transparent 25%),
+      color-mix(in oklch, var(--glass-bg) 30%, transparent);
+  }
+}
+
+.cn-toast[data-styled="true"] {
+  background: color-mix(in oklch, var(--popover) 72%, transparent);
+  border-color: color-mix(in oklch, var(--border) 72%, transparent);
+  border-radius: 1.5rem;
+  padding: 14px 56px 14px 16px;
+  gap: 10px;
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-highlight),
+    0 14px 36px -14px var(--glass-shadow);
+  backdrop-filter: blur(32px) saturate(190%);
+}
+
+.cn-toast[data-styled="true"][data-type="success"] {
+  color: oklch(0.47 0.13 151);
+}
+
+.cn-toast[data-styled="true"][data-type="info"] {
+  color: oklch(0.49 0.12 245);
+}
+
+.cn-toast[data-styled="true"][data-type="warning"] {
+  color: oklch(0.52 0.14 75);
+}
+
+.cn-toast[data-styled="true"][data-type="error"] {
+  color: var(--destructive);
+}
+
+.dark .cn-toast[data-styled="true"][data-type="success"] {
+  color: oklch(0.78 0.14 151);
+}
+
+.dark .cn-toast[data-styled="true"][data-type="info"] {
+  color: oklch(0.78 0.12 245);
+}
+
+.dark .cn-toast[data-styled="true"][data-type="warning"] {
+  color: oklch(0.82 0.14 75);
+}
+
+.cn-toast[data-styled="true"] [data-title] {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+}
+
+.cn-toast[data-styled="true"] [data-description] {
+  color: color-mix(in oklch, currentColor 70%, var(--popover-foreground));
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
+}
+
+.cn-toast[data-styled="true"] [data-icon] {
+  display: none !important;
+}
+
+.cn-toast[data-styled="true"] [data-close-button] {
+  position: absolute !important;
+  top: 50% !important;
+  left: auto !important;
+  right: 12px !important;
+  width: 28px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  padding: 0 !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  background: color-mix(in oklch, currentColor 8%, transparent) !important;
+  border-radius: 999px !important;
+  color: currentColor !important;
+}
+
+.cn-toast[data-styled="true"] [data-close-button]:hover {
+  background: color-mix(in oklch, currentColor 16%, transparent) !important;
+  border-color: transparent !important;
 }
 
 @keyframes navigation-progress {

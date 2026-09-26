@@ -16,7 +16,13 @@ function displayStatus(status: string) {
   return status.charAt(0) + status.slice(1).toLowerCase();
 }
 
-export function PhoneNumberStatusFilter({ value }: { value: string }) {
+export function PhoneNumberStatusFilter({
+  value,
+  popoverStyle = false,
+}: {
+  value: string;
+  popoverStyle?: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -31,15 +37,21 @@ export function PhoneNumberStatusFilter({ value }: { value: string }) {
   return (
     <Select value={value} onValueChange={setStatus}>
       <SelectTrigger
-        className="h-7 border-none px-0 pl-1 font-medium shadow-none"
+        className={popoverStyle
+          ? "h-8 w-full"
+          : "h-8 w-36 shrink-0 justify-between border-none px-2 font-medium shadow-none"}
         aria-label="Filter phone numbers by status"
       >
-        <SelectValue />
+        <SelectValue placeholder={popoverStyle ? "All statuses" : undefined} />
       </SelectTrigger>
       <SelectContent>
         {STATUS_OPTIONS.map((status) => (
           <SelectItem key={status} value={status}>
-            {status === "ALL" ? "Status" : displayStatus(status)}
+            {status === "ALL"
+              ? popoverStyle
+                ? "All statuses"
+                : "Status"
+              : displayStatus(status)}
           </SelectItem>
         ))}
       </SelectContent>

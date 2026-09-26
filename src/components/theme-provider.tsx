@@ -32,11 +32,19 @@ function isTheme(value: string | null | undefined): value is Theme {
   return value === "light" || value === "dark" || value === "system";
 }
 
+function getCookieTheme() {
+  const value = document.cookie.match(/(?:^|;\s*)theme=(light|dark|system)(?:;|$)/)?.[1];
+  return isTheme(value) ? value : null;
+}
+
+function persistThemeCookie(theme: Theme) {
+  document.cookie = `${STORAGE_KEY}=${theme}; Path=/; Max-Age=31536000; SameSite=Lax`;
+}
+
 function getStoredTheme() {
   if (typeof window === "undefined") return DEFAULT_THEME;
-  return isTheme(window.localStorage.getItem(STORAGE_KEY))
-    ? window.localStorage.getItem(STORAGE_KEY) as Theme
-    : DEFAULT_THEME;
+  const storedTheme = window.localStorage.getItem(STORAGE_KEY);
+  return isTheme(storedTheme) ? storedTheme : getCookieTheme() ?? DEFAULT_THEME;
 }
 
 function getSystemTheme(): ResolvedTheme {
@@ -79,6 +87,10 @@ export function ThemeProvider({
   const resolvedTheme = theme === "system" ? systemTheme : theme;
 
   useEffect(() => {
+    persistThemeCookie(theme);
+  }, [theme]);
+
+  useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const onChange = () => setSystemTheme(media.matches ? "dark" : "light");
     onChange();
@@ -104,6 +116,7 @@ export function ThemeProvider({
       const nextValue = typeof value === "function" ? value(current) : value;
       const nextTheme = isTheme(nextValue) ? nextValue : DEFAULT_THEME;
       window.localStorage.setItem(STORAGE_KEY, nextTheme);
+      persistThemeCookie(nextTheme);
       return nextTheme;
     });
   };

@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { RemovePhoneNumberButton } from "@/components/whatsapp/remove-phone-number-button";
+import { LocalDateTime } from "@/components/local-date-time";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 
@@ -42,11 +43,13 @@ function whatsappWebLink(value: unknown) {
 export function PhoneNumberViewButton({
   id,
   name,
+  addedAt,
   isMaster = false,
 }: {
   id: number;
   name: string;
   status?: string;
+  addedAt?: string;
   isMaster?: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -90,6 +93,8 @@ export function PhoneNumberViewButton({
               <p className="text-destructive text-sm">{error}</p>
             ) : details ? (
               <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+                <dt className="text-muted-foreground">Added</dt>
+                <dd className="min-w-0 break-words"><LocalDateTime value={addedAt} /></dd>
                 {DETAIL_FIELDS.map(([label, ...keys]) => {
                   const value = keys.map((key) => details[key]).find((item) => item !== undefined);
                   return (
@@ -130,6 +135,7 @@ export function PhoneNumberViewButton({
                   phoneNumber={String(details?.display_phone_number || details?.phone_number || "")}
                   mode="delete"
                   triggerVariant="destructive"
+                  triggerSize="default"
                   label="Delete"
                   onDeleted={() => setOpen(false)}
                 />
@@ -139,6 +145,7 @@ export function PhoneNumberViewButton({
                   name={name}
                   phoneNumber={String(details?.display_phone_number || details?.phone_number || "")}
                   triggerVariant="destructive"
+                  triggerSize="default"
                   label="Disconnect"
                   onDeleted={() => setOpen(false)}
                 />

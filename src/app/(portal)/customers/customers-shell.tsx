@@ -55,7 +55,7 @@ export function CustomersShell({
     try {
       const nextPage = currentPage + 1;
       const result = await apiFetch<CustomerListResponse>("v1/customers", {
-        query: { page: String(nextPage), page_size: pageSize, status, name, tags },
+        query: { page: String(nextPage), page_size: pageSize, status, tags },
       });
       setRows((currentRows) => [...currentRows, ...result.items]);
       setCurrentPage(nextPage);

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { Brand } from "@/components/brand";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { TopRightThemeToggle } from "@/components/top-right-theme-toggle";
 import { requireUser } from "@/lib/auth/session";
 import { SetPasswordForm } from "./set-password-form";
 
@@ -18,6 +19,7 @@ export default async function SetPasswordPage({ searchParams }: PageProps<"/set-
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6">
+      <TopRightThemeToggle />
       <Brand />
       <Card className="w-full max-w-sm">
         <CardHeader>

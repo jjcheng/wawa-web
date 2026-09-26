@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Archive, ArchiveRestore, Loader2, Megaphone, MessageCircle, Pencil } from "lucide-react";
+import { Archive, ArchiveRestore, Loader2, Megaphone, Pencil } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -47,23 +47,32 @@ export function ChatsView({
   currentUserId: number;
 }) {
   const [customers, setCustomers] = useState(initialCustomers);
+  const [nameInput, setNameInput] = useState(name);
   const [currentPage, setCurrentPage] = useState(1);
   const [numberOfPages, setNumberOfPages] = useState(initialNumberOfPages);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [unreadIds, setUnreadIds] = useState<Set<number>>(new Set());
   const [bulkActionPending, setBulkActionPending] = useState(false);
-  const allSelected = customers.length > 0 && customers.every((row) => selectedIds.has(row.id));
-  const someSelected = selectedIds.size > 0 && !allSelected;
   const router = useRouter();
   const pathname = usePathname();
-  const hasFilters = Boolean(name) || selectedTags.length > 0 || status !== "ACTIVE";
+  const filteredCustomers = useMemo(() => {
+    const query = nameInput.trim().toLowerCase();
+    return customers.filter((customer) =>
+      (customer.display_name ?? "").toLowerCase().includes(query),
+    );
+  }, [customers, nameInput]);
+  const allSelected = filteredCustomers.length > 0 && filteredCustomers.every((row) => selectedIds.has(row.id));
+  const someSelected = selectedIds.size > 0 && !allSelected;
+  const hasFilters = Boolean(nameInput) || selectedTags.length > 0 || status !== "ACTIVE";
 
   useEffect(() => {
-    setCustomers(initialCustomers);
-    setCurrentPage(1);
-    setNumberOfPages(initialNumberOfPages);
-    setSelectedIds(new Set());
+    queueMicrotask(() => {
+      setCustomers(initialCustomers);
+      setCurrentPage(1);
+      setNumberOfPages(initialNumberOfPages);
+      setSelectedIds(new Set());
+    });
   }, [initialCustomers, initialNumberOfPages]);
 
   function handleIncomingMessage(message: IncomingChatMessage) {
@@ -105,7 +114,6 @@ export function ChatsView({
           page: String(nextPage),
           page_size: "50",
           status,
-          name,
           tags: selectedTags,
         },
       });
@@ -120,11 +128,19 @@ export function ChatsView({
   }
 
   function resetFilters() {
+    setNameInput("");
     router.push(pathname);
   }
 
   function toggleAll() {
-    setSelectedIds(allSelected ? new Set() : new Set(customers.map((row) => row.id)));
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      for (const customer of filteredCustomers) {
+        if (allSelected) next.delete(customer.id);
+        else next.add(customer.id);
+      }
+      return next;
+    });
   }
 
   function toggleRow(id: number) {
@@ -213,15 +229,14 @@ export function ChatsView({
           )
         }
       />
-      {customers.length === 0 ? (
+      {filteredCustomers.length === 0 ? (
         <div className="bg-card divide-border divide-y overflow-hidden rounded-2xl border">
           <div className="flex items-center gap-2 px-4 py-2">
             <Checkbox checked={false} disabled aria-label="Select all chats" />
-            <ChatsSearchInput initialName={name} />
+            <ChatsSearchInput value={nameInput} onChange={setNameInput} />
             <ChatsFilterPopover tags={tags} selectedTags={selectedTags} status={status} />
           </div>
           <div className="flex min-h-32 flex-col items-center justify-center gap-2 p-6 text-center">
-            <MessageCircle className="text-muted-foreground size-8" />
             <p className="text-muted-foreground text-sm">No customers found.</p>
             {hasFilters ? (
               <Button type="button" size="sm" variant="outline" onClick={resetFilters}>
@@ -241,10 +256,10 @@ export function ChatsView({
               onChange={toggleAll}
               aria-label="Select all chats"
             />
-            <ChatsSearchInput initialName={name} />
+            <ChatsSearchInput value={nameInput} onChange={setNameInput} />
             <ChatsFilterPopover tags={tags} selectedTags={selectedTags} status={status} />
           </div>
-          {customers.map((customer) => (
+            {filteredCustomers.map((customer) => (
             <div
               key={customer.id}
               className="hover:bg-accent/60 flex items-center gap-3 px-4 py-3 transition-colors"

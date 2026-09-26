@@ -7,6 +7,7 @@ import { Brand } from "@/components/brand";
 import { EmbeddedSignupFlow } from "@/components/whatsapp/embedded-signup-flow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { TopRightThemeToggle } from "@/components/top-right-theme-toggle";
 import { serverEnv } from "@/lib/env.server";
 
 export const metadata: Metadata = { title: "Connect WhatsApp" };
@@ -38,6 +39,7 @@ export default async function EmbeddedSignupPage({ searchParams }: PageProps<"/e
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6">
+      <TopRightThemeToggle />
       {backPath ? (
         <Button asChild variant="ghost" className="fixed top-4 left-4">
           <Link href={backPath}>
@@ -49,15 +51,16 @@ export default async function EmbeddedSignupPage({ searchParams }: PageProps<"/e
       <Brand />
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Onboard the WhatsApp Business Platform With WAWAGO WhatsApp CRM</CardTitle>
+          <CardTitle>Onboard WhatsApp Business Platform</CardTitle>
           <CardDescription>
-           Get started with a few simple steps
+           Get started with Meta Embedded Signup
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <ol className="text-muted-foreground list-decimal space-y-2 pl-4 text-sm">
             <li>Create or select your WhatsApp Business Account.</li>
             <li>Add or select a phone number and provide profile details.</li>
+            <li>Create or select a catalog if needed.</li>
             <li>Add your payment method to start messaging your customers (billed directly by Meta).</li>
           </ol>
             <EmbeddedSignupFlow

@@ -225,6 +225,7 @@ export type Notification = {
   added_at?: string;
   last_updated_at?: string;
   type: "SUCCESS" | "INFO" | "WARNING" | "ERROR";
+  icon_type?: "CUSTOMER" | "BROADCAST" | "WEBSITE" | "CHAT" | "JOIN" | "TEMPLATE" | "TODO" | "DONE" | "ERROR" | "SUCCESS" | "WARNING";
   title: string;
   body: string;
   url?: string;

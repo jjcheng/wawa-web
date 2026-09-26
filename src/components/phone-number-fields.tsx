@@ -14,7 +14,7 @@ export function PhoneNumberFields({
   phoneValue,
   onPhoneChange,
   phoneId,
-  phonePlaceholder = "Enter phone number",
+  phonePlaceholder = "Enter phone number, no country code",
   phoneAutoComplete,
   phoneAriaInvalid,
   phoneRequired,
@@ -40,18 +40,19 @@ export function PhoneNumberFields({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-row gap-2", className)}>
-      <div className="w-24 shrink-0">
+    <div className={className}>
+      <div
+        className={cn(
+          "border-input focus-within:border-ring focus-within:ring-ring/50 has-[[aria-invalid=true]]:border-destructive has-[[aria-invalid=true]]:ring-destructive/20 flex items-stretch overflow-hidden rounded-lg border bg-transparent transition-colors focus-within:ring-3",
+        )}
+      >
         <CountryCodeSelect
           name={countryName}
           value={countryValue}
           onValueChange={onCountryChange}
-          className="h-[36px] w-24"
+          className="w-24 shrink-0 rounded-none border-0 border-r border-input bg-transparent focus-visible:border-input focus-visible:ring-0 dark:bg-transparent"
           aria-invalid={Boolean(countryError)}
         />
-        {countryError ? <p className="text-destructive mt-1 text-sm">{countryError}</p> : null}
-      </div>
-      <div className="min-w-0 flex-1">
         <Input
           id={phoneId ?? phoneName}
           name={phoneName}
@@ -69,12 +70,16 @@ export function PhoneNumberFields({
             onPhoneChange?.(event);
           }}
           maxLength={phoneMaxLength}
-          className={cn("h-[36px] w-full", MEDIUM_BUTTON_HEIGHT)}
+          className={cn(
+            "min-w-0 flex-1 rounded-none border-0 bg-transparent focus-visible:border-input focus-visible:ring-0 dark:bg-transparent",
+            MEDIUM_BUTTON_HEIGHT,
+          )}
           aria-invalid={phoneAriaInvalid}
           required={phoneRequired}
         />
-        {phoneError ? <p className="text-destructive mt-1 text-sm">{phoneError}</p> : null}
       </div>
+      {countryError ? <p className="text-destructive mt-1 text-sm">{countryError}</p> : null}
+      {phoneError ? <p className="text-destructive mt-1 text-sm">{phoneError}</p> : null}
     </div>
   );
 }
