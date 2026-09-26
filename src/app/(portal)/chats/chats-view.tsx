@@ -283,7 +283,7 @@ export function ChatsView({
               />
               <Link
                 href={`/chats/${customer.id}/chat?return_to=%2Fchats`}
-                className="flex min-w-0 flex-1 items-center gap-3"
+                className="flex min-w-0 flex-1 items-start gap-3"
                 onClick={() => clearUnread(customer.id)}
               >
                 <Avatar className="relative size-10 shrink-0">
@@ -302,34 +302,16 @@ export function ChatsView({
                       {customer.latest_message_content}
                     </p>
                   ) : (
-                    <p className="text-muted-foreground text-sm">No message</p>
+                    <p className="text-muted-foreground text-xs">No message</p>
                   )}
-                  <div className="mt-1 flex flex-wrap items-center gap-1.5 sm:hidden">
-                    {customer.tags?.slice(0, 2).map((customerTag) => (
-                      <Badge
-                        key={customerTag}
-                        className="bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
-                      >
-                        {customerTag}
-                      </Badge>
-                    ))}
-                    {customer.status === "INACTIVE" ? (
-                      <Badge variant="secondary">Inactive</Badge>
-                    ) : null}
-                    {customer.latest_message_content && customer.last_message_timestamp ? (
-                      <span className="text-muted-foreground text-xs">
-                        <RelativeTime value={customer.last_message_timestamp} />
-                      </span>
-                    ) : null}
-                  </div>
                 </div>
-                <div className="hidden shrink-0 flex-col items-end gap-1 text-right sm:flex">
+                <div className="ml-auto flex max-w-[45%] shrink-0 flex-col items-end gap-1 text-right">
                   {customer.tags?.length ? (
                     <div className="flex flex-wrap justify-end gap-1">
                       {customer.tags.slice(0, 2).map((customerTag) => (
                         <Badge
                           key={customerTag}
-                          className="bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
+                          className="h-5 px-1.5 text-[10px] leading-none bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
                         >
                           {customerTag}
                         </Badge>

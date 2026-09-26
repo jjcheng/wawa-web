@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, LogOut, RefreshCw, Settings } from "lucide-react";
+import { ExternalLink, LogOut, RefreshCw, Settings, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "@/lib/toast";
@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -206,6 +207,17 @@ export function Topbar({ user }: { user: User }) {
       ) : null}
 
       <div className="ml-auto flex items-center gap-1">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button type="button" variant="ghost" size="icon" aria-label="Ask AI" title="Ask AI">
+              <Sparkles className="size-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-48 space-y-1.5 p-3">
+            <p className="text-sm font-medium">Ask AI</p>
+            <p className="text-muted-foreground text-xs">Work in progress</p>
+          </PopoverContent>
+        </Popover>
         <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

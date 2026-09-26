@@ -5,6 +5,8 @@ import { Tooltip as TooltipPrimitive } from "radix-ui";
 
 import { cn } from "@/lib/utils";
 
+const TooltipTouchContext = React.createContext<(() => void) | null>(null);
+
 function TooltipProvider({
   delayDuration = 0,
   ...props
@@ -19,11 +21,56 @@ function TooltipProvider({
 }
 
 function Tooltip({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
-  return <TooltipPrimitive.Root data-slot="tooltip" {...props} />;
+  const [internalOpen, setInternalOpen] = React.useState(props.defaultOpen ?? false);
+  const open = props.open ?? internalOpen;
+  const dismissTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function setOpen(nextOpen: boolean) {
+    if (props.open === undefined) setInternalOpen(nextOpen);
+    props.onOpenChange?.(nextOpen);
+    if (dismissTimer.current) clearTimeout(dismissTimer.current);
+    dismissTimer.current = null;
+  }
+
+  function toggleFromTouch() {
+    if (open) {
+      setOpen(false);
+      return;
+    }
+
+    setOpen(true);
+    dismissTimer.current = setTimeout(() => setOpen(false), 4000);
+  }
+
+  React.useEffect(() => () => {
+    if (dismissTimer.current) clearTimeout(dismissTimer.current);
+  }, []);
+
+  return (
+    <TooltipTouchContext.Provider value={toggleFromTouch}>
+      <TooltipPrimitive.Root
+        data-slot="tooltip"
+        {...props}
+        open={open}
+        onOpenChange={setOpen}
+      />
+    </TooltipTouchContext.Provider>
+  );
 }
 
-function TooltipTrigger({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />;
+function TooltipTrigger({ onPointerDown, ...props }: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
+  const toggleFromTouch = React.useContext(TooltipTouchContext);
+
+  return (
+    <TooltipPrimitive.Trigger
+      data-slot="tooltip-trigger"
+      {...props}
+      onPointerDown={(event) => {
+        onPointerDown?.(event);
+        if (!event.defaultPrevented && event.pointerType === "touch") toggleFromTouch?.();
+      }}
+    />
+  );
 }
 
 function TooltipContent({
