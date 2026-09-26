@@ -11,8 +11,8 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 export function ChatsFilterPopover({
-  tags,
-  selectedTags,
+  tags = [],
+  selectedTags = [],
   status,
 }: {
   tags: string[];
