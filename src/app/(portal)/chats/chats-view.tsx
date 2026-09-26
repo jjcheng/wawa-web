@@ -274,13 +274,16 @@ export function ChatsView({
             {filteredCustomers.map((customer) => (
             <div
               key={customer.id}
-              className="hover:bg-accent/60 flex items-center gap-3 px-4 py-3 transition-colors"
+              className="hover:bg-accent/60 relative flex items-center gap-3 px-4 py-3 transition-colors"
             >
-              <Checkbox
-                checked={selectedIds.has(customer.id)}
-                onChange={() => toggleRow(customer.id)}
-                aria-label={`Select ${customer.display_name}`}
-              />
+              {selectedIds.size > 0 ? (
+                <Checkbox
+                  checked={selectedIds.has(customer.id)}
+                  onChange={() => toggleRow(customer.id)}
+                  aria-label={`Select ${customer.display_name}`}
+                  className="absolute top-2 left-2 z-10"
+                />
+              ) : null}
               <Link
                 href={`/chats/${customer.id}/chat?return_to=%2Fchats`}
                 className="flex min-w-0 flex-1 items-start gap-3"
