@@ -126,7 +126,7 @@ export function ChatMediaViewer({
         <>
           <button
             type="button"
-            className={`relative block aspect-square max-w-full cursor-pointer ${type === "sticker" ? "w-48" : "w-72 rounded-md overflow-hidden"}`}
+            className={`relative block aspect-square max-w-full cursor-pointer ${type === "sticker" ? "w-48" : "w-72 rounded-sm overflow-hidden"}`}
             aria-label={type === "sticker" ? "View sticker fullscreen" : "View image fullscreen"}
             onClick={(event) => {
               event.preventDefault();
@@ -152,7 +152,7 @@ export function ChatMediaViewer({
     if (type === "video") {
       return (
         <video
-          className="h-64 w-72 max-w-full rounded-md object-cover"
+          className="h-64 w-72 max-w-full rounded-sm object-cover"
           controls
           src={resolvedMediaUrl}
         />
