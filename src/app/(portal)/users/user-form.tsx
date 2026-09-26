@@ -74,7 +74,7 @@ export function UserForm({
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [assignedPhoneNumberIds, setAssignedPhoneNumberIds] = useState<number[]>(
-    (user?.phone_number_ids ?? []).map(Number),
+    (user?.assigned_phone_numbers ?? []).map((phoneNumber) => Number(phoneNumber.id)),
   );
   const [activeTab, setActiveTab] = useState(initialTab);
   const [phoneNumbers, setPhoneNumbers] = useState<PhoneNumber[]>([]);
