@@ -1,99 +1,44 @@
 "use client";
 
 import * as React from "react";
-import { Tooltip as TooltipPrimitive } from "radix-ui";
+import { Popover as PopoverPrimitive } from "radix-ui";
 
 import { cn } from "@/lib/utils";
 
-const TooltipTouchContext = React.createContext<(() => void) | null>(null);
-
-function TooltipProvider({
-  delayDuration = 0,
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
-  return (
-    <TooltipPrimitive.Provider
-      data-slot="tooltip-provider"
-      delayDuration={delayDuration}
-      {...props}
-    />
-  );
+function TooltipProvider({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
 }
 
-function Tooltip({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
-  const [internalOpen, setInternalOpen] = React.useState(props.defaultOpen ?? false);
-  const open = props.open ?? internalOpen;
-  const dismissTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  function setOpen(nextOpen: boolean) {
-    if (props.open === undefined) setInternalOpen(nextOpen);
-    props.onOpenChange?.(nextOpen);
-    if (dismissTimer.current) clearTimeout(dismissTimer.current);
-    dismissTimer.current = null;
-  }
-
-  function toggleFromTouch() {
-    if (open) {
-      setOpen(false);
-      return;
-    }
-
-    setOpen(true);
-    dismissTimer.current = setTimeout(() => setOpen(false), 4000);
-  }
-
-  React.useEffect(() => () => {
-    if (dismissTimer.current) clearTimeout(dismissTimer.current);
-  }, []);
-
-  return (
-    <TooltipTouchContext.Provider value={toggleFromTouch}>
-      <TooltipPrimitive.Root
-        data-slot="tooltip"
-        {...props}
-        open={open}
-        onOpenChange={setOpen}
-      />
-    </TooltipTouchContext.Provider>
-  );
+function Tooltip({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Root>) {
+  return <PopoverPrimitive.Root data-slot="popover" {...props} />;
 }
 
-function TooltipTrigger({ onPointerDown, ...props }: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
-  const toggleFromTouch = React.useContext(TooltipTouchContext);
-
-  return (
-    <TooltipPrimitive.Trigger
-      data-slot="tooltip-trigger"
-      {...props}
-      onPointerDown={(event) => {
-        onPointerDown?.(event);
-        if (!event.defaultPrevented && event.pointerType === "touch") toggleFromTouch?.();
-      }}
-    />
-  );
+function TooltipTrigger({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
+  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />;
 }
 
 function TooltipContent({
   className,
-  sideOffset = 0,
+  sideOffset = 4,
+  align = "center",
   children,
   ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
   return (
-    <TooltipPrimitive.Portal>
-      <TooltipPrimitive.Content
-        data-slot="tooltip-content"
+    <PopoverPrimitive.Portal>
+      <PopoverPrimitive.Content
+        data-slot="popover-content"
+        align={align}
         sideOffset={sideOffset}
         className={cn(
-          "bg-foreground text-background data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 z-50 inline-flex w-fit max-w-xs origin-(--radix-tooltip-content-transform-origin) items-center gap-1.5 rounded-md px-3 py-1.5 text-xs has-data-[slot=kbd]:pr-1.5 **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-sm",
+          "bg-popover text-popover-foreground ring-1 ring-[#edf0f1] shadow-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 dark:ring-foreground/10 z-50 w-fit max-w-xs rounded-lg p-3 text-xs",
           className,
         )}
         {...props}
       >
         {children}
-        <TooltipPrimitive.Arrow className="bg-foreground fill-foreground z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px]" />
-      </TooltipPrimitive.Content>
-    </TooltipPrimitive.Portal>
+      </PopoverPrimitive.Content>
+    </PopoverPrimitive.Portal>
   );
 }
 

@@ -13,6 +13,7 @@ import {
   Phone,
   Store,
   UsersRound,
+  Wrench,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -49,6 +50,7 @@ const ASSET_ITEMS = [
   { href: "/templates", label: "Templates", icon: FileText },
   { href: "/broadcasts", label: "Broadcasts", icon: Megaphone },
   { href: "/usage", label: "Analytics", icon: Gauge, masterOnly: true },
+  { href: "/tools", label: "Tools", icon: Wrench },
 ];
 
 export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user: User }) {

@@ -14,8 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 
@@ -23,17 +21,15 @@ export function BroadcastCancelButton({ broadcastId }: { broadcastId: number }) 
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [reason, setReason] = useState("");
 
   async function cancelBroadcast() {
     setLoading(true);
     try {
       await apiFetch(`v1/broadcasts/${broadcastId}/cancel`, {
         method: "PATCH",
-        body: { reason: reason.trim() },
+        body: { reason: "" },
       });
       setConfirmOpen(false);
-      setReason("");
       toast.success("Broadcast cancelled.");
       router.refresh();
     } catch (error) {
@@ -50,10 +46,7 @@ export function BroadcastCancelButton({ broadcastId }: { broadcastId: number }) 
       </Button>
       <Dialog
         open={confirmOpen}
-        onOpenChange={(open) => {
-          setConfirmOpen(open);
-          if (!open) setReason("");
-        }}
+        onOpenChange={setConfirmOpen}
       >
         <DialogContent>
           <DialogHeader>
@@ -62,15 +55,6 @@ export function BroadcastCancelButton({ broadcastId }: { broadcastId: number }) 
               This pending broadcast will be cancelled and cannot be sent.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="cancel-reason">Reason</Label>
-            <Textarea
-              id="cancel-reason"
-              placeholder="Why are you cancelling this broadcast?"
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-            />
-          </div>
           <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
             <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={loading}>
               Cancel
@@ -78,10 +62,10 @@ export function BroadcastCancelButton({ broadcastId }: { broadcastId: number }) 
             <Button
               variant="destructive"
               onClick={cancelBroadcast}
-              disabled={loading || !reason.trim()}
+              disabled={loading}
             >
               {loading ? <Loader2 className="size-4 animate-spin" /> : null}
-              Continue
+              Cancel
             </Button>
           </DialogFooter>
         </DialogContent>

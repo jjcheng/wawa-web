@@ -106,8 +106,14 @@ export function PhoneNumberList({
               key={number.id}
               className="hover:bg-accent/60 flex min-w-0 items-center gap-3 px-4 py-3 transition-colors"
             >
-              <span className="bg-accent text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-full">
+              <span className="bg-accent text-muted-foreground relative flex size-10 shrink-0 items-center justify-center rounded-full">
                 <Phone className="size-4" />
+                <span aria-label={displayStatus} title={displayStatus} className="absolute -top-0.5 -left-0.5">
+                  <Circle
+                    aria-hidden="true"
+                    className={`size-2.5 fill-current stroke-card stroke-2 ${connected ? "text-green-600" : "text-muted-foreground"}`}
+                  />
+                </span>
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium">{number.name || "Unnamed number"}</p>
@@ -127,16 +133,6 @@ export function PhoneNumberList({
                   <AssignedUsersSummary users={number.assigned_users ?? []} />
                 </div>
               ) : null}
-              <span
-                aria-label={displayStatus}
-                title={displayStatus}
-                className="inline-flex shrink-0 items-center"
-              >
-                <Circle
-                  aria-hidden="true"
-                  className={`size-2 fill-current ${connected ? "text-green-600" : "text-muted-foreground"}`}
-                />
-              </span>
               <PhoneNumberViewButton
                 id={number.id}
                 name={number.name || "This number"}

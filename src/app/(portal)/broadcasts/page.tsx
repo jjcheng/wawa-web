@@ -34,7 +34,7 @@ export default async function BroadcastsPage({ searchParams }: PageProps<"/broad
       <BackBar href="/assets" />
       <PageHeader
         title="Broadcasts"
-        description="Upcoming or past broadcasts to your customers."
+        description="Upcoming and past broadcasts to your customers."
         action={<NewBroadcastButton />}
       />
 

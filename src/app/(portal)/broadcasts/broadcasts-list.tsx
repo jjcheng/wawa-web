@@ -76,35 +76,34 @@ export function BroadcastsList({ rows, status }: { rows: Broadcast[]; status: st
           ) : null}
         </div>
       ) : (
-        filteredRows.map((broadcast) => (
-          <div
-            key={broadcast.id}
-            className="hover:bg-accent/60 flex min-w-0 flex-wrap items-center gap-3 px-4 py-3 transition-colors sm:flex-nowrap"
-          >
-            <div className="min-w-0 flex-1 sm:w-1/3 sm:flex-none">
-              <p className="break-words font-medium">{broadcast.name || "Unnamed broadcast"}</p>
-              <p className="text-muted-foreground mt-1 text-sm">
-                <LocalDateTime value={broadcast.send_date} />
-              </p>
-              <div className="mt-1 flex items-center gap-2 text-sm sm:hidden">
-                <span>{broadcast.recipient_count ?? broadcast.customer_ids?.length ?? 0} recipients</span>
-                <Badge variant="secondary">{displayStatus(broadcast.status)}</Badge>
+        filteredRows.map((broadcast) => {
+          const recipientCount = broadcast.recipient_count ?? broadcast.customer_ids?.length ?? 0;
+          return (
+            <div
+              key={broadcast.id}
+              className="hover:bg-accent/60 flex min-w-0 flex-wrap items-center gap-3 px-4 py-3 transition-colors sm:flex-nowrap"
+            >
+              <div className="min-w-0 flex-1 sm:w-1/3 sm:flex-none">
+                <p className="break-words font-medium">{broadcast.name || "Unnamed broadcast"}</p>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  <LocalDateTime value={broadcast.send_date} />
+                </p>
+              </div>
+              <div className="ml-auto flex shrink-0 items-center gap-2">
+                <div className="flex flex-col items-start gap-1">
+                  <span className="text-sm">{recipientCount} recipients</span>
+                  <Badge variant="secondary">{displayStatus(broadcast.status)}</Badge>
+                </div>
+                <BroadcastViewButton broadcast={broadcast} />
+                {broadcast.status === "PENDING" ? (
+                  <BroadcastCancelButton broadcastId={broadcast.id} />
+                ) : broadcast.status === "CANCELLED" ? (
+                  <BroadcastDeleteButton broadcastId={broadcast.id} />
+                ) : null}
               </div>
             </div>
-            <div className="hidden min-w-28 items-center gap-2 text-sm sm:flex sm:flex-col sm:items-end sm:gap-1">
-              <span>{broadcast.recipient_count ?? broadcast.customer_ids?.length ?? 0} recipients</span>
-              <Badge variant="secondary">{displayStatus(broadcast.status)}</Badge>
-            </div>
-            <div className="ml-auto flex shrink-0 items-center gap-2">
-              <BroadcastViewButton broadcast={broadcast} />
-              {broadcast.status === "PENDING" ? (
-                <BroadcastCancelButton broadcastId={broadcast.id} />
-              ) : broadcast.status === "CANCELLED" ? (
-                <BroadcastDeleteButton broadcastId={broadcast.id} />
-              ) : null}
-            </div>
-          </div>
-        ))
+          );
+        })
       )}
     </div>
   );

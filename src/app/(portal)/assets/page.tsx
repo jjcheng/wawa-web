@@ -1,4 +1,4 @@
-import { FileText, Gauge, Megaphone, Phone, UsersRound } from "lucide-react";
+import { FileText, Gauge, Megaphone, Phone, UsersRound, Wrench } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Assets" };
 const ASSET_LINKS = [
   {
     href: "/phone-numbers",
-    label: "Phone Numbers",
+    label: "Phone numbers",
     description: "Connected WhatsApp Business numbers.",
     icon: Phone,
   },
@@ -26,13 +26,13 @@ const ASSET_LINKS = [
   {
     href: "/templates",
     label: "Templates",
-    description: "Approved WhatsApp message templates.",
+    description: "WhatsApp message templates.",
     icon: FileText,
   },
   {
     href: "/broadcasts",
     label: "Broadcasts",
-    description: "Scheduled and sent bulk messages.",
+    description: "Upcoming and past broadcasts to your customers.",
     icon: Megaphone,
   },
   {
@@ -41,6 +41,12 @@ const ASSET_LINKS = [
     description: "Usage and delivery insights.",
     icon: Gauge,
     masterOnly: true,
+  },
+  {
+    href: "/tools",
+    label: "Tools",
+    description: "Useful tools in conducting business.",
+    icon: Wrench,
   },
 ];
 
@@ -57,7 +63,7 @@ export default async function AssetsPage() {
             <Card
               className={cn(
                 "h-full transition-colors hover:bg-accent/60",
-                "rounded-2xl",
+                "rounded-full",
               )}
             >
               <CardContent className="flex min-w-0 items-center gap-3 px-4">
