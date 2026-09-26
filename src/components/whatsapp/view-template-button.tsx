@@ -137,7 +137,7 @@ export function ViewTemplateButton({
           <DialogFooter>
             <div className="flex w-full items-center justify-between gap-2">
               {template.by_api ? (
-                <Button asChild variant="outline" size="sm" className={SMALL_BUTTON_HEIGHT}>
+                <Button asChild variant="outline">
                   <Link
                     href={`/templates/new?edit=${encodeURIComponent(template.id)}`}
                     onClick={() => setOpen(false)}
@@ -154,6 +154,7 @@ export function ViewTemplateButton({
                   wabaId={template.waba_id ?? ""}
                   name={template.name ?? ""}
                   triggerVariant="destructive"
+                  triggerSize="default"
                   onDeleted={() => {
                     setOpen(false);
                     onDeleted?.();

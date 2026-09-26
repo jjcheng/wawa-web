@@ -3,13 +3,13 @@
 import { useState, type ReactNode } from "react";
 
 export function DashboardTabs({
-  todos,
+  tasks,
   stats,
 }: {
-  todos: ReactNode;
+  tasks: ReactNode;
   stats: ReactNode;
 }) {
-  const [activeTab, setActiveTab] = useState<"todos" | "stats">("todos");
+  const [activeTab, setActiveTab] = useState<"tasks" | "stats">("tasks");
 
   return (
     <div className="space-y-4">
@@ -17,15 +17,15 @@ export function DashboardTabs({
         <button
           type="button"
           role="tab"
-          aria-selected={activeTab === "todos"}
+          aria-selected={activeTab === "tasks"}
           className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
-            activeTab === "todos"
+            activeTab === "tasks"
               ? "border-primary text-foreground"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
-          onClick={() => setActiveTab("todos")}
+          onClick={() => setActiveTab("tasks")}
         >
-          To-dos
+          Tasks
         </button>
         <button
           type="button"
@@ -41,7 +41,7 @@ export function DashboardTabs({
           Stats
         </button>
       </div>
-      {activeTab === "todos" ? todos : stats}
+      {activeTab === "tasks" ? tasks : stats}
     </div>
   );
 }

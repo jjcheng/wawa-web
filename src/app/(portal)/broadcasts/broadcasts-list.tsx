@@ -43,7 +43,7 @@ export function BroadcastsList({ rows, status }: { rows: Broadcast[]; status: st
   }
 
   return (
-    <div className="bg-card divide-border overflow-hidden divide-y rounded-2xl border">
+    <div className="bg-card divide-border overflow-hidden divide-y rounded-lg border">
       <div className="flex items-center gap-2 px-4 py-2">
         <div className="min-w-0 flex-1">
           <BroadcastNameFilter value={search} onChange={setSearch} />

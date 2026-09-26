@@ -54,6 +54,7 @@ export function ChatsView({
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [unreadIds, setUnreadIds] = useState<Set<number>>(new Set());
   const [bulkActionPending, setBulkActionPending] = useState(false);
+  const [broadcastPending, setBroadcastPending] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const filteredCustomers = useMemo(() => {
@@ -180,6 +181,7 @@ export function ChatsView({
       return;
     }
     sessionStorage.setItem("new-broadcast-customer-ids", JSON.stringify([...selectedIds]));
+    setBroadcastPending(true);
     router.push("/customers/new-broadcast");
   }
 
@@ -219,9 +221,19 @@ export function ChatsView({
                 )}
                 {status === "ACTIVE" ? "Archive" : "Unarchive"}
               </Button>
-              <Button type="button" size="sm" variant="outline" onClick={startBroadcast}>
-                <Megaphone className="size-4" />
-                Broadcast
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={startBroadcast}
+                disabled={broadcastPending}
+              >
+                {broadcastPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Megaphone className="size-4" />
+                )}
+                {broadcastPending ? "Loading..." : "Broadcast"}
               </Button>
             </div>
           ) : (
@@ -230,7 +242,7 @@ export function ChatsView({
         }
       />
       {filteredCustomers.length === 0 ? (
-        <div className="bg-card divide-border divide-y overflow-hidden rounded-2xl border">
+        <div className="bg-card divide-border divide-y overflow-hidden rounded-lg border">
           <div className="flex items-center gap-2 px-4 py-2">
             <Checkbox checked={false} disabled aria-label="Select all chats" />
             <ChatsSearchInput value={nameInput} onChange={setNameInput} />
@@ -246,7 +258,7 @@ export function ChatsView({
           </div>
         </div>
       ) : (
-        <div className="bg-card divide-border overflow-hidden divide-y rounded-2xl border">
+        <div className="bg-card divide-border overflow-hidden divide-y rounded-lg border">
           <div className="flex items-center gap-2 px-4 py-2">
             <Checkbox
               checked={allSelected}
@@ -270,7 +282,7 @@ export function ChatsView({
                 aria-label={`Select ${customer.display_name}`}
               />
               <Link
-                href={`/customers/${customer.id}/chat?return_to=%2Fchats`}
+                href={`/chats/${customer.id}/chat?return_to=%2Fchats`}
                 className="flex min-w-0 flex-1 items-center gap-3"
                 onClick={() => clearUnread(customer.id)}
               >

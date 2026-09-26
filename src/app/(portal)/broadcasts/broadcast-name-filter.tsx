@@ -7,9 +7,13 @@ import { Input } from "@/components/ui/input";
 export function BroadcastNameFilter({
   value,
   onChange,
+  placeholder = "Search broadcasts",
+  clearLabel = "Clear broadcast name search",
 }: {
   value: string;
   onChange: (value: string) => void;
+  placeholder?: string;
+  clearLabel?: string;
 }) {
 
   return (
@@ -18,15 +22,15 @@ export function BroadcastNameFilter({
       <Input
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="Search by name"
-        aria-label="Search broadcasts by name"
+        placeholder={placeholder}
+        aria-label={placeholder}
         className="h-7 border-none pr-6 pl-6 font-medium shadow-none focus-visible:ring-0"
       />
       {value ? (
         <button
           type="button"
           onClick={() => onChange("")}
-          aria-label="Clear broadcast name search"
+          aria-label={clearLabel}
           className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 flex items-center pr-1"
         >
           <X className="size-3.5" />

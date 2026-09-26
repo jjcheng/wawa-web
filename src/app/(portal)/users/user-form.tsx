@@ -227,6 +227,13 @@ export function UserForm({
 
   const pending = createMutation.isPending || updateMutation.isPending;
   const isMasterUser = isEditing && user?.type === "MASTER";
+  const availablePhoneNumberIds = phoneNumbers.map((phoneNumber) => Number(phoneNumber.id));
+  const allPhoneNumbersAssigned =
+    availablePhoneNumberIds.length > 0 &&
+    availablePhoneNumberIds.every((phoneNumberId) => assignedPhoneNumberIds.includes(phoneNumberId));
+  const somePhoneNumbersAssigned =
+    !allPhoneNumbersAssigned &&
+    availablePhoneNumberIds.some((phoneNumberId) => assignedPhoneNumberIds.includes(phoneNumberId));
 
   return (
     <Tabs
@@ -234,7 +241,7 @@ export function UserForm({
       onValueChange={(value) => setActiveTab(value as "profile" | "assigned-phone-numbers")}
       className="max-w-2xl space-y-4"
     >
-      <TabsList aria-label="User sections" variant="line">
+      <TabsList aria-label="User sections">
         <TabsTrigger value="profile">Profile</TabsTrigger>
         <TabsTrigger value="assigned-phone-numbers" disabled={!isEditing}>
           Assign phone numbers
@@ -398,7 +405,22 @@ export function UserForm({
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-10" />
+                        <TableHead className="w-10">
+                          <Checkbox
+                            checked={allPhoneNumbersAssigned}
+                            ref={(element) => {
+                              if (element) element.indeterminate = somePhoneNumbersAssigned;
+                            }}
+                            onChange={(event) => {
+                              setAssignedPhoneNumberIds((current) =>
+                                event.target.checked
+                                  ? [...new Set([...current, ...availablePhoneNumberIds])]
+                                  : current.filter((id) => !availablePhoneNumberIds.includes(id)),
+                              );
+                            }}
+                            aria-label="Assign all phone numbers"
+                          />
+                        </TableHead>
                         <TableHead>WhatsApp name</TableHead>
                         <TableHead>Number</TableHead>
                         <TableHead>Status</TableHead>

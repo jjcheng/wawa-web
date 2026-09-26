@@ -17,6 +17,7 @@ import {
   CircleCheck,
   FileText,
   Globe2,
+  Info,
   ListChecks,
   MessageCircle,
   ShieldUser,
@@ -30,6 +31,7 @@ import { LoadMoreButton } from "@/components/load-more-button";
 import { RelativeTime } from "@/components/relative-time";
 import { TemplatePreviewHtml } from "@/components/template-preview-html";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import { resolveSiteUrl } from "@/lib/format";
@@ -37,7 +39,7 @@ import type { Notification, NotificationListResponse } from "@/lib/api/types";
 import { toast } from "@/lib/toast";
 import { incrementUnreadNotificationsCount } from "@/lib/unread-notifications-store";
 
-const CATEGORY_OPTIONS = ["TODO", "HANDLED"] as const;
+const CATEGORY_OPTIONS = ["PENDING", "HANDS-OFF"] as const;
 const TYPE_STYLES: Record<Notification["type"], string> = {
   SUCCESS: "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
   INFO: "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
@@ -107,21 +109,39 @@ export function TodosView({
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center gap-2">
         <Tabs value={category} onValueChange={selectCategory}>
-        <TabsList aria-label="Notification category">
+          <TabsList aria-label="Notification category">
             {CATEGORY_OPTIONS.map((option) => (
               <TabsTrigger key={option} value={option}>
-                {option === "TODO" ? "TO-DOs" : "Handled"}
+                {option === "PENDING" ? "Pending" : "Hands-off"}
               </TabsTrigger>
             ))}
-        </TabsList>
-      </Tabs>
+          </TabsList>
+        </Tabs>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label="About task categories"
+            >
+              <Info />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="max-w-64 flex-col items-start whitespace-normal">
+            <p>Pending tasks: requires your manual actions.</p>
+            <p>Hands-off tasks: handled by the system, for your information only.</p>
+          </TooltipContent>
+        </Tooltip>
+      </div>
 
-      <div className="bg-card divide-border overflow-hidden divide-y rounded-2xl border">
+      <div className="bg-card divide-border overflow-hidden divide-y rounded-lg border">
         {notifications.length === 0 ? (
           <div className="flex min-h-32 items-center justify-center p-6 text-center">
             <p className="text-muted-foreground text-sm">
-              {category === "TODO" ? "No to-dos." : "No handled notifications."}
+              {category === "PENDING" ? "No pending tasks." : "No hands-off tasks."}
             </p>
           </div>
         ) : (
@@ -198,7 +218,7 @@ function NotificationRow({
           ) : null}
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className={`break-words text-sm font-medium ${isRead ? "text-muted-foreground" : "text-foreground"}`}>
+          <h2 className={`break-words text-base font-medium ${isRead ? "text-muted-foreground" : "text-foreground"}`}>
             {notification.title}
           </h2>
           <p className="text-muted-foreground mt-1 text-xs">

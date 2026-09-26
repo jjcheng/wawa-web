@@ -98,6 +98,7 @@ export default async function BroadcastRecipientsPage({
                     read: "Read",
                     failed: "Failed",
                     unprocessed: "Unprocessed",
+                    unknown: "Unprocessed",
                   };
                   return labelMap[key] ?? key;
                 })()}

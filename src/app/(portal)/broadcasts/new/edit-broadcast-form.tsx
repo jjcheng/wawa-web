@@ -53,6 +53,16 @@ function localDateTimeValue(date: Date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+function localDateTimeWithUtcOffset(value: string) {
+  const date = new Date(value);
+  const pad = (part: number) => String(part).padStart(2, "0");
+  const offsetMinutes = -date.getTimezoneOffset();
+  const offsetSign = offsetMinutes >= 0 ? "+" : "-";
+  const absoluteOffsetMinutes = Math.abs(offsetMinutes);
+  const localDateTime = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  return `${localDateTime}${offsetSign}${pad(Math.floor(absoluteOffsetMinutes / 60))}:${pad(absoluteOffsetMinutes % 60)}`;
+}
+
 function minimumScheduledDate() {
   return new Date(Date.now() + 5 * 60 * 1000);
 }
@@ -422,11 +432,9 @@ function customerParameterValue(
 }
 
 export function EditBroadcastForm({
-  broadcastId,
   customers,
   templates,
 }: {
-  broadcastId?: string;
   customers: Customer[];
   templates: Template[];
 }) {
@@ -562,7 +570,7 @@ export function EditBroadcastForm({
   const hasPreviewButtons = previewButtons.length > 0;
   const previewJson = {
     name: broadcastName.trim(),
-    send_date: schedule === "Send later" && sendDate ? new Date(sendDate).toISOString() : null,
+    send_date: schedule === "Send later" && sendDate ? localDateTimeWithUtcOffset(sendDate) : null,
     wa_template_id: selectedTemplateId,
     send_template: {
       components: buildSendComponents(
@@ -666,7 +674,9 @@ export function EditBroadcastForm({
         body: {
           name: values.name.trim(),
           send_date:
-            values.schedule === "Send later" ? new Date(values.send_date).toISOString() : null,
+            values.schedule === "Send later"
+              ? localDateTimeWithUtcOffset(values.send_date)
+              : null,
           wa_template_id: values.template_id,
           send_template: {
             components: buildSendComponents(
@@ -687,7 +697,7 @@ export function EditBroadcastForm({
     },
     onSuccess: () => {
       setSubmitError(null);
-      toast.success(broadcastId ? "Broadcast updated." : "Broadcast created.");
+      toast.success("Your broadcast is successfully created");
       router.push("/broadcasts");
     },
     onError: (error) => {
@@ -738,7 +748,9 @@ export function EditBroadcastForm({
       const payload = {
         name: values.name.trim(),
         send_date:
-          values.schedule === "Send later" ? new Date(values.send_date).toISOString() : null,
+          values.schedule === "Send later"
+            ? localDateTimeWithUtcOffset(values.send_date)
+            : null,
         wa_template_id: values.template_id,
         send_template: {
           components: buildSendComponents(

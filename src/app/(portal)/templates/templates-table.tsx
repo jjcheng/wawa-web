@@ -154,7 +154,7 @@ export function TemplatesTable({
 
   return (
     <div className="space-y-3">
-      <div className="bg-card divide-border overflow-hidden divide-y rounded-2xl border">
+      <div className="bg-card divide-border overflow-hidden divide-y rounded-lg border">
         <div className="flex items-center gap-2 px-4 py-2">
           <div className="relative min-w-0 flex-1">
             <Search className="text-muted-foreground pointer-events-none absolute inset-y-0 left-2 my-auto size-4" />
@@ -167,8 +167,8 @@ export function TemplatesTable({
                   submitSearch();
                 }
               }}
-              placeholder="Search templates by name or content"
-              aria-label="Search templates by name or content"
+              placeholder="Search templates"
+              aria-label="Search templates"
               className="h-8 border-none bg-transparent pr-7 pl-8 shadow-none focus-visible:ring-0"
             />
             {searchInput ? (

@@ -99,7 +99,7 @@ export default async function DashboardPage() {
       />
 
       <DashboardTabs
-        todos={
+        tasks={
           <PendingBroadcastCards broadcasts={pendingBroadcasts} />
         }
         stats={user.type === "MASTER" ? (

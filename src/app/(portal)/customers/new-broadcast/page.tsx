@@ -37,7 +37,7 @@ export default async function NewBroadcastPage({
         description="Broadcasts are a preview and are not yet backed by the API."
       />
 
-      <NewBroadcastContent broadcastId={broadcastId} templates={templates} />
+      <NewBroadcastContent templates={templates} />
     </>
   );
 }

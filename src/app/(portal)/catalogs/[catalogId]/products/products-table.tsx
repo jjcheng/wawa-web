@@ -122,7 +122,7 @@ export function ProductsTable({
           ))}
         </div>
       ) : null}
-      <div className="bg-card divide-border overflow-hidden divide-y rounded-2xl border">
+      <div className="bg-card divide-border overflow-hidden divide-y rounded-lg border">
         <div className="flex items-center gap-2 px-4 py-2">
           <div className="relative min-w-0 flex-1">
             <Search
@@ -132,8 +132,8 @@ export function ProductsTable({
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search products by name"
-              aria-label="Search products by name"
+              placeholder="Search products"
+              aria-label="Search products"
               className="h-8 border-none bg-transparent pr-7 pl-8 shadow-none focus-visible:ring-0"
             />
             {search ? (

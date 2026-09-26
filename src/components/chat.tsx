@@ -1,7 +1,7 @@
 "use client";
 
 import EmojiPicker, { EmojiStyle, Theme, type EmojiClickData } from "emoji-picker-react";
-import { ArrowDown, Check, CheckCheck, ContactRound, Info, Loader2, Phone, Reply, SmilePlus } from "lucide-react";
+import { ArrowDown, Check, CheckCheck, ContactRound, Info, Loader2, MessageCircle, Phone, Reply, SmilePlus } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { useEffect, useEffectEvent, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { toast } from "@/lib/toast";
@@ -1027,8 +1027,14 @@ export function Chat({
           <ArrowDown className="size-5" />
         </Button>
       ) : null}
-      {page >= numberOfPages ? <p className="mb-3 text-center text-xs text-muted-foreground">No more message</p> : null}
+      {page >= numberOfPages && visibleMessages.length > 0 ? <p className="mb-3 text-center text-xs text-muted-foreground">No more message</p> : null}
       {loading ? <p className="mb-3 text-center text-xs text-muted-foreground">Loading...</p> : null}
+      {visibleMessages.length === 0 && !loading ? (
+        <div className="flex min-h-[calc(100svh-18rem)] flex-col items-center justify-center gap-3 pb-20 text-muted-foreground">
+          <MessageCircle aria-hidden="true" className="size-10 opacity-70" strokeWidth={1.5} />
+          <p className="text-2xl font-normal opacity-70">No message</p>
+        </div>
+      ) : null}
       {messageGroups.map((group) => (
         <section key={group.date}>
           <p className="sticky top-[68px] z-30 mx-auto mb-3 w-fit rounded-lg bg-[#e9edef] px-2 py-0.5 text-[0.6875rem] leading-5 text-[#54656f] shadow-sm dark:bg-[#182229] dark:text-[#8696a0]">{group.date}</p>

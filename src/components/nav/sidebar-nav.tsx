@@ -39,7 +39,7 @@ import { cn } from "@/lib/utils";
 
 const MAIN_ITEMS = [
   { href: "/chats", label: "Chats", icon: MessageCircle },
-  { href: "/todos", label: "TO-DOs", icon: ListChecks },
+  { href: "/tasks", label: "Tasks", icon: ListChecks },
   { href: "/catalogs", label: "Catalogs", icon: Store, masterOnly: true },
 ];
 
@@ -108,7 +108,7 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
           >
             <item.icon className={cn("size-5 transition-colors", active ? "text-blue-600 dark:text-blue-400" : "group-hover:text-blue-600 dark:group-hover:text-blue-400")} />
             {item.label}
-            {item.href === "/todos" && unreadNotificationsCount > 0 ? (
+            {item.href === "/tasks" && unreadNotificationsCount > 0 ? (
               <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-medium text-white">
                 {unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount}
               </span>

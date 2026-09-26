@@ -34,7 +34,7 @@ export function PhoneNumberList({
   }, [phoneNumbers, search]);
 
   return (
-    <div className="bg-card divide-border overflow-hidden divide-y rounded-2xl border">
+    <div className="bg-card divide-border overflow-hidden divide-y rounded-lg border">
       <div className="flex items-center gap-2 px-4 py-2">
         <div className="relative min-w-0 flex-1">
           <Search
@@ -44,8 +44,8 @@ export function PhoneNumberList({
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search phone numbers by name or number"
-            aria-label="Search phone numbers by name or number"
+            placeholder="Search phone numbers"
+            aria-label="Search phone numbers"
             className="h-8 border-none bg-transparent pr-7 pl-8 shadow-none focus-visible:ring-0"
           />
           {search ? (

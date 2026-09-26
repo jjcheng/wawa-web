@@ -17,8 +17,8 @@ export function ChatsSearchInput({
       <Input
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="Search by name"
-        aria-label="Search by name"
+        placeholder="Search customers"
+        aria-label="Search customers"
         className="h-8 border-none bg-transparent pr-7 pl-7 shadow-none focus-visible:ring-0"
       />
       {value ? (

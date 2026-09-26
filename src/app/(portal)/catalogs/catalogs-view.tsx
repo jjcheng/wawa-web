@@ -38,7 +38,7 @@ export function CatalogsView({
         description="Product catalogs owned by your Meta business portfolio, upload or edit in Meta Commerce Manager."
         action={managerAction}
       />
-      <div className="bg-card divide-border overflow-hidden divide-y rounded-2xl border">
+      <div className="bg-card divide-border overflow-hidden divide-y rounded-lg border">
         <div className="flex items-center gap-2 px-4 py-2">
           <div className="relative min-w-0 flex-1">
             <Search
@@ -48,8 +48,8 @@ export function CatalogsView({
             <Input
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Search catalogs by name"
-              aria-label="Search catalogs by name"
+              placeholder="Search catalogs"
+              aria-label="Search catalogs"
               className="h-8 border-none bg-transparent pr-7 pl-8 shadow-none focus-visible:ring-0"
             />
             {name ? (

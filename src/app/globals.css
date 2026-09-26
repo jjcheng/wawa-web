@@ -183,8 +183,8 @@
 
   .glass-surface-float-subtle {
     background:
-      linear-gradient(265deg, color-mix(in oklch, var(--glass-sheen) 25%, transparent), transparent 25%),
-      color-mix(in oklch, var(--glass-bg) 30%, transparent);
+      linear-gradient(165deg, color-mix(in oklch, var(--glass-sheen) 72%, transparent), transparent 55%),
+      color-mix(in oklch, var(--glass-bg) 82%, transparent);
   }
 }
 

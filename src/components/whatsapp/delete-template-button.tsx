@@ -26,6 +26,7 @@ export function DeleteTemplateButton({
   name,
   label = "Delete",
   triggerVariant = "outline",
+  triggerSize = "sm",
   onDeleted,
   redirectTo,
 }: {
@@ -34,6 +35,7 @@ export function DeleteTemplateButton({
   name: string;
   label?: string;
   triggerVariant?: "outline" | "destructive";
+  triggerSize?: "default" | "sm";
   onDeleted?: () => void;
   redirectTo?: string;
 }) {
@@ -61,7 +63,11 @@ export function DeleteTemplateButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant={triggerVariant} size="sm" className={SMALL_BUTTON_HEIGHT}>
+        <Button
+          variant={triggerVariant}
+          size={triggerSize}
+          className={triggerSize === "sm" ? SMALL_BUTTON_HEIGHT : undefined}
+        >
           {label}
         </Button>
       </DialogTrigger>

@@ -277,8 +277,8 @@ export function CustomerList({
                     <Input
                       value={nameInput}
                       onChange={(event) => setNameInput(event.target.value)}
-                      placeholder="Search by name"
-                      aria-label="Search customers by name"
+                      placeholder="Search customers"
+                      aria-label="Search customers"
                       className="h-7 border-none pr-6 pl-6 font-medium shadow-none focus-visible:ring-0"
                     />
                     {nameInput ? (
@@ -385,7 +385,7 @@ export function CustomerList({
                         />
                         <Button size="sm" variant="outline" asChild>
                           <Link
-                            href={`/customers/${row.id}/chat?return_to=${encodeURIComponent(
+                            href={`/chats/${row.id}/chat?return_to=${encodeURIComponent(
                               `${pathname}?${searchParams.toString()}`,
                             )}`}
                           >

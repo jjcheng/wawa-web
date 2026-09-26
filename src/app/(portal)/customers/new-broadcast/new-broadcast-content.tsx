@@ -9,10 +9,8 @@ import { toApiError } from "@/lib/api/errors";
 import type { Customer, CustomerListResponse, Template } from "@/lib/api/types";
 
 export function NewBroadcastContent({
-  broadcastId,
   templates,
 }: {
-  broadcastId?: string;
   templates: Template[];
 }) {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -67,5 +65,5 @@ export function NewBroadcastContent({
 
   if (loading) return <p className="text-muted-foreground text-sm">Loading customers...</p>;
 
-  return <EditBroadcastForm broadcastId={broadcastId} customers={customers} templates={templates} />;
+  return <EditBroadcastForm customers={customers} templates={templates} />;
 }

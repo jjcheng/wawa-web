@@ -42,7 +42,7 @@ export function UsersTable({
   }, [search, statusFilter, users]);
 
   return (
-    <div className="bg-card divide-border overflow-hidden divide-y rounded-2xl border">
+    <div className="bg-card divide-border overflow-hidden divide-y rounded-lg border">
       <div className="flex items-center gap-2 px-4 py-2">
         <div className="relative min-w-0 flex-1">
           <Search
@@ -52,8 +52,8 @@ export function UsersTable({
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search users by name, phone, or email"
-            aria-label="Search users by name, phone, or email"
+            placeholder="Search users"
+            aria-label="Search users"
             className="h-8 border-none bg-transparent pr-7 pl-8 shadow-none focus-visible:ring-0"
           />
           {search ? (

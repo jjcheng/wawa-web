@@ -1,1 +1,1 @@
-export const MAIN_ROUTES = ["/chats", "/todos", "/catalogs", "/assets"];
+export const MAIN_ROUTES = ["/chats", "/tasks", "/catalogs", "/assets"];

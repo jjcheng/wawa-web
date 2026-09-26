@@ -14,7 +14,7 @@ import type { BroadcastRecipient } from "@/lib/api/types";
 
 function displayRecipientStatus(status: unknown) {
   const raw = String(status || "").trim();
-  if (!raw) return "Unknown";
+  if (!raw) return "Unprocessed";
   const labelMap: Record<string, string> = {
     rejected: "Rejected",
     accepted: "Accepted",
@@ -23,6 +23,7 @@ function displayRecipientStatus(status: unknown) {
     read: "Read",
     failed: "Failed",
     unprocessed: "Unprocessed",
+    unknown: "Unprocessed",
   };
   return labelMap[raw.toLowerCase()] ?? raw.charAt(0) + raw.slice(1).toLowerCase();
 }
@@ -52,10 +53,15 @@ export function BroadcastRecipientsList({
   }
 
   return (
-    <div className="bg-card divide-border overflow-hidden divide-y rounded-2xl border">
+    <div className="bg-card divide-border overflow-hidden divide-y rounded-lg border">
       <div className="flex items-center gap-2 px-4 py-2">
         <div className="min-w-0 flex-1">
-          <BroadcastNameFilter value={search} onChange={setSearch} />
+          <BroadcastNameFilter
+            value={search}
+            onChange={setSearch}
+            placeholder="Search customers"
+            clearLabel="Clear customer search"
+          />
         </div>
         <Popover>
           <PopoverTrigger asChild>

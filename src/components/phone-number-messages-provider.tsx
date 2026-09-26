@@ -70,7 +70,7 @@ export function PhoneNumberMessagesProvider({ user }: { user: User }) {
         description: incoming.notification_content,
         action: {
           label: "View",
-          onClick: () => router.push(`/customers/${incoming.customer_id}/chat?return_to=%2Fchats`),
+          onClick: () => router.push(`/chats/${incoming.customer_id}/chat?return_to=%2Fchats`),
         },
       });
     });

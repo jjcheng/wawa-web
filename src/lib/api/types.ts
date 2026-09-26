@@ -200,6 +200,7 @@ export type Customer = {
   display_name: string;
   country_code: string;
   phone_number: string;
+  sending_phone_number?: { display_phone_number?: string } | null;
   meta_user_id?: string;
   wa_id?: string;
   status?: string;

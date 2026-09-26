@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 const TABS = [
   { href: "/chats", label: "Chats", icon: MessageCircle },
-  { href: "/todos", label: "TO-DOs", icon: ListChecks },
+  { href: "/tasks", label: "Tasks", icon: ListChecks },
   { href: "/catalogs", label: "Catalogs", icon: Store },
   { href: "/assets", label: "Assets", icon: LayoutGrid },
 ] as const;
@@ -47,7 +47,7 @@ export function BottomTabBar() {
                   )}
                   strokeWidth={active ? 2.4 : 2}
                 />
-                {tab.href === "/todos" && unreadNotificationsCount > 0 ? (
+                {tab.href === "/tasks" && unreadNotificationsCount > 0 ? (
                   <span className="absolute -top-1 -right-3 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-semibold text-white">
                     {unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount}
                   </span>
