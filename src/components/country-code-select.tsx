@@ -142,7 +142,7 @@ export function CountryCodeSelect({
             showCloseButton={false}
             className="!fixed !inset-0 !left-0 !top-0 !h-[100dvh] !max-h-none !w-screen !max-w-none !translate-x-0 !translate-y-0 !transform-none !gap-0 !overflow-hidden !rounded-none !p-0"
           >
-            <DialogHeader className="!fixed !inset-x-0 !top-0 !z-10 flex h-14 shrink-0 flex-row items-center justify-between border-b bg-popover px-4 py-3">
+            <DialogHeader className="relative z-10 flex h-14 shrink-0 flex-row items-center justify-between border-b bg-popover px-4 py-3">
               <DialogTitle>Select country code</DialogTitle>
               <DialogClose asChild>
                 <Button type="button" variant="ghost" size="icon-sm" aria-label="Close country code list">
@@ -150,7 +150,7 @@ export function CountryCodeSelect({
                 </Button>
               </DialogClose>
             </DialogHeader>
-            <Command className="!absolute !inset-x-0 !bottom-0 !top-14 !h-auto !min-h-0 !w-full !overflow-hidden !rounded-none">
+            <Command className="!h-0 !min-h-0 flex-1 !overflow-hidden !rounded-none">
               <CommandInput placeholder="Search country or code" />
               <CommandList className="max-h-none min-h-0 flex-1 touch-pan-y overscroll-y-contain">
                 {countryOptions}
