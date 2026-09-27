@@ -1037,7 +1037,7 @@ export function Chat({
       ) : null}
       {messageGroups.map((group) => (
         <section key={group.date}>
-          <p className="sticky top-[68px] z-30 mx-auto mb-3 w-fit rounded-lg bg-[#e9edef] px-2 py-0.5 text-[0.6875rem] leading-5 text-[#54656f] shadow-sm dark:bg-[#182229] dark:text-[#8696a0]">{group.date}</p>
+          <p className="sticky top-[68px] z-30 mx-auto mb-3 w-fit rounded-md bg-[#e9edef] px-2 py-0.5 text-[0.6875rem] leading-5 text-[#54656f] shadow-sm dark:bg-[#182229] dark:text-[#8696a0]">{group.date}</p>
           {group.messages.map((message) => (
             <div
               key={message.id}
@@ -1046,7 +1046,7 @@ export function Chat({
                 if (element) messageRefs.current.set(messageKey, element);
                 else messageRefs.current.delete(messageKey);
               }}
-              className={`mb-4 flex flex-col rounded-lg transition-colors ${message.sending ? "items-end" : "items-start"} ${flashedMessageKey === (message.wa_message_id?.trim() || String(message.id)) ? "bg-yellow-200/70 dark:bg-yellow-400/20" : ""}`}
+              className={`mb-4 flex flex-col rounded-md transition-colors ${message.sending ? "items-end" : "items-start"} ${flashedMessageKey === (message.wa_message_id?.trim() || String(message.id)) ? "bg-yellow-200/70 dark:bg-yellow-400/20" : ""}`}
             >
               <div
                 className={`flex w-fit max-w-[80%] flex-col ${
@@ -1063,8 +1063,8 @@ export function Chat({
                     message.type === "message" || message.type === "sticker" || message.type === "template" || message.type === "document" || message.type === "audio"
                       ? "relative mb-1.5 w-full text-base leading-[1.35]"
                       : message.sending
-                        ? `relative mb-1.5 min-w-0 w-full overflow-hidden rounded-lg [overflow-wrap:anywhere] ${["image", "video", "location"].includes(message.type) ? "rounded-[4px] px-0 py-0" : "rounded-[7.5px] px-1.5 py-1.5"} rounded-tr-none border border-[#edf0f1] bg-[#d9fdd3] text-base leading-[1.35] text-[#111b21] dark:border-[#087663] dark:bg-[#005c4b] dark:text-[#e9edef]`
-                        : `relative mb-1.5 min-w-0 w-full overflow-hidden rounded-lg [overflow-wrap:anywhere] ${["image", "video", "location"].includes(message.type) ? "rounded-[4px] px-0 py-0" : "rounded-[7.5px] px-1.5 py-1.5"} rounded-tl-none border border-[#edf0f1] bg-white text-base leading-[1.35] text-[#111b21] dark:border-[#314047] dark:bg-[#202c33] dark:text-[#e9edef]`
+                        ? `relative mb-1.5 min-w-0 w-full overflow-hidden rounded-md [overflow-wrap:anywhere] ${["image", "video", "location"].includes(message.type) ? "rounded-[4px] px-0 py-0" : "rounded-[7.5px] px-2 py-1.5"} rounded-tr-none border border-[#edf0f1] bg-[#d9fdd3] text-base leading-[1.35] text-[#111b21] dark:border-[#087663] dark:bg-[#005c4b] dark:text-[#e9edef]`
+                        : `relative mb-1.5 min-w-0 w-full overflow-hidden rounded-md [overflow-wrap:anywhere] ${["image", "video", "location"].includes(message.type) ? "rounded-[4px] px-0 py-0" : "rounded-[7.5px] px-2 py-1.5"} rounded-tl-none border border-[#edf0f1] bg-white text-base leading-[1.35] text-[#111b21] dark:border-[#314047] dark:bg-[#202c33] dark:text-[#e9edef]`
                   }
                 >
                   <MessageContent
@@ -1162,7 +1162,7 @@ export function Chat({
         </section>
       ))}
       {menu ? (
-        <div ref={menuRef} className={`fixed z-50 max-w-[calc(100vw-1rem)] rounded-lg bg-popover p-1 shadow-md ring-1 ring-[#edf0f1] dark:ring-foreground/10 ${showEmojis ? "w-[328px]" : "w-52"}`} style={{ left: Math.max(8, Math.min(menu.x, window.innerWidth - (showEmojis ? 336 : 216))), top: Math.max(8, Math.min(menu.y, window.innerHeight - (showEmojis ? 472 : 80))) }}>
+        <div ref={menuRef} className={`fixed z-50 max-w-[calc(100vw-1rem)] rounded-md bg-popover p-1 shadow-md ring-1 ring-[#edf0f1] dark:ring-foreground/10 ${showEmojis ? "w-[328px]" : "w-52"}`} style={{ left: Math.max(8, Math.min(menu.x, window.innerWidth - (showEmojis ? 336 : 216))), top: Math.max(8, Math.min(menu.y, window.innerHeight - (showEmojis ? 472 : 80))) }}>
           <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => { setReplyTarget({ waMessageId: menu.message.wa_message_id, preview: messageBody(menu.message) }); setMenu(null); }}><Reply />Reply</Button>
           <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => setShowEmojis(true)}><SmilePlus />React</Button>
           {showEmojis ? (

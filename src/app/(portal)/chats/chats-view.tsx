@@ -242,7 +242,7 @@ export function ChatsView({
         }
       />
       {filteredCustomers.length === 0 ? (
-        <div className="bg-card divide-border divide-y overflow-hidden rounded-lg border">
+        <div className="bg-card divide-border divide-y overflow-hidden rounded-md border">
           <div className="flex items-center gap-2 px-4 py-2">
             <Checkbox checked={false} disabled aria-label="Select all chats" />
             <ChatsSearchInput value={nameInput} onChange={setNameInput} />
@@ -258,7 +258,7 @@ export function ChatsView({
           </div>
         </div>
       ) : (
-        <div className="bg-card divide-border overflow-hidden divide-y rounded-lg border">
+        <div className="bg-card divide-border overflow-hidden divide-y rounded-md border">
           <div className="flex items-center gap-2 px-4 py-2">
             <Checkbox
               checked={allSelected}

@@ -108,7 +108,7 @@ export function ChatMediaViewer({
         href={resolvedMediaUrl}
         target="_blank"
         rel="noreferrer"
-        className="flex items-center gap-3 rounded-md bg-black/5 p-2 "
+        className="flex items-center gap-3 rounded-md bg-black/5 p-2 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/15"
       >
         <FileText className="size-8 shrink-0" />
         <span className="min-w-0 flex-1">
