@@ -100,14 +100,14 @@ export function ViewTemplateButton({
               <TemplatePreviewHtml
                 lightHtml={template.preview_html}
                 darkHtml={template.preview_dark_html}
-                className="overflow-hidden rounded-lg"
+                className="overflow-hidden"
               />
             ) : components.length === 0 ? (
               <p className="text-muted-foreground text-sm">
                 Meta did not return any components for this template.
               </p>
             ) : (
-              <div className="min-w-0 overflow-hidden rounded-lg">
+              <div className="min-w-0 overflow-hidden">
                 {components.map((component, index) => {
                   const text = componentText(component);
                   if (!text) return null;
