@@ -30,7 +30,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         <CardHeader>
           <CardTitle>Sign in</CardTitle>
           <CardDescription>
-            Use your registered WhatsApp Business Account number.
+            Using your registered phone number.
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -189,8 +189,8 @@
 }
 
 .cn-toast[data-styled="true"] {
-  background: color-mix(in oklch, var(--popover) 72%, transparent);
-  border-color: color-mix(in oklch, var(--border) 72%, transparent);
+  background: var(--popover);
+  border-color: var(--border);
   border-radius: 1.5rem;
   padding: 14px 56px 14px 16px;
   gap: 10px;
@@ -238,10 +238,18 @@
   color: color-mix(in oklch, currentColor 70%, var(--popover-foreground));
   font-size: 0.8125rem;
   line-height: 1.125rem;
+  padding-right: 28px;
 }
 
 .cn-toast[data-styled="true"] [data-icon] {
-  display: none !important;
+  display: flex;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
+  margin: 0 2px 0 0;
 }
 
 .cn-toast[data-styled="true"] [data-close-button] {

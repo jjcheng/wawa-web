@@ -62,61 +62,61 @@ export function LoginForm({ next }: { next?: string }) {
 
   return (
     <form action={formAction} className="space-y-4">
-      <input type="hidden" name="next" value={next ?? ""} />
-      <input type="hidden" name="turnstile_response" value={turnstileToken} />
+        <input type="hidden" name="next" value={next ?? ""} />
+        <input type="hidden" name="turnstile_response" value={turnstileToken} />
 
-      <div className="space-y-2">
-        <Label htmlFor="phone_number">Phone number</Label>
-        <PhoneNumberFields
-          countryName="country_code"
-          phoneName="phone_number"
-          countryValue={countryCode}
-          onCountryChange={handleCountryCodeChange}
-          phoneValue={phoneNumber}
-          onPhoneChange={(event) => setPhoneNumber(event.target.value)}
-          phoneAutoComplete="username"
-          countryError={fieldError(state, "country_code")}
-          phoneError={fieldError(state, "phone_number")}
-          phoneAriaInvalid={Boolean(fieldError(state, "phone_number"))}
-          phoneRequired
-        />
-      </div>
+        <div className="space-y-2">
+          <Label htmlFor="phone_number">Phone number</Label>
+          <PhoneNumberFields
+            countryName="country_code"
+            phoneName="phone_number"
+            countryValue={countryCode}
+            onCountryChange={handleCountryCodeChange}
+            phoneValue={phoneNumber}
+            onPhoneChange={(event) => setPhoneNumber(event.target.value)}
+            phoneAutoComplete="username"
+            countryError={fieldError(state, "country_code")}
+            phoneError={fieldError(state, "phone_number")}
+            phoneAriaInvalid={Boolean(fieldError(state, "phone_number"))}
+            phoneRequired
+          />
+        </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <PasswordInput
-          id="password"
-          name="password"
-          placeholder="Enter your password"
-          autoComplete="current-password"
-          className={MEDIUM_BUTTON_HEIGHT}
-          aria-invalid={Boolean(fieldError(state, "password"))}
-          required
-        />
-        {fieldError(state, "password") ? (
-          <p className="text-destructive text-sm">{fieldError(state, "password")}</p>
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <PasswordInput
+            id="password"
+            name="password"
+            placeholder="Enter your password"
+            autoComplete="current-password"
+            className={MEDIUM_BUTTON_HEIGHT}
+            aria-invalid={Boolean(fieldError(state, "password"))}
+            required
+          />
+          {fieldError(state, "password") ? (
+            <p className="text-destructive text-sm">{fieldError(state, "password")}</p>
+          ) : null}
+        </div>
+
+        <SignInButton disabled={Boolean(turnstileSiteKey && !turnstileToken)} />
+        {turnstileSiteKey ? (
+          <>
+            <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
+            <div className="flex w-full min-w-0 justify-center overflow-hidden">
+              <div
+                className="cf-turnstile w-full min-w-0 max-w-[350px] [&_iframe]:!max-w-full"
+                data-sitekey={turnstileSiteKey}
+                data-size="flexible"
+                data-callback="wawaTurnstileSuccess"
+                data-expired-callback="wawaTurnstileReset"
+                data-error-callback="wawaTurnstileReset"
+              />
+            </div>
+          </>
         ) : null}
-      </div>
-
-      <SignInButton disabled={Boolean(turnstileSiteKey && !turnstileToken)} />
-      {turnstileSiteKey ? (
-        <>
-          <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
-          <div className="flex w-full justify-center">
-            <div
-              className="cf-turnstile w-full max-w-[350px]"
-              data-sitekey={turnstileSiteKey}
-              data-size="flexible"
-              data-callback="wawaTurnstileSuccess"
-              data-expired-callback="wawaTurnstileReset"
-              data-error-callback="wawaTurnstileReset"
-            />
-          </div>
-        </>
-      ) : null}
-      {state.message ? (
-        <p className="text-destructive text-sm">{state.message}</p>
-      ) : null}
+        {state.message ? (
+          <p className="text-destructive text-sm">{state.message}</p>
+        ) : null}
     </form>
   );
 }
