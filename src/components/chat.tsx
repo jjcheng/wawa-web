@@ -661,11 +661,11 @@ function MessageContent({
             autoLoad={message.auto_load_media}
           />
           {media?.caption ? (
-            <p className="mt-2 whitespace-pre-wrap">{formatWhatsAppText(media.caption)}</p>
+            <p className="mt-2 whitespace-pre-wrap pb-2 px-2">{formatWhatsAppText(media.caption)}</p>
           ) : null}
         </>
       ) : location?.latitude !== undefined && location.longitude !== undefined ? (
-        <a href={`https://www.google.com/maps?q=${location.latitude},${location.longitude}`} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-sm">
+        <a href={`https://www.google.com/maps?q=${location.latitude},${location.longitude}`} target="_blank" rel="noreferrer" className="block overflow-hidden">
           {(() => {
             const staticMapUrl = locationStaticMapUrl(location);
             return staticMapUrl ? (
@@ -676,7 +676,7 @@ function MessageContent({
               />
             ) : null;
           })()}
-          <div className="flex items-start gap-3 px-0.5 py-0.5">
+          <div className="flex items-start gap-3 px-2 py-2">
             <span><span className="block text-sm font-medium">{location.name || "Location"}</span>{location.address ? <span className="mt-0.5 block text-xs opacity-70">{location.address}</span> : null}</span>
           </div>
         </a>
@@ -1060,11 +1060,11 @@ export function Chat({
                     setMenu({ message, x: event.clientX, y: event.clientY });
                   }}
                   className={
-                    message.type === "message" || message.type === "sticker" || message.type === "template"
-                      ? "relative mb-1 w-full text-base leading-[1.35]"
+                    message.type === "message" || message.type === "sticker" || message.type === "template" || message.type === "document" || message.type === "audio"
+                      ? "relative mb-1.5 w-full text-base leading-[1.35]"
                       : message.sending
-                        ? `relative mb-1.5 min-w-0 w-full [overflow-wrap:anywhere] ${["image", "video", "location"].includes(message.type) ? "rounded-[4px] px-0 py-0" : "rounded-[7.5px] px-1.5 py-1.5"} rounded-tr-none border border-[#edf0f1] bg-[#d9fdd3] text-base leading-[1.35] text-[#111b21] dark:border-[#087663] dark:bg-[#005c4b] dark:text-[#e9edef]`
-                        : `relative mb-1.5 min-w-0 w-full [overflow-wrap:anywhere] ${["image", "video", "location"].includes(message.type) ? "rounded-[4px] px-0 py-0" : "rounded-[7.5px] px-1.5 py-1.5"} rounded-tl-none border border-[#edf0f1] bg-white text-base leading-[1.35] text-[#111b21] dark:border-[#314047] dark:bg-[#202c33] dark:text-[#e9edef]`
+                        ? `relative mb-1.5 min-w-0 w-full overflow-hidden rounded-lg [overflow-wrap:anywhere] ${["image", "video", "location"].includes(message.type) ? "rounded-[4px] px-0 py-0" : "rounded-[7.5px] px-1.5 py-1.5"} rounded-tr-none border border-[#edf0f1] bg-[#d9fdd3] text-base leading-[1.35] text-[#111b21] dark:border-[#087663] dark:bg-[#005c4b] dark:text-[#e9edef]`
+                        : `relative mb-1.5 min-w-0 w-full overflow-hidden rounded-lg [overflow-wrap:anywhere] ${["image", "video", "location"].includes(message.type) ? "rounded-[4px] px-0 py-0" : "rounded-[7.5px] px-1.5 py-1.5"} rounded-tl-none border border-[#edf0f1] bg-white text-base leading-[1.35] text-[#111b21] dark:border-[#314047] dark:bg-[#202c33] dark:text-[#e9edef]`
                   }
                 >
                   <MessageContent

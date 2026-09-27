@@ -123,14 +123,14 @@ export function PhoneNumberList({
                 {isMaster ? (
                   <div className="mt-1 flex items-baseline gap-1 text-sm md:hidden">
                     <span className="text-muted-foreground">Assigned to</span>
-                    <AssignedUsersSummary users={number.assigned_users ?? []} />
+                    <AssignedUsersSummary phoneNumber={number} />
                   </div>
                 ) : null}
               </div>
               {isMaster ? (
                 <div className="hidden w-48 shrink-0 self-stretch md:flex md:flex-col md:justify-center">
                   <span className="text-muted-foreground mb-0.5 block text-sm">Assigned to</span>
-                  <AssignedUsersSummary users={number.assigned_users ?? []} />
+                  <AssignedUsersSummary phoneNumber={number} />
                 </div>
               ) : null}
               <PhoneNumberViewButton

@@ -158,12 +158,12 @@ export function UsersTable({
                 </div>
                 <div className="mt-1 flex min-w-0 items-baseline gap-1 text-sm sm:hidden">
                   <span className="text-muted-foreground shrink-0 text-sm">Managing</span>
-                  <AssignedPhoneNumbersButton phoneNumbers={user.assigned_phone_numbers ?? []} />
+                  <AssignedPhoneNumbersButton user={user} />
                 </div>
               </div>
               <div className="hidden min-w-0 shrink-0 sm:flex sm:w-48 sm:flex-col sm:items-start sm:justify-center">
                 <span className="text-muted-foreground shrink-0 text-sm sm:mb-0.5">Managing</span>
-                <AssignedPhoneNumbersButton phoneNumbers={user.assigned_phone_numbers ?? []} />
+                <AssignedPhoneNumbersButton user={user} />
               </div>
               <Button
                 type="button"

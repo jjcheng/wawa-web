@@ -1,8 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { MessageCircle } from "lucide-react";
 
 import type { User } from "@/lib/api/types";
 import { subscribeToPhoneNumberMessages } from "@/lib/phone-number-realtime";
@@ -52,6 +51,7 @@ function toIncomingChatMessage(data: unknown): IncomingChatMessage | null {
  */
 export function PhoneNumberMessagesProvider({ user }: { user: User }) {
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const phoneNumberIds = (user.assigned_phone_numbers ?? []).map((phoneNumber) =>
@@ -67,32 +67,18 @@ export function PhoneNumberMessagesProvider({ user }: { user: User }) {
         return;
       }
       notifyIncomingChatMessage(incoming);
+      const currentChatCustomerId = pathname.match(/^\/chats\/(\d+)\/chat(?:\/|$)/)?.[1];
+      if (Number(currentChatCustomerId) === incoming.customer_id) return;
+
       const chatHref = `/chats/${incoming.customer_id}/chat?return_to=%2Fchats`;
-      toast.custom(
-        (toastId) => (
-          <button
-            type="button"
-            onClick={() => {
-              toast.dismiss(toastId);
-              router.push(chatHref);
-            }}
-            className="flex w-full items-center gap-3 text-left"
-          >
-            <MessageCircle className="text-current size-4 shrink-0" aria-hidden="true" />
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm leading-5 font-semibold">
-                New message from {incoming.customer_name}
-              </span>
-              {incoming.notification_content ? (
-                <span className="mt-0.5 line-clamp-2 block text-[0.8125rem] leading-[1.125rem] opacity-75">
-                  {incoming.notification_content}
-                </span>
-              ) : null}
-            </span>
-          </button>
-        ),
-        { className: "cn-toast glass-surface-float glass-surface-float-subtle", closeButton: true },
-      );
+      toast.info(`New message from ${incoming.customer_name}`, {
+        description: incoming.notification_content || undefined,
+        closeButton: false,
+        action: {
+          label: "Open chat",
+          onClick: () => router.push(chatHref),
+        },
+      });
     });
 
     // pagehide also fires on tab close, unlike React's unmount cleanup.
@@ -102,7 +88,7 @@ export function PhoneNumberMessagesProvider({ user }: { user: User }) {
       window.removeEventListener("pagehide", unsubscribe);
       unsubscribe();
     };
-  }, [user.id, router]);
+  }, [pathname, user.id, router]);
 
   return null;
 }

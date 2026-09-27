@@ -84,14 +84,14 @@ export default async function CustomerChatPage({
 							customer={customer}
 							startInEditMode
 							trigger={
-								<Button size="icon" variant="outline" className="rounded-full" aria-label="Edit customer" title="Edit customer">
+								<Button size="icon" variant="ghost" className="rounded-full bg-muted" aria-label="Edit customer" title="Edit customer">
 									<Pencil className="size-4" />
 								</Button>
 							}
 						/>
 						<Popover>
 							<PopoverTrigger asChild>
-								<Button size="icon" variant="outline" className="rounded-full" aria-label="Customer details">
+								<Button size="icon" variant="ghost" className="rounded-full bg-muted" aria-label="Customer details">
 									<Info className="size-4" />
 								</Button>
 							</PopoverTrigger>

@@ -89,7 +89,7 @@ export function CountryCodeSelect({
       <PopoverContent className="w-64 p-0" align="start">
         <Command>
           <CommandInput placeholder="Search country or code" />
-          <CommandList>
+          <CommandList className="max-h-[min(16rem,calc(100dvh-8rem))] touch-pan-y overscroll-y-contain">
             <CommandEmpty>No country found.</CommandEmpty>
             <CommandGroup>
               {COUNTRY_CODES.map((country) => (

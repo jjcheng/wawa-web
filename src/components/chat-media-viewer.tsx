@@ -108,7 +108,7 @@ export function ChatMediaViewer({
         href={resolvedMediaUrl}
         target="_blank"
         rel="noreferrer"
-        className="flex items-center gap-3 rounded-md bg-black/5 p-2 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/15"
+        className="flex items-center gap-3 rounded-md bg-black/5 p-2 "
       >
         <FileText className="size-8 shrink-0" />
         <span className="min-w-0 flex-1">
@@ -126,7 +126,7 @@ export function ChatMediaViewer({
         <>
           <button
             type="button"
-            className={`relative block aspect-square max-w-full cursor-pointer ${type === "sticker" ? "w-48" : "w-72 rounded-sm overflow-hidden"}`}
+            className={`relative block aspect-square max-w-full cursor-pointer ${type === "sticker" ? "w-48" : "w-72 overflow-hidden"}`}
             aria-label={type === "sticker" ? "View sticker fullscreen" : "View image fullscreen"}
             onClick={(event) => {
               event.preventDefault();
@@ -152,7 +152,7 @@ export function ChatMediaViewer({
     if (type === "video") {
       return (
         <video
-          className="h-64 w-72 max-w-full rounded-sm object-cover"
+          className="h-64 w-72 max-w-full object-cover overflow-hidden"
           controls
           src={resolvedMediaUrl}
         />
