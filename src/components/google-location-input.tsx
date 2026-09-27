@@ -178,7 +178,7 @@ export function GoogleLocationInput({
           .fetchFields({ fields: ["formattedAddress", "displayName", "location"] })
           .then(() => {
             const name = place.displayName || place.formattedAddress || "";
-            const address = place.displayName || place.formattedAddress || "";
+            const address = place.formattedAddress || place.displayName || "";
             if (address) onChange(address);
             if (name && address) {
               onPlaceSelect?.({
@@ -191,7 +191,7 @@ export function GoogleLocationInput({
           })
           .catch(() => {
             const name = place.displayName || place.formattedAddress || "";
-            const address = place.displayName || place.formattedAddress || "";
+            const address = place.formattedAddress || place.displayName || "";
             if (address) onChange(address);
             if (name && address) onPlaceSelect?.({ name, address });
           });

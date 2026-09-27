@@ -1,8 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import Script from "next/script";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
@@ -16,14 +15,14 @@ function fieldError(state: LoginState, field: string) {
   return state.inputErrors?.find((error) => error.field === field)?.message;
 }
 
-function SignInButton({ disabled = false }: { disabled?: boolean }) {
+function SignInButton() {
   const { pending } = useFormStatus();
 
   return (
     <Button
       type="submit"
       className={cn("w-full", MEDIUM_BUTTON_HEIGHT)}
-      disabled={pending || disabled}
+      disabled={pending}
     >
       {pending ? <Loader2 className="size-4 animate-spin" /> : null}
       Sign in
@@ -31,11 +30,9 @@ function SignInButton({ disabled = false }: { disabled?: boolean }) {
   );
 }
 
-export function LoginForm({ next }: { next?: string }) {
+export function LoginForm({ next, turnstileToken }: { next?: string; turnstileToken: string }) {
   const [state, formAction] = useActionState<LoginState, FormData>(loginAction, {});
   const [countryCode, setCountryCode] = useState<string | undefined>(undefined);
-  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
-  const [turnstileToken, setTurnstileToken] = useState("");
   // React resets uncontrolled <form action> fields after the action runs, so keep this controlled
   // to preserve the phone number when a login attempt fails.
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -44,21 +41,6 @@ export function LoginForm({ next }: { next?: string }) {
     window.localStorage.setItem("country_code", nextCountryCode);
     setCountryCode(nextCountryCode);
   }
-
-  useEffect(() => {
-    if (!turnstileSiteKey) return;
-    const callbacks = globalThis as typeof globalThis & {
-      wawaTurnstileSuccess?: (token: string) => void;
-      wawaTurnstileReset?: () => void;
-    };
-    callbacks.wawaTurnstileSuccess = (token: string) => setTurnstileToken(token);
-    callbacks.wawaTurnstileReset = () => setTurnstileToken("");
-
-    return () => {
-      delete callbacks.wawaTurnstileSuccess;
-      delete callbacks.wawaTurnstileReset;
-    };
-  }, [turnstileSiteKey]);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -98,22 +80,7 @@ export function LoginForm({ next }: { next?: string }) {
           ) : null}
         </div>
 
-        <SignInButton disabled={Boolean(turnstileSiteKey && !turnstileToken)} />
-        {turnstileSiteKey ? (
-          <>
-            <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
-            <div className="flex w-full min-w-0 justify-center overflow-hidden">
-              <div
-                className="cf-turnstile w-full min-w-0 max-w-[350px] [&_iframe]:!max-w-full"
-                data-sitekey={turnstileSiteKey}
-                data-size="flexible"
-                data-callback="wawaTurnstileSuccess"
-                data-expired-callback="wawaTurnstileReset"
-                data-error-callback="wawaTurnstileReset"
-              />
-            </div>
-          </>
-        ) : null}
+        <SignInButton />
         {state.message ? (
           <p className="text-destructive text-sm">{state.message}</p>
         ) : null}

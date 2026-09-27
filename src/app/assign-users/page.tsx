@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { Brand } from "@/components/brand";
+import { TopRightThemeToggle } from "@/components/top-right-theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toApiError } from "@/lib/api/errors";
@@ -53,6 +54,7 @@ export default async function AssignUsersPage({
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6">
+      <TopRightThemeToggle />
       <Brand />
       <Card className="w-full max-w-2xl">
         <CardHeader>

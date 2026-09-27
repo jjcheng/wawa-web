@@ -124,12 +124,12 @@ export function AssignUsersForm({
         </Table>
       </div>
       <div className="flex items-center justify-between gap-3">
+        <Button variant="outline" onClick={() => router.push("/phone-numbers")} disabled={mutation.isPending}>
+          Skip
+        </Button>
         <Button onClick={() => mutation.mutate()} disabled={selectedUserIds.size === 0 || mutation.isPending}>
           {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
           Assign
-        </Button>
-        <Button variant="outline" onClick={() => router.push("/phone-numbers")} disabled={mutation.isPending}>
-          Skip
         </Button>
       </div>
     </div>
