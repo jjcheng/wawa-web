@@ -13,6 +13,12 @@ function initials(catalog: Catalog) {
   return (catalog.name || "?").slice(0, 2).toUpperCase();
 }
 
+function productCountLabel(catalog: Catalog) {
+  return catalog.product_count !== undefined
+    ? `${catalog.product_count.toLocaleString()} products`
+    : "0 product";
+}
+
 export function CatalogsView({
   catalogs,
   managerAction,
@@ -91,8 +97,11 @@ export function CatalogsView({
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium">{catalog.name || "Unnamed catalog"}</p>
-                <p className="text-muted-foreground truncate text-sm capitalize mb-1">
-                  {catalog.vertical ? catalog.vertical.replaceAll("_", " ") : "No category"}
+                <p className="text-muted-foreground mb-1 flex min-w-0 items-center gap-2 text-sm capitalize">
+                  <span className="truncate">
+                    {catalog.vertical ? catalog.vertical.replaceAll("_", " ") : "No category"}
+                  </span>
+                  <span className="shrink-0 text-xs sm:hidden">{productCountLabel(catalog)}</span>
                 </p>
                 {catalog.website_url ? (
                   <p className="text-muted-foreground flex min-w-0 items-center gap-1.5 truncate text-xs sm:hidden">
@@ -118,9 +127,7 @@ export function CatalogsView({
                   </span>
                 ) : null}
                 <p className="text-muted-foreground text-xs">
-                  {catalog.product_count !== undefined
-                    ? `${catalog.product_count.toLocaleString()} products`
-                    : "0 product"}
+                  {productCountLabel(catalog)}
                 </p>
               </div>
             </Link>

@@ -105,5 +105,6 @@ export async function deleteWebsiteAction(
   }
 
   revalidatePath("/websites");
-  redirect("/websites");
+  revalidatePath("/catalogs");
+  redirect("/catalogs");
 }
