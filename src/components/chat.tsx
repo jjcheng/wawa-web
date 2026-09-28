@@ -16,8 +16,10 @@ import { createAblyConversationProvider } from "@/lib/ably-realtime";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import type { MessageDetail } from "@/lib/api/types";
+import { applyGoogleMapsTheme } from "@/lib/google-maps";
 import { ChatMediaViewer } from "@/components/chat-media-viewer";
 import { TemplatePreviewHtml } from "@/components/template-preview-html";
+import { useHydrated } from "@/components/use-hydrated";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -75,14 +77,6 @@ function messageTime(timestamp: number, useLocalTime: boolean) {
     hour12: true,
     timeZone: useLocalTime ? undefined : "UTC",
   }).format(new Date(timestamp * 1000));
-}
-
-function subscribeToHydration() {
-  return () => {};
-}
-
-function useHydrated() {
-  return useSyncExternalStore(subscribeToHydration, () => true, () => false);
 }
 
 function messageBody(message: Message) {
@@ -249,7 +243,10 @@ function formatWhatsAppText(value: string) {
   return parts;
 }
 
-function locationStaticMapUrl(location: { latitude?: number; longitude?: number } | null | undefined) {
+function locationStaticMapUrl(
+  location: { latitude?: number; longitude?: number } | null | undefined,
+  theme: "light" | "dark",
+) {
   const latitude = Number(location?.latitude ?? 1.32);
   const longitude = Number(location?.longitude ?? 103.85);
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -261,6 +258,7 @@ function locationStaticMapUrl(location: { latitude?: number; longitude?: number 
   url.searchParams.set("zoom", "17");
   url.searchParams.set("size", "480x220");
   url.searchParams.set("maptype", "roadmap");
+  applyGoogleMapsTheme(url, theme);
   url.searchParams.set("markers", `color:red|${coordinates}`);
   url.searchParams.set("key", apiKey);
   return url.toString();
@@ -560,11 +558,13 @@ function MessageContent({
   onButtonResponseClick,
   onReplyClick,
   buttonResponseContext,
+  mapTheme,
 }: {
   message: Message;
   onButtonResponseClick?: () => void;
   onReplyClick?: () => void;
   buttonResponseContext?: string;
+  mapTheme: "light" | "dark";
 }) {
   const payload = message.payload;
   const media = payload[message.type] as
@@ -667,7 +667,7 @@ function MessageContent({
       ) : location?.latitude !== undefined && location.longitude !== undefined ? (
         <a href={`https://www.google.com/maps?q=${location.latitude},${location.longitude}`} target="_blank" rel="noreferrer" className="block overflow-hidden">
           {(() => {
-            const staticMapUrl = locationStaticMapUrl(location);
+            const staticMapUrl = locationStaticMapUrl(location, mapTheme);
             return staticMapUrl ? (
               <img
                 src={staticMapUrl}
@@ -1083,6 +1083,7 @@ export function Chat({
                 >
                   <MessageContent
                     message={message}
+                    mapTheme={hydrated ? resolvedTheme : "light"}
                     onButtonResponseClick={message.type === "button" ? () => scrollToButtonResponseTarget(message) : undefined}
                     onReplyClick={message.type === "text" ? () => scrollToReplyTarget(message) : undefined}
                     buttonResponseContext={(() => {

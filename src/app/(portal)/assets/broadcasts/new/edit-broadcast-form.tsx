@@ -16,6 +16,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "@/lib/toast";
+import { useTheme } from "@/components/theme-provider";
+import { useHydrated } from "@/components/use-hydrated";
 
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
@@ -44,6 +46,7 @@ import {
 import type { Customer, SendTemplateParameter, Template } from "@/lib/api/types";
 import { cn, MEDIUM_BUTTON_HEIGHT } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
+import { applyGoogleMapsTheme } from "@/lib/google-maps";
 
 const SCHEDULES = ["Send now", "Send later"] as const;
 const GOOGLE_STATIC_MAPS_URL = "https://maps.googleapis.com/maps/api/staticmap";
@@ -171,7 +174,7 @@ function replacePreviewVariables(value: string, values: Record<string, string>) 
   );
 }
 
-function locationPreviewImageUrl(location: GoogleLocationSelection | null) {
+function locationPreviewImageUrl(location: GoogleLocationSelection | null, theme: "light" | "dark") {
   const latitude = location?.latitude ?? 1.32;
   const longitude = location?.longitude ?? 103.85;
   const url = new URL(GOOGLE_STATIC_MAPS_URL);
@@ -180,6 +183,7 @@ function locationPreviewImageUrl(location: GoogleLocationSelection | null) {
   url.searchParams.set("zoom", "17");
   url.searchParams.set("size", "450x450");
   url.searchParams.set("maptype", "roadmap");
+  applyGoogleMapsTheme(url, theme);
   url.searchParams.set("markers", `color:red|${coordinates}`);
   url.searchParams.set("key", process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "");
   return url.toString();
@@ -439,6 +443,8 @@ export function EditBroadcastForm({
   templates: Template[];
 }) {
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
+  const hydrated = useHydrated();
   const isLocalhost = useSyncExternalStore(
     subscribeToLocationSnapshot,
     isLocalhostSnapshot,
@@ -1338,7 +1344,10 @@ export function EditBroadcastForm({
             ) : headerFormat === "LOCATION" ? (
               <div className="bg-muted/50 -mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)] overflow-hidden dark:bg-white/10">
                 <Image
-                  src={locationPreviewImageUrl(headerLocationDetails)}
+                  src={locationPreviewImageUrl(
+                    headerLocationDetails,
+                    hydrated ? resolvedTheme : "light",
+                  )}
                   alt="Location map preview"
                   width={450}
                   height={450}

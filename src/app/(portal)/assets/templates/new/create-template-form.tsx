@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
+import { useHydrated } from "@/components/use-hydrated";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
@@ -66,6 +67,7 @@ import {
   type CreateTemplateInput,
 } from "@/lib/api/schemas";
 import type { Template } from "@/lib/api/types";
+import { applyGoogleMapsTheme } from "@/lib/google-maps";
 import { useSelectedSampleTemplate } from "./template-source-context";
 import { TEMPLATE_JSON_LOAD_EVENT } from "./template-json-loader";
 import type { WabaOption } from "@/lib/waba-options";
@@ -155,6 +157,13 @@ LOCATION_HEADER_PREVIEW_IMAGE_URL.searchParams.set(
   process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "",
 );
 const HEADER_VARIABLE = "{{1}}";
+
+function locationHeaderPreviewImageUrl(theme: "light" | "dark") {
+  const url = new URL(LOCATION_HEADER_PREVIEW_IMAGE_URL);
+  applyGoogleMapsTheme(url, theme);
+  return url.toString();
+}
+
 const TEMPLATE_VARIABLE_PATTERN = /\{\{\s*\d+\s*\}\}/g;
 const TEMPLATE_NAME_CHARACTER_PATTERN = /^[a-z0-9_]$/;
 const TEMPLATE_NAME_INVALID_CHARACTER_PATTERN = /[^a-z0-9_]/g;
@@ -590,6 +599,7 @@ export function CreateTemplateForm({
   const isEditing = Boolean(initialTemplate);
   const router = useRouter();
   const { resolvedTheme } = useTheme();
+  const hydrated = useHydrated();
   const isLocalhost = useSyncExternalStore(
     subscribeToLocationSnapshot,
     isLocalhostSnapshot,
@@ -1973,7 +1983,9 @@ export function CreateTemplateForm({
             ) : mediaSample === "LOCATION" ? (
               <div className="bg-muted/50 -mx-3 -mt-2 mb-2 w-[calc(100%+1.5rem)] overflow-hidden dark:bg-white/10">
                 <Image
-                  src={LOCATION_HEADER_PREVIEW_IMAGE_URL.toString()}
+                  src={locationHeaderPreviewImageUrl(
+                    hydrated ? resolvedTheme : "light",
+                  )}
                   alt="Location map preview"
                   width={450}
                   height={450}

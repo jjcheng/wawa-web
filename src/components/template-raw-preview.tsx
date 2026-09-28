@@ -2,7 +2,9 @@
 
 import { useEffect, useRef } from "react";
 
+import { useTheme } from "@/components/theme-provider";
 import { sanitizeTemplateHtml } from "@/lib/html";
+import { applyGoogleMapsTheme } from "@/lib/google-maps";
 
 export function TemplateRawPreview({
   html,
@@ -26,6 +28,7 @@ export function TemplateRawPreview({
     longitude?: number;
   } | null;
 }) {
+  const { resolvedTheme } = useTheme();
   const previewRef = useRef<HTMLDivElement>(null);
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -90,6 +93,7 @@ export function TemplateRawPreview({
         mapUrl.searchParams.set("zoom", "15");
         mapUrl.searchParams.set("size", "500x500");
         mapUrl.searchParams.set("maptype", "roadmap");
+        applyGoogleMapsTheme(mapUrl, resolvedTheme);
         mapUrl.searchParams.set("markers", `color:red|${coordinates}`);
         mapUrl.searchParams.set("key", googleMapsApiKey);
         locationMap.src = mapUrl.toString();
@@ -117,6 +121,7 @@ export function TemplateRawPreview({
     highlightedVariable,
     html,
     location,
+    resolvedTheme,
     variableSubstitutions,
   ]);
 
