@@ -12,12 +12,11 @@
     "binding": "ASSETS"
   },
   "vars": {
-    "NEXT_META_APP_ID": "1389467986648945",
-    "NEXT_META_EMBEDDED_SIGNUP_CONFIG_ID": "1871010847640153",
-    "NEXT_PUBLIC_COMMERCE_WEBSITE_DOMAIN": "wawago.app",
+    "NEXT_PUBLIC_META_APP_ID": "1389467986648945",
+    "NEXT_PUBLIC_META_EMBEDDED_SIGNUP_CONFIG_ID": "1871010847640153",
+    "COMMERCE_WEBSITE_DOMAIN": "wawago.app",
     "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyDS_T64TL2WaIeapcdk3mNhwiN9YslgLhs",
-    "NEXT_PUBLIC_PORTAL_HOST": "portal.wawago.app",
-    "NEXT_PUBLIC_TURNSTILE_SITE_KEY": ""
+    "PORTAL_HOST": "portal.wawago.app"
   },
   "observability": {
     "logs": {

@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME ?? "wawa_session";
 const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:9000";
-const PORTAL_HOST = process.env.NEXT_PUBLIC_PORTAL_HOST ?? "";
+const PORTAL_HOST = process.env.PORTAL_HOST ?? "";
 
 const PUBLIC_PATHS = ["/login"];
 const PUBLIC_METADATA_PATHS = ["/robots.txt", "/sitemap.xml", "/llms.txt"];

@@ -7,7 +7,7 @@ function text(value: string | null | undefined) {
 function isPortalHost(origin: string) {
   if (!origin) return false;
   const hostname = new URL(origin).hostname;
-  const configuredHost = process.env.NEXT_PUBLIC_PORTAL_HOST;
+  const configuredHost = process.env.PORTAL_HOST;
   return (
     hostname === "localhost" ||
     hostname === "127.0.0.1" ||

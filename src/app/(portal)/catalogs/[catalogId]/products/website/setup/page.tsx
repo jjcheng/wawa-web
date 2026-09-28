@@ -54,7 +54,7 @@ export default async function CreateWebsitePage({
             <WebsiteSetupForm
               catalogId={catalogId}
               catalogName={catalogName}
-              domain={serverEnv.NEXT_PUBLIC_COMMERCE_WEBSITE_DOMAIN}
+              domain={serverEnv.COMMERCE_WEBSITE_DOMAIN}
             />
           </CardContent>
         </Card>

@@ -64,8 +64,8 @@ export default async function EmbeddedSignupPage({ searchParams }: PageProps<"/e
             <li>Add your payment method to start messaging your customers (billed directly by Meta).</li>
           </ol>
             <EmbeddedSignupFlow
-              appId={serverEnv.NEXT_META_APP_ID}
-              configId={serverEnv.NEXT_META_EMBEDDED_SIGNUP_CONFIG_ID}
+              appId={serverEnv.NEXT_PUBLIC_META_APP_ID}
+              configId={serverEnv.NEXT_PUBLIC_META_EMBEDDED_SIGNUP_CONFIG_ID}
               redirectTo={safeNextPath(next) ?? "/chats"}
               className="w-full"
             />
