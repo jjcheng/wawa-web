@@ -99,7 +99,7 @@ export function PhoneNumberViewButton({
                 handleOpen();
               }
             }}
-            className="contents"
+            className="block"
           >
             {trigger}
           </div>

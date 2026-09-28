@@ -110,7 +110,7 @@ export function PhoneNumberList({
               addedAt={number.added_at}
               isMaster={isMaster}
               trigger={
-                <div className="border-border hover:bg-accent/60 flex min-w-0 cursor-pointer items-center gap-3 border-t px-4 py-3 transition-colors">
+                <div className="hover:bg-accent/60 flex min-w-0 cursor-pointer items-center gap-3 px-4 py-3 transition-colors">
                   <span className="bg-accent text-muted-foreground relative flex size-10 shrink-0 items-center justify-center rounded-full">
                     <Phone className="size-4" />
                     <span aria-label={displayStatus} title={displayStatus} className="absolute -top-0.5 -left-0.5">

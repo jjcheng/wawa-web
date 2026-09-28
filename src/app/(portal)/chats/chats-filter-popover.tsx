@@ -22,7 +22,7 @@ export function ChatsFilterPopover({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const activeCount = selectedTags.length + (status === "INACTIVE" ? 1 : 0);
+  const activeCount = selectedTags.length + 1;
 
   function toggleTag(tag: string, checked: boolean) {
     const params = new URLSearchParams(searchParams);

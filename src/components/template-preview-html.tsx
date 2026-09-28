@@ -1,6 +1,6 @@
 "use client";
 
-import { stripScriptTags } from "@/lib/html";
+import { sanitizeTemplateHtml } from "@/lib/html";
 
 export function TemplatePreviewHtml({
   lightHtml,
@@ -21,11 +21,11 @@ export function TemplatePreviewHtml({
       <div className={className}>
         <div
           className={`dark:hidden ${baseClass}`}
-          dangerouslySetInnerHTML={{ __html: stripScriptTags(lightHtml) }}
+          dangerouslySetInnerHTML={{ __html: sanitizeTemplateHtml(lightHtml) }}
         />
         <div
           className={`hidden dark:block ${baseClass}`}
-          dangerouslySetInnerHTML={{ __html: stripScriptTags(darkHtml) }}
+          dangerouslySetInnerHTML={{ __html: sanitizeTemplateHtml(darkHtml) }}
         />
       </div>
     );
@@ -37,7 +37,7 @@ export function TemplatePreviewHtml({
     <div className={className}>
       <div
         className={baseClass}
-        dangerouslySetInnerHTML={{ __html: stripScriptTags(html) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeTemplateHtml(html) }}
       />
     </div>
   );

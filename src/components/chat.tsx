@@ -708,6 +708,7 @@ export function Chat({
   const [messages, setMessages] = useState(() => initialMessages);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const loadingOlderRef = useRef(false);
   const [menu, setMenu] = useState<MessageMenu | null>(null);
   const [showEmojis, setShowEmojis] = useState(false);
   const documentHeightRef = useRef(0);
@@ -816,7 +817,15 @@ export function Chat({
   }, [appendedMessages]);
 
   const loadOlderMessages = useEffectEvent(async () => {
-    if (loading || page >= numberOfPages) return;
+    if (
+      loading ||
+      loadingOlderRef.current ||
+      page >= numberOfPages ||
+      (messages.length === 0 && appendedMessages.length === 0)
+    ) {
+      return;
+    }
+    loadingOlderRef.current = true;
     documentHeightRef.current = document.documentElement.scrollHeight;
     setLoading(true);
     try {
@@ -827,6 +836,10 @@ export function Chat({
           page_size: "50",
         },
       });
+      if (response.items.length === 0) {
+        setPage(numberOfPages);
+        return;
+      }
       setMessages((current) => mergeMessages(current, response.items));
       setPage((current) => current + 1);
       requestAnimationFrame(() => {
@@ -835,6 +848,7 @@ export function Chat({
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not load older messages.");
     } finally {
+      loadingOlderRef.current = false;
       setLoading(false);
     }
   });

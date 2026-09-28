@@ -5,7 +5,7 @@ import { StorefrontShell } from "@/components/public-storefront-shell";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type { PublicWebsitePage } from "@/lib/api/types";
-import { excerptText, htmlToPlainText, stripScriptTags, withLazyImages } from "@/lib/html";
+import { excerptText, htmlToPlainText, sanitizeHtml, withLazyImages } from "@/lib/html";
 import { serializeJsonLd } from "@/lib/public-seo";
 import {
   getPublicWebsiteHostname,
@@ -142,7 +142,7 @@ export default async function PublicWebsiteSlugPage({ params }: PublicPageProps)
           <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
           {page.description ? <p className="mt-6 whitespace-pre-line text-base leading-7 text-muted-foreground">{page.description}</p> : null}
         {page.content ? (
-          <PublicPageContent html={withLazyImages(stripScriptTags(page.content))} />
+          <PublicPageContent html={withLazyImages(sanitizeHtml(page.content))} />
         ) : null}
         </div>
       </article>

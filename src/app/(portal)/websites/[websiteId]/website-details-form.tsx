@@ -443,10 +443,13 @@ export function WebsiteDetailsForm({
             onSearchChange={setSearchAddress}
             onPlaceSelect={(location: GoogleLocationSelection | null) => {
               if (!location) return;
-              setSearchAddress(location.address);
+              setSearchAddress(location.name);
               setValues((current) => ({
                 ...current,
-                address: location.address,
+                address:
+                  location.name === location.address
+                    ? location.address
+                    : `${location.name}\n${location.address}`,
                 latitude: location.latitude?.toString() ?? "",
                 longitude: location.longitude?.toString() ?? "",
               }));
@@ -585,7 +588,7 @@ export function WebsiteDetailsForm({
                 </DialogClose>
                 <Button type="submit" variant="destructive" disabled={deletePending}>
                   {deletePending ? <Loader2 className="size-4 animate-spin" /> : null}
-                  {deletePending ? "Deleting..." : "Delete website"}
+                  {deletePending ? "Deleting..." : "Delete"}
                 </Button>
               </DialogFooter>
             </form>

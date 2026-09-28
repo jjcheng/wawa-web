@@ -307,7 +307,7 @@ export function WebsitePageForm({
                 </DialogClose>
                 <Button type="button" variant="destructive" onClick={() => void deletePage()} disabled={deleting}>
                   {deleting ? <Loader2 className="size-4 animate-spin" /> : null}
-                  {deleting ? "Deleting..." : "Delete page"}
+                  {deleting ? "Deleting..." : "Delete"}
                 </Button>
               </DialogFooter>
             </DialogContent>

@@ -1,3 +1,43 @@
+import rehypeParse from "rehype-parse";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
+import rehypeStringify from "rehype-stringify";
+import { unified } from "unified";
+
+const templateSchema = {
+  ...defaultSchema,
+  tagNames: [...(defaultSchema.tagNames ?? []), "style", "button"],
+  attributes: {
+    ...defaultSchema.attributes,
+    "*": [...(defaultSchema.attributes?.["*"] ?? []), "style", "className"],
+  },
+};
+
+function createHtmlSanitizer(schema?: typeof templateSchema) {
+  return unified()
+    .use(rehypeParse, { fragment: true })
+    .use(rehypeSanitize, schema)
+    .use(rehypeStringify);
+}
+
+const htmlSanitizer = createHtmlSanitizer();
+const templateHtmlSanitizer = createHtmlSanitizer(templateSchema);
+
+export function sanitizeHtml(html: string) {
+  try {
+    return String(htmlSanitizer.processSync(html));
+  } catch {
+    return "";
+  }
+}
+
+export function sanitizeTemplateHtml(html: string) {
+  try {
+    return String(templateHtmlSanitizer.processSync(html));
+  } catch {
+    return "";
+  }
+}
+
 /** Strips <script> tags from backend-provided preview HTML before it's injected via dangerouslySetInnerHTML. */
 export function stripScriptTags(html: string) {
   return html.replace(/<script\b[^>]*>[\s\S]*?(?:<\/script\s*>|$)/gi, "");

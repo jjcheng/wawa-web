@@ -717,7 +717,7 @@ export function ChatMessageComposer({
       <Dialog open={locationOpen} onOpenChange={setLocationOpen}>
         <DialogContent
           className="!max-h-[85vh] h-[70vh] overflow-y-auto [&>[data-slot=dialog-header]~*:not([data-slot=dialog-footer]):not([data-slot=dialog-close])]:overflow-visible"
-          style={{ width: "min(90vw, 48rem)", maxWidth: "48rem" }}
+          style={{ width: "min(90vw, 32rem)", maxWidth: "32rem" }}
         >
           <DialogHeader>
             <DialogTitle>Attach location</DialogTitle>
@@ -782,7 +782,7 @@ export function ChatMessageComposer({
 }
 
 function AttachmentOption({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
-  return <Button type="button" variant="ghost" className="h-auto flex-col gap-1.5 p-0 text-xs font-normal" onClick={onClick}><span className="flex size-9 items-center justify-center rounded-full bg-[#d9fdd3] text-[#008f72] dark:bg-[#005c4b] dark:text-[#e9edef]">{icon}</span>{label}</Button>;
+  return <Button type="button" variant="ghost" className="h-auto flex-col gap-1.5 p-0 text-xs font-normal hover:bg-transparent hover:text-inherit" onClick={onClick}><span className="flex size-9 items-center justify-center rounded-full bg-[#d9fdd3] text-[#008f72] transition-colors group-hover/button:bg-[#c5f1bc] dark:bg-[#005c4b] dark:text-[#e9edef] dark:group-hover/button:bg-[#006b57]">{icon}</span>{label}</Button>;
 }
 
 function AttachmentPopover({

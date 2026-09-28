@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-import { stripScriptTags } from "@/lib/html";
+import { sanitizeTemplateHtml } from "@/lib/html";
 
 export function TemplateRawPreview({
   html,
@@ -32,7 +32,7 @@ export function TemplateRawPreview({
   useEffect(() => {
     const preview = previewRef.current;
     if (!preview) return;
-    preview.innerHTML = stripScriptTags(html);
+    preview.innerHTML = sanitizeTemplateHtml(html);
     const pattern = /{{\s*([^}]+?)\s*}}/g;
     const variableOccurrences = new Map<string, number>();
     const walker = document.createTreeWalker(preview, NodeFilter.SHOW_TEXT);

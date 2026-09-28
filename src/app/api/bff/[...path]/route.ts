@@ -20,6 +20,10 @@ async function proxyRequest(request: NextRequest, context: Context) {
   const upstreamPath = path.join("/");
   const method = request.method.toUpperCase();
 
+  if (method !== "GET" && method !== "HEAD" && request.headers.get("origin") !== request.nextUrl.origin) {
+    return envelope(403, "cross-origin request denied");
+  }
+
   if (!isAllowedUpstream(method, upstreamPath)) {
     return envelope(404, "route not found");
   }
@@ -51,10 +55,7 @@ async function proxyRequest(request: NextRequest, context: Context) {
     query[key] = values.length === 1 ? values[0] : values;
   }
 
-  const accessToken =
-    request.headers.get("x-user-access-token") ??
-    request.cookies.get(serverEnv.SESSION_COOKIE_NAME)?.value ??
-    undefined;
+  const accessToken = request.cookies.get(serverEnv.SESSION_COOKIE_NAME)?.value;
 
   let upstream: Response;
   try {
@@ -64,7 +65,7 @@ async function proxyRequest(request: NextRequest, context: Context) {
       rawBody,
       contentType,
       query,
-      forwardedHost: request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? undefined,
+      forwardedHost: request.nextUrl.host,
       forwardedOrigin: request.nextUrl.origin,
       sessionToken: accessToken,
     });
@@ -88,7 +89,6 @@ async function proxyRequest(request: NextRequest, context: Context) {
   const session = readUpstreamSession(upstream.headers.getSetCookie());
   const tokenValue = upstreamAccessToken ?? session?.value;
   if (tokenValue) {
-    response.headers.set("x-user-access-token", tokenValue);
     response.cookies.set(
       serverEnv.SESSION_COOKIE_NAME,
       tokenValue,
