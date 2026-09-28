@@ -126,7 +126,7 @@ export function ChatMediaViewer({
         <>
           <button
             type="button"
-            className={`relative block aspect-square max-w-full cursor-pointer ${type === "sticker" ? "w-48" : "w-72 overflow-hidden"}`}
+            className={`relative block aspect-square max-w-full cursor-pointer ${type === "sticker" ? "w-48" : "w-full max-h-[250px] overflow-hidden sm:w-72 sm:max-h-none"}`}
             aria-label={type === "sticker" ? "View sticker fullscreen" : "View image fullscreen"}
             onClick={(event) => {
               event.preventDefault();

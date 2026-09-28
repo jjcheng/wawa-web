@@ -1049,7 +1049,7 @@ export function Chat({
               className={`mb-4 flex flex-col rounded-md transition-colors ${message.sending ? "items-end" : "items-start"} ${flashedMessageKey === (message.wa_message_id?.trim() || String(message.id)) ? "bg-yellow-200/70 dark:bg-yellow-400/20" : ""}`}
             >
               <div
-                className={`flex w-fit max-w-[80%] flex-col ${
+                className={`flex ${message.type === "image" ? "w-full max-w-full sm:w-fit sm:max-w-[80%]" : "w-fit max-w-[80%]"} flex-col ${
                   message.sending ? "items-end" : "items-start"
                 }`}
               >
