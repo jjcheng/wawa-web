@@ -47,6 +47,8 @@ const ALLOWED: { method: string; pattern: RegExp }[] = [
   { method: "GET", pattern: /^v1\/wa\/messages$/ },
   { method: "GET", pattern: /^v1\/wa\/messages\/\d+$/ },
   { method: "POST", pattern: /^v1\/wa\/messages$/ },
+  { method: "POST", pattern: /^v1\/wa\/messages\/start-typing$/ },
+  { method: "POST", pattern: /^v1\/wa\/messages\/mark-read$/ },
   { method: "POST", pattern: /^v1\/wa\/messages\/chat-token$/ },
   { method: "POST", pattern: /^v1\/account\/phone-numbers\/[^/]+\/token$/ },
   { method: "GET", pattern: /^v1\/wa\/media$/ },
