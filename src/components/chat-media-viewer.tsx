@@ -1,7 +1,6 @@
 "use client";
 
 import { Download, FileText, ImageIcon, LoaderCircle, Play, Sticker } from "lucide-react";
-import Image from "next/image";
 import { useEffect, useEffectEvent, useState } from "react";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
@@ -126,7 +125,7 @@ export function ChatMediaViewer({
         <>
           <button
             type="button"
-            className={`relative block aspect-square max-w-full cursor-pointer ${type === "sticker" ? "w-48" : "w-full max-h-[250px] overflow-hidden sm:w-72 sm:max-h-none"}`}
+            className={`relative block cursor-pointer ${type === "sticker" ? "aspect-square w-48" : "w-full max-w-full overflow-hidden"}`}
             aria-label={type === "sticker" ? "View sticker fullscreen" : "View image fullscreen"}
             onClick={(event) => {
               event.preventDefault();
@@ -134,15 +133,21 @@ export function ChatMediaViewer({
               setGalleryOpen(true);
             }}
           >
-          <Image
-            src={resolvedMediaUrl}
-            alt={type === "sticker" ? "Sticker attachment" : "Image attachment"}
-            fill
-            loading="lazy"
-            unoptimized
-            sizes="288px"
-            className={type === "sticker" ? "object-contain" : "object-cover"}
-          />
+          {type === "sticker" ? (
+            <img
+              src={resolvedMediaUrl}
+              alt="Sticker attachment"
+              className="absolute inset-0 size-full object-contain"
+              loading="lazy"
+            />
+          ) : (
+            <img
+              src={resolvedMediaUrl}
+              alt="Image attachment"
+              className="block h-auto max-h-[288px] w-full max-w-full"
+              loading="lazy"
+            />
+          )}
           </button>
           <Lightbox open={galleryOpen} close={() => setGalleryOpen(false)} carousel={{ finite: true }} slides={[{ src: resolvedMediaUrl }]} />
         </>
