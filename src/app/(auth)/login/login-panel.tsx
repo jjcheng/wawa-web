@@ -1,7 +1,7 @@
 "use client";
 
 import Script from "next/script";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   Card,
@@ -14,24 +14,46 @@ import { Separator } from "@/components/ui/separator";
 import { EmbeddedSignupButton } from "@/components/whatsapp/embedded-signup-button";
 import { LoginForm } from "./login-form";
 
+type TurnstileOptions = {
+  sitekey: string;
+  size: "flexible";
+  callback: (token: string) => void;
+  "expired-callback": () => void;
+  "error-callback": () => void;
+};
+
+type TurnstileApi = {
+  render: (container: HTMLElement, options: TurnstileOptions) => string;
+  remove: (widgetId: string) => void;
+};
+
+declare global {
+  interface Window {
+    turnstile?: TurnstileApi;
+  }
+}
+
 export function LoginPanel({ next }: { next?: string }) {
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileReady, setTurnstileReady] = useState(false);
+  const turnstileContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!turnstileSiteKey) return;
-    const callbacks = globalThis as typeof globalThis & {
-      wawaTurnstileSuccess?: (token: string) => void;
-      wawaTurnstileReset?: () => void;
-    };
-    callbacks.wawaTurnstileSuccess = (token: string) => setTurnstileToken(token);
-    callbacks.wawaTurnstileReset = () => setTurnstileToken("");
+    const turnstile = window.turnstile;
+    const container = turnstileContainerRef.current;
+    if (!turnstileSiteKey || !turnstileReady || !turnstile || !container) return;
 
-    return () => {
-      delete callbacks.wawaTurnstileSuccess;
-      delete callbacks.wawaTurnstileReset;
-    };
-  }, [turnstileSiteKey]);
+    const widgetId = turnstile.render(container, {
+      sitekey: turnstileSiteKey,
+      size: "flexible",
+      callback: setTurnstileToken,
+      "expired-callback": () => setTurnstileToken(""),
+      "error-callback": () => setTurnstileToken(""),
+    });
+
+    return () => turnstile.remove(widgetId);
+  }, [turnstileReady, turnstileSiteKey]);
 
   return (
     <>
@@ -58,15 +80,15 @@ export function LoginPanel({ next }: { next?: string }) {
       </Card>
       {turnstileSiteKey ? (
         <>
-          <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
+          <Script
+            id="cloudflare-turnstile"
+            src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+            onReady={() => setTurnstileReady(true)}
+          />
           <div className="flex w-full min-w-0 justify-center overflow-hidden">
             <div
-              className="cf-turnstile w-full min-w-0 max-w-[350px] [&_iframe]:!max-w-full"
-              data-sitekey={turnstileSiteKey}
-              data-size="flexible"
-              data-callback="wawaTurnstileSuccess"
-              data-expired-callback="wawaTurnstileReset"
-              data-error-callback="wawaTurnstileReset"
+              ref={turnstileContainerRef}
+              className="w-full min-w-0 max-w-[350px] [&_iframe]:!max-w-full"
             />
           </div>
         </>

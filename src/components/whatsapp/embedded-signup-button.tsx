@@ -12,7 +12,7 @@ const DEFAULT_LABEL = "Add WhatsApp Business Number";
 export function EmbeddedSignupButton({
   label = DEFAULT_LABEL,
   className,
-  redirectTo = "/phone-numbers",
+  redirectTo = "/assets/phone-numbers",
 }: {
   label?: string;
   className?: string;

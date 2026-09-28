@@ -73,7 +73,7 @@ export function CatalogsView({
         {filtered.length === 0 ? (
           <div className="flex min-h-32 flex-col items-center justify-center gap-2 p-6 text-center">
             <Store className="text-muted-foreground size-8" />
-            <p className="text-muted-foreground text-sm">No product catalogs found.</p>
+            <p className="text-muted-foreground text-base">No product catalogs found.</p>
             {hasFilters ? (
               <Button
                 type="button"

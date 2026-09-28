@@ -150,12 +150,13 @@ export function ProductsTable({
         </div>
         {filteredProducts.length === 0 ? (
           <div className="flex min-h-32 flex-col items-center justify-center gap-2 p-6 text-center">
-            <p className="text-muted-foreground text-sm">
-              {search ? "No products match your search." : "No products found."}
+            <PackageOpen className="text-muted-foreground size-8" />
+            <p className="text-muted-foreground text-base">
+              {search ? "No products found." : "No products found."}
             </p>
             {search ? (
               <Button type="button" size="sm" variant="outline" onClick={() => setSearch("")}>
-                Clear search
+                Reset filter
               </Button>
             ) : null}
           </div>

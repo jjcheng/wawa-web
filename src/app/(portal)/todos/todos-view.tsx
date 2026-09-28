@@ -21,6 +21,7 @@ import {
   ListChecks,
   MessageCircle,
   Megaphone,
+  ClipboardList,
   ShieldUser,
   TriangleAlert,
   UserRound,
@@ -130,17 +131,19 @@ export function TodosView({
               <Info />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="right" className="max-w-64 flex-col items-start whitespace-normal">
-            <p>Pending tasks: requires your manual actions.</p>
-            <p>Hands-off tasks: handled by the system, for your information only.</p>
+          <TooltipContent side="right" className="max-w-50 flex-col items-start whitespace-normal">
+            <p><strong>Pending tasks:</strong><br/>Requires your manual actions.</p>
+            <br/>
+            <p><strong>Hands-off tasks:</strong><br/>Handled by the system, no action required.</p>
           </TooltipContent>
         </Tooltip>
       </div>
 
       <div className="bg-card divide-border overflow-hidden divide-y rounded-lg border">
         {notifications.length === 0 ? (
-          <div className="flex min-h-32 items-center justify-center p-6 text-center">
-            <p className="text-muted-foreground text-sm">
+          <div className="flex min-h-32 flex-col items-center justify-center gap-2 p-6 text-center">
+            <ClipboardList className="text-muted-foreground size-8" />
+            <p className="text-muted-foreground text-base">
               {category === "PENDING" ? "No pending tasks." : "No hands-off tasks."}
             </p>
           </div>

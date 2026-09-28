@@ -47,7 +47,7 @@ export function AssignUsersForm({
       }),
     onSuccess: () => {
       toast.success("Users assigned.");
-      router.push("/phone-numbers");
+      router.push("/assets/phone-numbers");
       router.refresh();
     },
     onError: (error) => toast.error(toApiError(error).message),
@@ -124,7 +124,7 @@ export function AssignUsersForm({
         </Table>
       </div>
       <div className="flex items-center justify-between gap-3">
-        <Button variant="outline" onClick={() => router.push("/phone-numbers")} disabled={mutation.isPending}>
+        <Button variant="outline" onClick={() => router.push("/assets/phone-numbers")} disabled={mutation.isPending}>
           Skip
         </Button>
         <Button onClick={() => mutation.mutate()} disabled={selectedUserIds.size === 0 || mutation.isPending}>

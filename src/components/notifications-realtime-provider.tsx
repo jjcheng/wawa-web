@@ -36,7 +36,7 @@ export function NotificationsRealtimeProvider({ user }: { user: User }) {
             : notification.type === "SUCCESS"
               ? toast.success
               : toast.info;
-      toastFn(notification.title, { description: notification.body });
+      toastFn(notification.title);
     });
 
     // pagehide also fires on tab close, unlike React's unmount cleanup.

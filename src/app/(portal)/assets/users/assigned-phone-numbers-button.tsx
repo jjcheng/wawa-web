@@ -3,7 +3,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -34,7 +34,7 @@ function phoneNumberEntry(phoneNumber: PhoneNumber) {
 
 export function AssignedPhoneNumbersButton({ user }: { user: User }) {
   const router = useRouter();
-  const phoneNumbers: PhoneNumber[] = user.assigned_phone_numbers ?? [];
+  const phoneNumbers = user.assigned_phone_numbers ?? [];
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [availablePhoneNumbers, setAvailablePhoneNumbers] = useState<PhoneNumber[]>([]);
@@ -168,8 +168,7 @@ export function AssignedPhoneNumbersButton({ user }: { user: User }) {
                       <label className="flex cursor-pointer items-center gap-3 py-1.5">
                         <Checkbox
                           checked={selectedPhoneNumberIds.has(phoneNumberId)}
-                          onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                            togglePhoneNumber(phoneNumberId, event.target.checked)}
+                          onChange={(event) => togglePhoneNumber(phoneNumberId, event.target.checked)}
                           aria-label={`Assign ${label}`}
                         />
                         <span className="min-w-0">

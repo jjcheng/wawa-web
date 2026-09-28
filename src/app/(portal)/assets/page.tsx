@@ -1,4 +1,4 @@
-import { FileText, Gauge, Megaphone, Phone, UsersRound, Wrench } from "lucide-react";
+import { FileText, Gauge, Megaphone, Phone, UsersRound } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -11,42 +11,36 @@ export const metadata: Metadata = { title: "Assets" };
 
 const ASSET_LINKS = [
   {
-    href: "/phone-numbers",
+    href: "/assets/phone-numbers",
     label: "Phone numbers",
     description: "Connected WhatsApp Business numbers.",
     icon: Phone,
   },
   {
-    href: "/users",
+    href: "/assets/users",
     label: "Users",
     description: "Team members with portal access.",
     icon: UsersRound,
     masterOnly: true,
   },
   {
-    href: "/templates",
+    href: "/assets/templates",
     label: "Templates",
     description: "WhatsApp message templates.",
     icon: FileText,
   },
   {
-    href: "/broadcasts",
+    href: "/assets/broadcasts",
     label: "Broadcasts",
     description: "Upcoming and past broadcasts to your customers.",
     icon: Megaphone,
   },
   {
-    href: "/usage",
-    label: "Analytics",
+    href: "/assets/usage",
+    label: "Usage",
     description: "Usage and delivery insights.",
     icon: Gauge,
     masterOnly: true,
-  },
-  {
-    href: "/tools",
-    label: "Tools",
-    description: "Useful tools in conducting business.",
-    icon: Wrench,
   },
 ];
 

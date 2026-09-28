@@ -208,7 +208,7 @@ export async function completeEmbeddedSignup(input: unknown): Promise<EmbeddedSi
 
   return {
     status: result.user.status,
-    redirectTo: masterSessionToken ? "/phone-numbers" : "/login",
+    redirectTo: masterSessionToken ? "/assets/phone-numbers" : "/login",
   };
 }
 

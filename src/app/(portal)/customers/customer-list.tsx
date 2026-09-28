@@ -251,7 +251,7 @@ export function CustomerList({
                   "new-broadcast-customer-ids",
                   JSON.stringify([...selectedRows]),
                 );
-                router.push("/customers/new-broadcast");
+                router.push("/chats/new-broadcast");
               }}
             >
               New broadcast

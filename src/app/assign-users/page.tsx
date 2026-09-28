@@ -23,7 +23,7 @@ export default async function AssignUsersPage({
   if (currentUser.type !== "MASTER") redirect("/dashboard");
 
   const { phone_number_id: phoneNumberId } = await searchParams;
-  if (!phoneNumberId || !/^\d+$/.test(phoneNumberId)) redirect("/phone-numbers");
+  if (!phoneNumberId || !/^\d+$/.test(phoneNumberId)) redirect("/assets/phone-numbers");
 
   let phoneNumber: PhoneNumber | null = null;
   let users: User[] = [];
@@ -64,7 +64,7 @@ export default async function AssignUsersPage({
           </CardDescription>
           <CardAction>
             <Button asChild size="sm">
-              <Link href="/users/new">Add user</Link>
+              <Link href="/assets/users/new">Add user</Link>
             </Button>
           </CardAction>
         </CardHeader>

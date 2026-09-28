@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Archive, ArchiveRestore, Loader2, Megaphone, Pencil } from "lucide-react";
+import { Archive, ArchiveRestore, Loader2, Megaphone, MessageCircle, Pencil } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -182,7 +182,7 @@ export function ChatsView({
     }
     sessionStorage.setItem("new-broadcast-customer-ids", JSON.stringify([...selectedIds]));
     setBroadcastPending(true);
-    router.push("/customers/new-broadcast");
+    router.push("/chats/new-broadcast");
   }
 
   return (
@@ -249,7 +249,8 @@ export function ChatsView({
             <ChatsFilterPopover tags={tags} selectedTags={selectedTags} status={status} />
           </div>
           <div className="flex min-h-32 flex-col items-center justify-center gap-2 p-6 text-center">
-            <p className="text-muted-foreground text-sm">No customers found.</p>
+            <MessageCircle className="text-muted-foreground size-8" />
+            <p className="text-muted-foreground text-base">No customers found.</p>
             {hasFilters ? (
               <Button type="button" size="sm" variant="outline" onClick={resetFilters}>
                 Reset filters

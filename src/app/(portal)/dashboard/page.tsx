@@ -44,7 +44,7 @@ function PendingBroadcastCards({ broadcasts }: { broadcasts: Broadcast[] }) {
           <CardHeader className="flex flex-row items-center justify-between space-y-0 px-3 py-2">
             <CardDescription>Pending broadcast</CardDescription>
             <Button asChild size="sm" variant="outline">
-              <Link href="/broadcasts">View</Link>
+              <Link href="/assets/broadcasts">View</Link>
             </Button>
           </CardHeader>
           <CardContent className="space-y-2 px-3 pb-2">

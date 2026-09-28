@@ -139,7 +139,7 @@ export function ViewTemplateButton({
               {template.by_api ? (
                 <Button asChild variant="outline">
                   <Link
-                    href={`/templates/new?edit=${encodeURIComponent(template.id)}`}
+                    href={`/assets/templates/new?edit=${encodeURIComponent(template.id)}`}
                     onClick={() => setOpen(false)}
                   >
                     Edit

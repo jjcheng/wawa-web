@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 export default async function CustomerChatPage({
   params,
   searchParams,
-}: PageProps<"/customers/[customerId]/chat">) {
+}: PageProps<"/chats/[customerId]/chat">) {
   const [{ customerId }, query] = await Promise.all([params, searchParams]);
   const destination = new URLSearchParams();
   if (typeof query.identity === "string") destination.set("identity", query.identity);
