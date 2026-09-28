@@ -102,45 +102,45 @@ export function PhoneNumberList({
             : "Unknown status";
 
           return (
-            <div
+            <PhoneNumberViewButton
               key={number.id}
-              className="hover:bg-accent/60 flex min-w-0 items-center gap-3 px-4 py-3 transition-colors"
-            >
-              <span className="bg-accent text-muted-foreground relative flex size-10 shrink-0 items-center justify-center rounded-full">
-                <Phone className="size-4" />
-                <span aria-label={displayStatus} title={displayStatus} className="absolute -top-0.5 -left-0.5">
-                  <Circle
-                    aria-hidden="true"
-                    className={`size-2.5 fill-current stroke-card stroke-2 ${connected ? "text-green-600" : "text-muted-foreground"}`}
-                  />
-                </span>
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">{number.name || "Unnamed number"}</p>
-                <p className="text-muted-foreground truncate text-sm">
-                  {formatPhoneNumber(number.display_phone_number || number.phone_number) || "Number unavailable"}
-                </p>
-                {isMaster ? (
-                  <div className="mt-1 flex items-baseline gap-1 text-sm md:hidden">
-                    <span className="text-muted-foreground">Assigned to</span>
-                    <AssignedUsersSummary phoneNumber={number} />
+              id={number.id}
+              name={number.name || "This number"}
+              status={number.status}
+              addedAt={number.added_at}
+              isMaster={isMaster}
+              trigger={
+                <div className="hover:bg-accent/60 flex min-w-0 cursor-pointer items-center gap-3 px-4 py-3 transition-colors">
+                  <span className="bg-accent text-muted-foreground relative flex size-10 shrink-0 items-center justify-center rounded-full">
+                    <Phone className="size-4" />
+                    <span aria-label={displayStatus} title={displayStatus} className="absolute -top-0.5 -left-0.5">
+                      <Circle
+                        aria-hidden="true"
+                        className={`size-2.5 fill-current stroke-card stroke-2 ${connected ? "text-green-600" : "text-muted-foreground"}`}
+                      />
+                    </span>
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{number.name || "Unnamed number"}</p>
+                    <p className="text-muted-foreground truncate text-sm">
+                      {formatPhoneNumber(number.display_phone_number || number.phone_number) || "Number unavailable"}
+                    </p>
+                    {isMaster ? (
+                      <div className="mt-1 flex items-baseline gap-1 text-sm md:hidden">
+                        <span className="text-muted-foreground">Assigned to</span>
+                        <AssignedUsersSummary phoneNumber={number} />
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
-              </div>
-              {isMaster ? (
-                <div className="hidden w-48 shrink-0 self-stretch md:flex md:flex-col md:justify-center">
-                  <span className="text-muted-foreground mb-0.5 block text-sm">Assigned to</span>
-                  <AssignedUsersSummary phoneNumber={number} />
+                  {isMaster ? (
+                    <div className="ml-auto hidden w-48 shrink-0 self-stretch text-right md:flex md:flex-col md:justify-center">
+                      <span className="text-muted-foreground mb-0.5 block text-sm">Assigned to</span>
+                      <AssignedUsersSummary phoneNumber={number} />
+                    </div>
+                  ) : null}
                 </div>
-              ) : null}
-              <PhoneNumberViewButton
-                id={number.id}
-                name={number.name || "This number"}
-                status={number.status}
-                addedAt={number.added_at}
-                isMaster={isMaster}
-              />
-            </div>
+              }
+            />
           );
         })
       )}

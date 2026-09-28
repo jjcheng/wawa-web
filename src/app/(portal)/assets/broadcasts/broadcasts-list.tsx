@@ -2,17 +2,15 @@
 
 import { useMemo, useState } from "react";
 import { Filter } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { LocalDateTime } from "@/components/local-date-time";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BroadcastCancelButton } from "./broadcast-cancel-button";
-import { BroadcastDeleteButton } from "./broadcast-delete-button";
 import { BroadcastNameFilter } from "./broadcast-name-filter";
 import { BroadcastStatusFilter } from "./broadcast-status-filter";
-import { BroadcastViewButton } from "./broadcast-view-button";
 import type { Broadcast } from "@/lib/api/types";
 
 function displayStatus(status: string) {
@@ -79,28 +77,24 @@ export function BroadcastsList({ rows, status }: { rows: Broadcast[]; status: st
         filteredRows.map((broadcast) => {
           const recipientCount = broadcast.recipient_count ?? broadcast.customer_ids?.length ?? 0;
           return (
-            <div
-              key={broadcast.id}
-              className="hover:bg-accent/60 flex min-w-0 flex-wrap items-center gap-3 px-4 py-3 transition-colors sm:flex-nowrap"
-            >
-              <div className="min-w-0 flex-1 sm:w-1/3 sm:flex-none">
-                <p className="break-words font-medium">{broadcast.name || "Unnamed broadcast"}</p>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  <LocalDateTime value={broadcast.send_date} />
-                </p>
-              </div>
-              <div className="ml-auto flex shrink-0 items-center gap-2">
-                <div className="flex flex-col items-start gap-1">
-                  <span className="text-sm">{recipientCount} recipients</span>
-                  <Badge variant="secondary">{displayStatus(broadcast.status)}</Badge>
+            <div key={broadcast.id} className="hover:bg-accent/60 transition-colors">
+              <Link
+                href={`/assets/broadcasts/recipients?broadcast_id=${broadcast.id}`}
+                className="flex min-w-0 cursor-pointer flex-wrap items-center gap-3 px-4 py-3 sm:flex-nowrap"
+              >
+                <div className="min-w-0 flex-1 sm:w-1/3 sm:flex-none">
+                  <p className="break-words font-medium">{broadcast.name || "Unnamed broadcast"}</p>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    <LocalDateTime value={broadcast.send_date} />
+                  </p>
                 </div>
-                <BroadcastViewButton broadcast={broadcast} />
-                {broadcast.status === "PENDING" ? (
-                  <BroadcastCancelButton broadcastId={broadcast.id} />
-                ) : broadcast.status === "CANCELLED" ? (
-                  <BroadcastDeleteButton broadcastId={broadcast.id} />
-                ) : null}
-              </div>
+                <div className="ml-auto flex shrink-0 items-center gap-2">
+                  <div className="flex flex-col items-start gap-1">
+                    <span className="text-sm">{recipientCount} recipients</span>
+                    <Badge variant="secondary">{displayStatus(broadcast.status)}</Badge>
+                  </div>
+                </div>
+              </Link>
             </div>
           );
         })

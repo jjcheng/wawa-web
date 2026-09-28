@@ -49,9 +49,7 @@ export default async function UsersPage() {
           <UsersTable
             users={users}
             currentUserId={currentUser.id}
-            currentUserIsMaster={currentUser.type === "MASTER"}
           />
-          <p className="mt-3 text-sm text-muted-foreground">MASTER users cannot be edited.</p>
         </>
       )}
     </>

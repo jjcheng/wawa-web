@@ -226,7 +226,6 @@ export function UserForm({
   }
 
   const pending = createMutation.isPending || updateMutation.isPending;
-  const isMasterUser = isEditing && user?.type === "MASTER";
   const availablePhoneNumberIds = phoneNumbers.map((phoneNumber) => Number(phoneNumber.id));
   const allPhoneNumbersAssigned =
     availablePhoneNumberIds.length > 0 &&
@@ -244,7 +243,7 @@ export function UserForm({
       <TabsList aria-label="User sections">
         <TabsTrigger value="profile">Profile</TabsTrigger>
         <TabsTrigger value="assigned-phone-numbers" disabled={!isEditing}>
-          Assign phone numbers
+          Phone numbers
         </TabsTrigger>
       </TabsList>
       <TabsContent value="profile">
@@ -380,7 +379,7 @@ export function UserForm({
         ) : null}
         {submitError ? <p className="text-destructive text-sm">{submitError}</p> : null}
         <div className="flex justify-start">
-          <Button type="button" onClick={submit} disabled={pending || isMasterUser}>
+          <Button type="button" onClick={submit} disabled={pending}>
             {pending ? <Loader2 className="size-4 animate-spin" /> : null}
             {isEditing ? "Save" : "Create"}
           </Button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ import { RemovePhoneNumberButton } from "@/components/whatsapp/remove-phone-numb
 import { LocalDateTime } from "@/components/local-date-time";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
+import type { PhoneNumber } from "@/lib/api/types";
+import { AssignedUsersSummary } from "./assigned-users-button";
 
 const DETAIL_FIELDS = [
   ["Phone number", "display_phone_number", "phone_number"],
@@ -45,15 +47,17 @@ export function PhoneNumberViewButton({
   name,
   addedAt,
   isMaster = false,
+  trigger,
 }: {
   id: number;
   name: string;
   status?: string;
   addedAt?: string;
   isMaster?: boolean;
+  trigger?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const [details, setDetails] = useState<Record<string, unknown> | null>(null);
+  const [details, setDetails] = useState<(PhoneNumber & Record<string, unknown>) | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,7 +73,7 @@ export function PhoneNumberViewButton({
     setError(null);
     setDetails(null);
     try {
-      setDetails(await apiFetch<Record<string, unknown>>(`v1/wa/phone-numbers/${id}`));
+      setDetails(await apiFetch<PhoneNumber & Record<string, unknown>>(`v1/wa/phone-numbers/${id}`));
     } catch (requestError) {
       setError(toApiError(requestError).message);
     } finally {
@@ -77,10 +81,31 @@ export function PhoneNumberViewButton({
     }
   }
 
+  function handleOpen() {
+    void loadDetails();
+  }
+
   return (
     <>
-      <Button size="sm" variant="outline" onClick={loadDetails}>View</Button>
       <Dialog open={open} onOpenChange={setOpen}>
+        {trigger ? (
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={handleOpen}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                handleOpen();
+              }
+            }}
+            className="contents"
+          >
+            {trigger}
+          </div>
+        ) : (
+          <Button size="sm" variant="outline" onClick={handleOpen}>View</Button>
+        )}
         <DialogContent className="max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle>{name}</DialogTitle>
@@ -121,6 +146,15 @@ export function PhoneNumberViewButton({
                       "—"
                     );
                   })()}
+                </dd>
+                <dt className="text-muted-foreground">Assigned to</dt>
+                <dd className="min-w-0 break-words">
+                  <div>
+                    {details.assigned_users?.length
+                      ? details.assigned_users.map((user) => user.name || user.phone_number || "Unnamed user").join(", ")
+                      : "No users assigned"}
+                  </div>
+                  {isMaster ? <AssignedUsersSummary phoneNumber={details} variant="manage" /> : null}
                 </dd>
               </dl>
             ) : null}

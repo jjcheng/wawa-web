@@ -41,7 +41,7 @@ export function BroadcastCancelButton({ broadcastId }: { broadcastId: number }) 
 
   return (
     <>
-      <Button size="sm" variant="outline" onClick={() => setConfirmOpen(true)} disabled={loading}>
+      <Button size="sm" variant="destructive" onClick={() => setConfirmOpen(true)} disabled={loading}>
         Cancel
       </Button>
       <Dialog

@@ -196,7 +196,7 @@ export function TemplatesTable({
             </PopoverTrigger>
             <PopoverContent className="w-72 space-y-3 p-3" align="end">
               <div className="space-y-1.5">
-                <p className="text-muted-foreground text-xs font-medium">Category</p>
+                <p className="text-muted-foreground text-sm font-medium">Category</p>
                 <Select value={category} onValueChange={setCategory}>
                   <SelectTrigger className="h-8 w-full" aria-label="Filter by category">
                     <SelectValue placeholder="All categories" />
@@ -211,7 +211,7 @@ export function TemplatesTable({
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <p className="text-muted-foreground text-xs font-medium">Status</p>
+                <p className="text-muted-foreground text-sm font-medium">Status</p>
                 <Select value={status} onValueChange={setStatus}>
                   <SelectTrigger className="h-8 w-full" aria-label="Filter by status">
                     <SelectValue placeholder="All statuses" />
@@ -241,33 +241,33 @@ export function TemplatesTable({
           </div>
         ) : (
           templates.map((template) => (
-            <div
+            <ViewTemplateButton
               key={template.id}
-              className="hover:bg-accent/60 flex min-w-0 items-center gap-3 px-4 py-3 transition-colors"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="break-all font-medium">{template.name || "Unnamed template"}</p>
-                <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                  <span>{template.category || "No category"}</span>
-                  <span>{template.language || "No language"}</span>
+              template={template}
+              isMaster={isMaster}
+              trigger={
+                <div className="hover:bg-accent/60 flex min-w-0 cursor-pointer items-center gap-3 px-4 py-3 transition-colors">
+                  <div className="min-w-0 flex-1">
+                    <p className="break-all font-medium">{template.name || "Unnamed template"}</p>
+                    <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                      <span>{template.category || "No category"}</span>
+                      <span>{template.language || "No language"}</span>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1 text-right">
+                    {template.status ? <Badge variant="secondary">{template.status}</Badge> : null}
+                    <span className="text-muted-foreground text-sm">
+                      Quality {template.quality_score?.score || "—"}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex shrink-0 flex-col items-end gap-1 text-right">
-                {template.status ? <Badge variant="secondary">{template.status}</Badge> : null}
-                <span className="text-muted-foreground text-xs">
-                  Quality {template.quality_score?.score || "—"}
-                </span>
-              </div>
-              <ViewTemplateButton
-                template={template}
-                isMaster={isMaster}
-                onDeleted={() =>
-                  setTemplates((currentTemplates) =>
-                    currentTemplates.filter((currentTemplate) => currentTemplate.id !== template.id),
-                  )
-                }
-              />
-            </div>
+              }
+              onDeleted={() =>
+                setTemplates((currentTemplates) =>
+                  currentTemplates.filter((currentTemplate) => currentTemplate.id !== template.id),
+                )
+              }
+            />
           ))
         )}
       </div>

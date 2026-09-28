@@ -28,7 +28,7 @@ export function BroadcastDeleteButton({ broadcastId }: { broadcastId: number }) 
       await apiFetch(`v1/broadcasts/${broadcastId}`, { method: "DELETE" });
       setConfirmOpen(false);
       toast.success("Broadcast deleted.");
-      router.refresh();
+      router.replace("/assets/broadcasts");
     } catch (error) {
       toast.error(toApiError(error).message);
     } finally {

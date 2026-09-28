@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 
 import { BroadcastRecipientsList } from "./broadcast-recipients-list";
 import { BackBar } from "@/components/back-bar";
+import { BroadcastCancelButton } from "../broadcast-cancel-button";
+import { BroadcastDeleteButton } from "../broadcast-delete-button";
 import { PageHeader } from "@/components/page-header";
+import { LocalDateTime } from "@/components/local-date-time";
 import { ApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type {
@@ -33,11 +36,12 @@ export default async function BroadcastRecipientsPage({
   const status = recipientStatusOptions.includes(requestedStatus) ? requestedStatus : "ALL";
   let recipients: BroadcastRecipient[] = [];
   let recipientStats: Record<string, number> = {};
+  let broadcast: Broadcast | null = null;
   let broadcastName = "Broadcast recipients";
 
   if (broadcastId) {
     try {
-      const broadcast = await serverFetch<Broadcast>(`/v1/broadcasts/${broadcastId}`);
+      broadcast = await serverFetch<Broadcast>(`/v1/broadcasts/${broadcastId}`);
       broadcastName = broadcast.name || broadcastName;
     } catch (error) {
       if (!(error instanceof ApiError)) throw error;
@@ -80,7 +84,25 @@ export default async function BroadcastRecipientsPage({
   return (
     <>
       <BackBar href="/assets/broadcasts" />
-      <PageHeader title={`Broadcast: ${broadcastName}`} description="Recipients and their status in this broadcast." />
+      <PageHeader
+        title={`Broadcast: ${broadcastName}`}
+        description={(
+          <>
+            Send date: {broadcast?.send_date ? <LocalDateTime value={broadcast.send_date} /> : "—"}
+            {" · "}
+            Status: {broadcast?.status
+              ? broadcast.status.charAt(0) + broadcast.status.slice(1).toLowerCase()
+              : "—"}
+          </>
+        )}
+        action={
+          broadcast?.status === "PENDING" ? (
+            <BroadcastCancelButton broadcastId={broadcast.id} />
+          ) : broadcast?.status === "CANCELLED" ? (
+            <BroadcastDeleteButton broadcastId={broadcast.id} />
+          ) : null
+        }
+      />
       {statItems.length > 0 ? (
         <div className="mb-4 flex flex-wrap gap-2">
           {statItems.map(([key, value]) => (

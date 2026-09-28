@@ -15,7 +15,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import type { PhoneNumber, User } from "@/lib/api/types";
@@ -28,12 +27,13 @@ function userDisplayName(user: User) {
 
 export function AssignedUsersSummary({
   phoneNumber,
+  variant = "text",
 }: {
   phoneNumber: PhoneNumber;
+  variant?: "text" | "manage";
 }) {
   const router = useRouter();
   const users = phoneNumber.assigned_users ?? [];
-  const [popoverOpen, setPopoverOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -94,7 +94,6 @@ export function AssignedUsersSummary({
     setSelectedUserIds(new Set(users.map((user) => Number(user.id))));
     setUsersLoading(true);
     setUsersError(null);
-    setPopoverOpen(false);
     setDialogOpen(true);
   }
 
@@ -109,45 +108,20 @@ export function AssignedUsersSummary({
 
   return (
     <>
-      <div className="min-w-0 max-w-[190px] text-sm">
-        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="block min-w-0 max-w-full truncate cursor-pointer text-left text-primary underline underline-offset-2 decoration-from-font"
-              aria-label={users.length === 0
-                ? "Manage users: none assigned"
-                : `Assigned to: ${users.map(userDisplayName).join(", ")}`}
-            >
-              {assignedNames}
-            </button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-72 p-3">
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Assigned to users</p>
-                {users.length > 0 ? (
-                  <ul className="list-disc space-y-1 pl-5 text-sm">
-                    {users.map((user) => (
-                      <li key={user.id}>{userDisplayName(user)}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-muted-foreground text-sm">No users assigned.</p>
-                )}
-              </div>
-              <Button type="button" size="sm" className="w-full" onClick={openManageDialog}>
-                Manage
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
-      </div>
+      {variant === "text" ? (
+        <div className="min-w-0 max-w-[190px] text-sm md:w-full md:max-w-full">
+          <span className="block min-w-0 max-w-full truncate md:text-right">{assignedNames}</span>
+        </div>
+      ) : (
+        <Button type="button" size="sm" variant="outline" className="mt-2" onClick={openManageDialog}>
+          Manage
+        </Button>
+      )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Assign {phoneNumber.name || "Unnamed number"} to users</DialogTitle>
+            <DialogTitle>Assign WhatsApp number to users</DialogTitle>
             <DialogDescription>
               {formatPhoneNumber(phoneNumber.display_phone_number || phoneNumber.phone_number) || "—"}
             </DialogDescription>

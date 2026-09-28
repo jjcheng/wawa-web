@@ -1,6 +1,7 @@
 "use client";
 
 import { Filter, Info, Search, X } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -23,11 +24,9 @@ import {
 export function UsersTable({
   users,
   currentUserId,
-  currentUserIsMaster,
 }: {
   users: User[];
   currentUserId: number;
-  currentUserIsMaster: boolean;
 }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -117,16 +116,22 @@ export function UsersTable({
         </div>
       ) : (
         filteredUsers.map((user) => {
-          const isMaster = user.type === "MASTER";
           const isCurrentUser = user.id === currentUserId;
-          const shouldDisableEdit = isMaster || (isCurrentUser && currentUserIsMaster);
+          const shouldDisableEdit = user.type === "MASTER" && !isCurrentUser;
           const displayName = user.name || "Unnamed user";
           const initials = displayName.slice(0, 2).toUpperCase();
 
           return (
-            <div
+            <Link
               key={user.id}
-              className="hover:bg-accent/60 flex min-w-0 flex-wrap items-center gap-3 px-4 py-3 transition-colors sm:flex-nowrap"
+              href={shouldDisableEdit ? "#" : `/assets/users/${user.id}`}
+              onClick={(event) => {
+                if (shouldDisableEdit) event.preventDefault();
+              }}
+              className={
+                "hover:bg-accent/60 flex min-w-0 flex-wrap items-center gap-3 px-4 py-3 transition-colors sm:flex-nowrap " +
+                (shouldDisableEdit ? "cursor-not-allowed opacity-80" : "cursor-pointer")
+              }
             >
               <span className="bg-accent flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-medium">
                 {initials}
@@ -139,7 +144,14 @@ export function UsersTable({
                       Myself
                     </span>
                   ) : null}
-                  {user.type ? <Badge variant="outline">{user.type}</Badge> : null}
+                  {user.type ? (
+                    <Badge
+                      variant="outline"
+                      className={user.type === "MASTER" ? "border-blue-600 bg-transparent text-blue-700 dark:border-blue-400 dark:text-blue-300" : undefined}
+                    >
+                      {user.type}
+                    </Badge>
+                  ) : null}
                 </div>
                 <div className="text-muted-foreground mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                   <span className="inline-flex min-w-0 items-center gap-1">
@@ -161,23 +173,11 @@ export function UsersTable({
                   <AssignedPhoneNumbersButton user={user} />
                 </div>
               </div>
-              <div className="hidden min-w-0 shrink-0 sm:flex sm:w-48 sm:flex-col sm:items-start sm:justify-center">
+              <div className="ml-auto hidden min-w-0 shrink-0 text-right sm:flex sm:w-48 sm:flex-col sm:items-end sm:justify-center">
                 <span className="text-muted-foreground shrink-0 text-sm sm:mb-0.5">Managing</span>
                 <AssignedPhoneNumbersButton user={user} />
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="ml-auto shrink-0"
-                disabled={shouldDisableEdit}
-                onClick={() => {
-                  if (!shouldDisableEdit) router.push(`/assets/users/${user.id}`);
-                }}
-              >
-                Edit
-              </Button>
-            </div>
+            </Link>
           );
         })
       )}

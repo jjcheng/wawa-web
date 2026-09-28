@@ -2,7 +2,7 @@
 
 import { Eye } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -28,11 +28,13 @@ export function ViewTemplateButton({
   onDeleted,
   iconOnly = false,
   isMaster = false,
+  trigger,
 }: {
   template: Template;
   onDeleted?: () => void;
   iconOnly?: boolean;
   isMaster?: boolean;
+  trigger?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const components = template.components ?? [];
@@ -48,17 +50,21 @@ export function ViewTemplateButton({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant={iconOnly ? "ghost" : "outline"}
-          size={iconOnly ? "icon-sm" : "sm"}
-          className={iconOnly ? undefined : SMALL_BUTTON_HEIGHT}
-          aria-label={iconOnly ? "Preview template" : undefined}
-          title={iconOnly ? "Preview template" : undefined}
-        >
-          {iconOnly ? <Eye /> : "View"}
-        </Button>
-      </DialogTrigger>
+      {trigger ? (
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+      ) : (
+        <DialogTrigger asChild>
+          <Button
+            variant={iconOnly ? "ghost" : "outline"}
+            size={iconOnly ? "icon-sm" : "sm"}
+            className={iconOnly ? undefined : SMALL_BUTTON_HEIGHT}
+            aria-label={iconOnly ? "Preview template" : undefined}
+            title={iconOnly ? "Preview template" : undefined}
+          >
+            {iconOnly ? <Eye /> : "View"}
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-h-[80vh] min-w-0 overflow-hidden sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-lg">{template.name || "Template"}</DialogTitle>

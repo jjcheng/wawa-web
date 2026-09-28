@@ -60,9 +60,11 @@ export function CustomerTagsSelect({
     setNewTag("");
   }
 
+  const normalizedNewTag = newTag.trim();
   const matchingTags = [...new Set([...availableTags, ...selectedTags])].filter((tag) =>
-    tag.toLowerCase().startsWith(newTag.trim().toLowerCase()),
+    tag.toLowerCase().startsWith(normalizedNewTag.toLowerCase()),
   );
+  const hasExactMatch = matchingTags.some((tag) => tag.toLowerCase() === normalizedNewTag.toLowerCase());
 
   return (
     <div className="space-y-2">
@@ -109,21 +111,34 @@ export function CustomerTagsSelect({
             />
           </div>
         </PopoverTrigger>
-        <PopoverContent onOpenAutoFocus={(event) => event.preventDefault()}>
+        <PopoverContent
+          className="max-h-[40vh] overflow-y-auto overscroll-contain"
+          onOpenAutoFocus={(event) => event.preventDefault()}
+        >
+          {normalizedNewTag && !hasExactMatch ? (
+            <button
+              type="button"
+              className="hover:bg-accent flex w-full items-center rounded-md px-2 py-2 text-left text-sm"
+              onClick={addTag}
+            >
+              Create &quot;{normalizedNewTag}&quot;
+            </button>
+          ) : null}
           {matchingTags.map((tag) => (
             <label
               key={tag}
-              className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm"
+              className="hover:bg-accent flex min-h-10 cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-sm"
             >
               <input
                 type="checkbox"
+                className="size-4 shrink-0"
                 checked={selectedTags.includes(tag)}
                 onChange={(event) => toggleTag(tag, event.target.checked)}
               />
               {tag}
             </label>
           ))}
-          {matchingTags.length === 0 ? (
+          {matchingTags.length === 0 && !normalizedNewTag ? (
             <p className="text-muted-foreground px-2 py-1 text-sm">No existing tags found.</p>
           ) : null}
         </PopoverContent>

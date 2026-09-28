@@ -211,7 +211,19 @@ function NotificationRow({
 
   return (
     <>
-      <article className="hover:bg-accent/40 flex min-w-0 items-center gap-4 px-4 py-4 transition-colors">
+      <article
+        role="button"
+        tabIndex={0}
+        aria-label={`Open task: ${notification.title}`}
+        onClick={() => handleOpenChange(true)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            handleOpenChange(true);
+          }
+        }}
+        className="hover:bg-accent/40 flex min-w-0 cursor-pointer items-center gap-4 px-4 py-4 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
         <div className="relative shrink-0">
           <div className={`flex size-12 items-center justify-center rounded-xl ${TYPE_STYLES[notification.type]}`}>
             <Icon aria-hidden="true" className="size-6" strokeWidth={2} />
@@ -221,13 +233,10 @@ function NotificationRow({
           <h2 className={`break-words text-base font-medium ${isRead ? "text-muted-foreground" : "text-foreground"}`}>
             {notification.title}
           </h2>
-          <p className="text-muted-foreground mt-1 text-xs">
+          <p className="text-muted-foreground mt-1 text-sm">
             {notification.added_at ? <RelativeTime value={notification.added_at} /> : "—"}
           </p>
         </div>
-        <Button className="shrink-0" size="sm" variant="outline" onClick={() => handleOpenChange(true)}>
-          View
-        </Button>
       </article>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>

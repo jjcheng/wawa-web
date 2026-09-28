@@ -101,10 +101,10 @@ export function CatalogsView({
                   <span className="truncate">
                     {catalog.vertical ? catalog.vertical.replaceAll("_", " ") : "No category"}
                   </span>
-                  <span className="shrink-0 text-xs sm:hidden">{productCountLabel(catalog)}</span>
+                  <span className="shrink-0 text-sm sm:hidden">{productCountLabel(catalog)}</span>
                 </p>
                 {catalog.website_url ? (
-                  <p className="text-muted-foreground flex min-w-0 items-center gap-1.5 truncate text-xs sm:hidden">
+                  <p className="text-muted-foreground flex min-w-0 items-center gap-1.5 truncate text-sm sm:hidden">
                     <Circle
                       aria-hidden="true"
                       className={`size-2 shrink-0 fill-current ${catalog.website_status === "ACTIVE" ? "text-green-600" : "text-muted-foreground"}`}
@@ -116,7 +116,7 @@ export function CatalogsView({
               <div className="hidden shrink-0 flex-col items-end gap-1 text-right sm:flex">
                 {catalog.website_url ? (
                   <span
-                    className="text-muted-foreground flex max-w-[28rem] min-w-0 items-center gap-1.5 text-xs"
+                    className="text-muted-foreground flex max-w-[28rem] min-w-0 items-center gap-1.5 text-sm"
                     title={catalog.website_url}
                   >
                     <Circle
@@ -126,7 +126,7 @@ export function CatalogsView({
                     <span className="truncate">{catalog.website_url}</span>
                   </span>
                 ) : null}
-                <p className="text-muted-foreground text-xs">
+                <p className="text-muted-foreground text-sm">
                   {productCountLabel(catalog)}
                 </p>
               </div>

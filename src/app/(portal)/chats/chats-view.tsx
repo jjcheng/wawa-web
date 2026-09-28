@@ -298,31 +298,38 @@ export function ChatsView({
                   ) : null}
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{customer.display_name}</p>
+                  <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                    <p className="min-w-0 truncate font-medium">{customer.display_name}</p>
+                    {customer.tags?.length ? (
+                      <div className="flex flex-wrap gap-1">
+                        {customer.tags.map((customerTag) => (
+                          <Badge
+                            key={customerTag}
+                            className="h-5 px-1.5 text-[10px] leading-none bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
+                          >
+                            {customerTag}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
                   {customer.latest_message_content ? (
                     <p className="text-muted-foreground line-clamp-2 text-sm">
                       {customer.latest_message_content}
                     </p>
                   ) : (
-                    <p className="text-muted-foreground text-xs">No message</p>
+                    <p className="text-muted-foreground text-sm">No message</p>
                   )}
+                  {customer.latest_message_content && customer.last_message_timestamp ? (
+                    <p className="text-muted-foreground mt-1 text-xs sm:hidden">
+                      <RelativeTime value={customer.last_message_timestamp} />
+                    </p>
+                  ) : null}
                 </div>
                 <div className="ml-auto flex max-w-[45%] shrink-0 flex-col items-end gap-1 text-right">
-                  {customer.tags?.length ? (
-                    <div className="flex flex-wrap justify-end gap-1">
-                      {customer.tags.slice(0, 2).map((customerTag) => (
-                        <Badge
-                          key={customerTag}
-                          className="h-5 px-1.5 text-[10px] leading-none bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
-                        >
-                          {customerTag}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : null}
                   {customer.status === "INACTIVE" ? <Badge variant="secondary">Inactive</Badge> : null}
                   {customer.latest_message_content && customer.last_message_timestamp ? (
-                    <p className="text-muted-foreground text-xs">
+                    <p className="text-muted-foreground hidden text-xs sm:block">
                       <RelativeTime value={customer.last_message_timestamp} />
                     </p>
                   ) : null}

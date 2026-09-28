@@ -34,8 +34,6 @@ export default async function EditUserPage({
     loadError = toApiError(error).message;
   }
 
-  if (user && (user.type === "MASTER" || user.id === currentUser.id)) redirect("/assets/users");
-
   return (
     <>
       <BackBar href="/assets/users" />
