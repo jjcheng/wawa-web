@@ -289,7 +289,7 @@ export function AddCustomerMenu({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button size="sm">
+          <Button size="sm" className="rounded-full">
             Add customer
             <ChevronDown className="size-4" />
           </Button>

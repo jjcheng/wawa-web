@@ -36,7 +36,7 @@ export function TableHeaderMultiSelect({
         <button
           type="button"
           aria-label={`Filter by ${label.toLowerCase()}`}
-          className="border-input focus-visible:border-ring focus-visible:ring-ring/50 text-foreground dark:bg-input/30 dark:hover:bg-input/50 flex h-8 w-fit items-center justify-between gap-1.5 rounded-lg border-none bg-transparent px-0 pl-1 text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-3"
+          className="border-input focus-visible:border-ring focus-visible:ring-ring/50 text-foreground dark:bg-input/30 dark:hover:bg-input/50 flex h-8 w-fit items-center justify-between gap-1.5 rounded-full border-none bg-transparent px-0 pl-1 text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-3"
         >
           {selectedValues.size > 0 ? `${label} (${selectedValues.size})` : label}
           <ChevronDown className="text-muted-foreground size-4" />

@@ -24,12 +24,12 @@ export function BackBar({
     <>
       <div className="fixed top-14 right-0 left-0 z-20 flex h-12 items-center justify-between px-4 pt-1 pb-1 sm:px-5 lg:left-56 xl:left-64">
         {history ? (
-          <Button type="button" variant="ghost" className="bg-muted" onClick={() => router.back()}>
+          <Button type="button" variant="ghost" className="bg-muted dark:bg-muted/90" onClick={() => router.back()}>
             <ArrowLeft className="size-4" />
             {children}
           </Button>
         ) : (
-          <Button asChild variant="ghost" className="bg-muted">
+          <Button asChild variant="ghost" className="bg-muted dark:bg-muted/90">
             <Link href={href}>
               <ArrowLeft className="size-4" />
               {children}

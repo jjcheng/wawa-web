@@ -312,7 +312,7 @@ export function WebsiteDetailsForm({
           </TabsList>
         </Tabs>
         {activeTab === "pages" ? (
-          <Button asChild size="sm" className="ml-auto">
+          <Button asChild size="sm" className="ml-auto rounded-full">
             <Link href={`/websites/${encodeURIComponent(websiteId)}/pages/new?return_to=${encodeURIComponent(`/websites/${websiteId}?tab=pages`)}`}>Add page</Link>
           </Button>
         ) : null}

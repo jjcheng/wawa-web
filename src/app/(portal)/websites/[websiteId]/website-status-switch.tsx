@@ -38,7 +38,7 @@ export function WebsiteStatusSwitch({
       onClick={toggleStatus}
       disabled={isPending}
       className={cn(
-        "group inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+        "group inline-flex h-9 cursor-pointer items-center gap-2 rounded-full px-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         online
           ? "text-emerald-700 dark:text-emerald-300"
           : "text-muted-foreground",

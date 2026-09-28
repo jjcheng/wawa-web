@@ -34,7 +34,7 @@ export default async function UsersPage() {
         title="Users"
         description="Manage users in your account."
         action={
-          <Button asChild size="sm">
+          <Button asChild size="sm" className="rounded-full">
             <Link href="/assets/users/new">Add user</Link>
           </Button>
         }

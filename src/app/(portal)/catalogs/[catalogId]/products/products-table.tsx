@@ -114,6 +114,7 @@ export function ProductsTable({
               type="button"
               variant={selectedSetId === set.id ? "default" : "outline"}
               size="sm"
+              className="rounded-lg"
               onClick={() => void selectSet(set.id)}
               disabled={loading}
             >

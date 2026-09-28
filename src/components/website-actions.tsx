@@ -51,7 +51,7 @@ export function WebsiteActions({
         <Button
           variant={compact ? "outline" : "default"}
           size={compact || small ? "sm" : "default"}
-          className={compact ? undefined : small ? "mb-0" : `${MEDIUM_BUTTON_HEIGHT} mb-0`}
+          className={compact ? undefined : small ? "mb-0 rounded-full" : `${MEDIUM_BUTTON_HEIGHT} mb-0`}
           disabled={syncing}
         >
           {syncing ? "Syncing..." : compact ? "View" : "View website"}
