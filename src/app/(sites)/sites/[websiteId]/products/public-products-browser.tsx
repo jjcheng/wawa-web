@@ -68,9 +68,9 @@ export function PublicProductsBrowser({
                 type="button"
                 role="tab"
                 aria-selected={selectedSetId === set.id}
-                size="lg"
+                size="sm"
                 variant={selectedSetId === set.id ? "default" : "outline"}
-                className="rounded-lg px-3 text-xs font-semibold uppercase tracking-wide"
+                className="rounded-full px-3 text-xs font-semibold uppercase tracking-wide"
                 disabled={loading}
                 onClick={() => void selectSet(set.id)}
               >
