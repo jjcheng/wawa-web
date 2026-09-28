@@ -72,7 +72,7 @@ export function AssignedUsersSummary({
       apiFetch("v1/admin/assign-users", {
         method: "POST",
         body: {
-          phone_number_id: Number(phoneNumber.id),
+          phone_number_id: phoneNumber.id,
           user_ids: [...selectedUserIds],
         },
       }),

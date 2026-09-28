@@ -58,9 +58,9 @@ export default async function AssignUsersPage({
       <Brand />
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle>Assign users </CardTitle>
+          <CardTitle>Assign users To {phoneNumber?.name || phoneNumber?.display_phone_number || "this phone number"}</CardTitle>
           <CardDescription>
-            To {phoneNumber?.name || phoneNumber?.display_phone_number || "this phone number"}.
+            All assigned users can access this number.
           </CardDescription>
           <CardAction>
             <Button asChild size="sm">
