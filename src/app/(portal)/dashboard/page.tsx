@@ -146,7 +146,7 @@ export default async function DashboardPage() {
                   className="flex items-center justify-between gap-3 text-sm"
                 >
                   <div>
-                    <p className="font-medium">{number.name || "Unnamed number"}</p>
+                    <p className="font-medium leading-5">{number.name || "Unnamed number"}</p>
                     <p className="text-muted-foreground">
                       {formatPhoneNumber(number.phone_number)}
                     </p>

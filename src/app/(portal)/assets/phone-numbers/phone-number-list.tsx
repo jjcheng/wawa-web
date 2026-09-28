@@ -121,7 +121,7 @@ export function PhoneNumberList({
                     </span>
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{number.name || "Unnamed number"}</p>
+                    <p className="truncate font-medium leading-5 mb-1">{number.name || "Unnamed number"}</p>
                     <p className="text-muted-foreground truncate text-sm">
                       {formatPhoneNumber(number.display_phone_number || number.phone_number) || "Number unavailable"}
                     </p>

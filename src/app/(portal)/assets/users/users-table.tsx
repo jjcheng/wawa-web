@@ -138,7 +138,7 @@ export function UsersTable({
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  <p className="truncate font-medium">{displayName}</p>
+                  <p className="truncate font-medium leading-5 mb-1">{displayName}</p>
                   {isCurrentUser ? (
                     <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
                       Myself
@@ -153,7 +153,7 @@ export function UsersTable({
                     </Badge>
                   ) : null}
                 </div>
-                <div className="text-muted-foreground mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                <div className="text-muted-foreground flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                   <span className="inline-flex min-w-0 items-center gap-1">
                     <span className="shrink-0">{formatPhoneNumber(user.phone_number, user.country_code) || "—"}</span>
                     <Tooltip>

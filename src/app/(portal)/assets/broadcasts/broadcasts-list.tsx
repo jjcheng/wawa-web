@@ -83,7 +83,7 @@ export function BroadcastsList({ rows, status }: { rows: Broadcast[]; status: st
                 className="flex min-w-0 cursor-pointer flex-wrap items-center gap-3 px-4 py-3 sm:flex-nowrap"
               >
                 <div className="min-w-0 flex-1 sm:w-1/3 sm:flex-none">
-                  <p className="break-words font-medium">{broadcast.name || "Unnamed broadcast"}</p>
+                  <p className="break-words font-medium leading-5">{broadcast.name || "Unnamed broadcast"}</p>
                   <p className="text-muted-foreground mt-1 text-sm">
                     <LocalDateTime value={broadcast.send_date} />
                   </p>

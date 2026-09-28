@@ -299,7 +299,7 @@ export function ChatsView({
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                    <p className="min-w-0 truncate font-medium">{customer.display_name}</p>
+                    <p className="min-w-0 truncate font-medium leading-5">{customer.display_name}</p>
                     {customer.tags?.length ? (
                       <div className="flex flex-wrap gap-1">
                         {customer.tags.map((customerTag) => (

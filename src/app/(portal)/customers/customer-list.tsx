@@ -334,7 +334,7 @@ export function CustomerList({
                       />
                     </TableCell>
                     <TableCell className="max-w-56 font-medium">
-                      <p className="truncate">{row.display_name}</p>
+                      <p className="truncate leading-5">{row.display_name}</p>
                       {row.latest_message_content ? (
                         <p className="text-muted-foreground line-clamp-2 text-xs font-normal">
                           {row.latest_message_content}

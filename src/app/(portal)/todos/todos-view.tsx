@@ -230,7 +230,7 @@ function NotificationRow({
           </div>
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className={`break-words text-base font-medium ${isRead ? "text-muted-foreground" : "text-foreground"}`}>
+          <h2 className={`break-words text-base leading-5 font-medium ${isRead ? "text-muted-foreground" : "text-foreground"}`}>
             {notification.title}
           </h2>
           <p className="text-muted-foreground mt-1 text-sm">

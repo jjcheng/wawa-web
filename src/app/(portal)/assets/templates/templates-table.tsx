@@ -248,7 +248,7 @@ export function TemplatesTable({
               trigger={
                 <div className="hover:bg-accent/60 flex min-w-0 cursor-pointer items-center gap-3 px-4 py-3 transition-colors">
                   <div className="min-w-0 flex-1">
-                    <p className="break-all font-medium">{template.name || "Unnamed template"}</p>
+                    <p className="break-all font-medium leading-5">{template.name || "Unnamed template"}</p>
                     <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                       <span>{template.category || "No category"}</span>
                       <span>{template.language || "No language"}</span>
