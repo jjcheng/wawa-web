@@ -27,9 +27,11 @@ function userDisplayName(user: User) {
 
 export function AssignedUsersSummary({
   phoneNumber,
+  phoneNumberId = phoneNumber.id,
   variant = "text",
 }: {
   phoneNumber: PhoneNumber;
+  phoneNumberId?: number;
   variant?: "text" | "manage";
 }) {
   const router = useRouter();
@@ -72,7 +74,7 @@ export function AssignedUsersSummary({
       apiFetch("v1/admin/assign-users", {
         method: "POST",
         body: {
-          phone_number_id: phoneNumber.id,
+          phone_number_id: phoneNumberId,
           user_ids: [...selectedUserIds],
         },
       }),

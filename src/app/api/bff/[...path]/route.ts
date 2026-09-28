@@ -19,6 +19,7 @@ async function proxyRequest(request: NextRequest, context: Context) {
   const { path } = await context.params;
   const upstreamPath = path.join("/");
   const method = request.method.toUpperCase();
+  const forwardedHost = request.headers.get("host")?.split(",")[0]?.trim() || request.nextUrl.host;
 
   if (method !== "GET" && method !== "HEAD" && request.headers.get("origin") !== request.nextUrl.origin) {
     return envelope(403, "cross-origin request denied");
@@ -65,7 +66,7 @@ async function proxyRequest(request: NextRequest, context: Context) {
       rawBody,
       contentType,
       query,
-      forwardedHost: request.nextUrl.host,
+      forwardedHost,
       forwardedOrigin: request.nextUrl.origin,
       sessionToken: accessToken,
     });

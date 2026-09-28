@@ -232,6 +232,8 @@
   font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.25rem;
+  padding-right: 40px;
+  overflow-wrap: anywhere;
 }
 
 .cn-toast[data-styled="true"] [data-description] {

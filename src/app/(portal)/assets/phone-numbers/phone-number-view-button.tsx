@@ -154,7 +154,7 @@ export function PhoneNumberViewButton({
                       ? details.assigned_users.map((user) => user.name || user.phone_number || "Unnamed user").join(", ")
                       : "No users assigned"}
                   </div>
-                  {isMaster ? <AssignedUsersSummary phoneNumber={details} variant="manage" /> : null}
+                  {isMaster ? <AssignedUsersSummary phoneNumber={details} phoneNumberId={id} variant="manage" /> : null}
                 </dd>
               </dl>
             ) : null}
