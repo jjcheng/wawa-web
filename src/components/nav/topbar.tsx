@@ -209,13 +209,13 @@ export function Topbar({ user }: { user: User }) {
       <div className="ml-auto flex items-center gap-1">
         <Popover>
           <PopoverTrigger asChild>
-            <Button type="button" variant="ghost" size="icon" aria-label="Ask AI" title="Ask AI">
+            <Button type="button" variant="ghost" size="icon" aria-label="AI Worker" title="AI Worker">
               <Sparkles className="size-4" />
             </Button>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-48 space-y-1.5 p-3">
-            <p className="text-sm font-medium">Ask AI</p>
-            <p className="text-muted-foreground text-xs">Work in progress</p>
+            <p className="text-sm font-medium">AI Worker</p>
+            <p className="text-muted-foreground text-sm">Under development</p>
           </PopoverContent>
         </Popover>
         <ThemeToggle />

@@ -314,7 +314,7 @@ export function ChatsView({
                     ) : null}
                   </div>
                   {customer.latest_message_content ? (
-                    <p className="text-muted-foreground line-clamp-2 text-sm">
+                    <p className="text-muted-foreground line-clamp-2 text-sm mt-1">
                       {customer.latest_message_content}
                     </p>
                   ) : (
