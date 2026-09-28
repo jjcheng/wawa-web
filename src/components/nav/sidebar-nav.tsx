@@ -102,7 +102,7 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
             className={cn(
               "group relative flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-base font-medium transition-colors duration-200",
               active
-                ? "bg-transparent font-semibold text-blue-600 dark:text-blue-400"
+                ? "bg-transparent font-medium text-blue-600 dark:text-blue-400"
                 : "text-foreground hover:text-blue-600 dark:hover:text-blue-400",
             )}
           >
@@ -133,7 +133,7 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
           className={cn(
             "group flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-base font-medium transition-colors duration-200",
             assetsActive
-              ? "bg-transparent font-semibold text-blue-600 dark:text-blue-400"
+              ? "bg-transparent font-medium text-blue-600 dark:text-blue-400"
               : "text-foreground hover:text-blue-600 dark:hover:text-blue-400",
           )}
         >
@@ -175,7 +175,7 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
                     className={cn(
                       "group relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[0.9375rem] font-medium transition-colors duration-200",
                       active
-                        ? "bg-transparent font-semibold text-blue-600 dark:text-blue-400"
+                        ? "bg-transparent font-medium text-blue-600 dark:text-blue-400"
                         : "text-foreground hover:text-blue-600 dark:hover:text-blue-400",
                     )}
                   >

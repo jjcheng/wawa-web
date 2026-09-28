@@ -113,7 +113,10 @@ export default async function CustomerChatPage({
 					customer.tags?.length ? (
 						<div className="flex flex-wrap gap-1.5">
 							{customer.tags.map((tag) => (
-								<Badge key={tag} variant="secondary">
+								<Badge
+									key={tag}
+									className="h-5 px-1.5 text-[10px] leading-none bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
+								>
 									{tag}
 								</Badge>
 							))}
