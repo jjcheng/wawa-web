@@ -12,11 +12,10 @@
     "binding": "ASSETS"
   },
   "vars": {
-    "NEXT_PUBLIC_META_APP_ID": "1389467986648945",
-    "NEXT_PUBLIC_META_EMBEDDED_SIGNUP_CONFIG_ID": "1871010847640153",
+    "API_BASE_URL": "https://api.wawago.app",
     "COMMERCE_WEBSITE_DOMAIN": "wawago.app",
-    "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyDS_T64TL2WaIeapcdk3mNhwiN9YslgLhs",
-    "PORTAL_HOST": "portal.wawago.app"
+    "PORTAL_HOST": "portal.wawago.app",
+    "SESSION_COOKIE_NAME": "wawago_session"
   },
   "observability": {
     "logs": {
