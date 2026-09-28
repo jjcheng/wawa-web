@@ -139,7 +139,10 @@ export default async function CustomerChatPage({
 						customerMetaUserId={customer.bsuid}
 						recipient={customer.bsuid || `${customer.country_code}${customer.phone_number}`}
 					/>
-					<ChatMessageComposer customerId={customerId} />
+					<ChatMessageComposer
+						customerId={customerId}
+						messageId={[...messages].reverse().find((message) => !message.sending && message.type !== "reaction")?.id}
+					/>
 				</ChatComposeProvider>
 			)}
 		</>

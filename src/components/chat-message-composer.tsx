@@ -38,6 +38,7 @@ import { apiFetch } from "@/lib/api/client";
 
 type ChatMessageComposerProps = {
   customerId: string;
+  messageId?: number;
   lastCustomerMessageTimestamp?: number | null;
 };
 
@@ -64,6 +65,7 @@ type AttachedLocation = {
 const IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024;
 const VIDEO_MAX_SIZE_BYTES = 16 * 1024 * 1024;
 const DOCUMENT_MAX_SIZE_BYTES = 100 * 1024 * 1024;
+const TYPING_INDICATOR_INTERVAL_MS = 30_000;
 
 const VIDEO_ALLOWED_TYPES = new Set(["video/mp4", "video/3gpp"]);
 const IMAGE_ALLOWED_TYPES = new Set(["image/jpeg", "image/png"]);
@@ -291,6 +293,7 @@ function parseVCard(value: string): WhatsAppContact | null {
 
 export function ChatMessageComposer({
   customerId,
+  messageId,
 }: ChatMessageComposerProps) {
   const { replyTarget, setReplyTarget } = useChatCompose();
   const { resolvedTheme } = useTheme();
@@ -312,6 +315,9 @@ export function ChatMessageComposer({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const vCardInputRef = useRef<HTMLInputElement>(null);
   const previewUrlRef = useRef<string | null>(null);
+  const typingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const typingActiveRef = useRef(false);
+  const lastTypingAtRef = useRef(0);
   const hasSendableContent = Boolean(message.trim() || attachedContact || attachedLocation || attachment);
   const canSend = hasSendableContent && !sending && !compressing;
   const disabledReason = compressing
@@ -322,12 +328,43 @@ export function ChatMessageComposer({
 
   useEffect(() => () => {
     if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
   }, []);
+
+  function stopTypingIndicator() {
+    if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+    typingIntervalRef.current = null;
+    typingActiveRef.current = false;
+    lastTypingAtRef.current = 0;
+  }
+
+  function sendTypingIndicator() {
+    if (messageId === undefined) return;
+    void apiFetch("v1/wa/messages/start-typing", {
+      method: "POST",
+      query: { message_id: String(messageId) },
+    }).catch(() => {});
+  }
+
+  function startTypingIndicator(now: number) {
+    stopTypingIndicator();
+    typingActiveRef.current = true;
+    lastTypingAtRef.current = now;
+    sendTypingIndicator();
+    typingIntervalRef.current = setInterval(() => {
+      if (Date.now() - lastTypingAtRef.current >= TYPING_INDICATOR_INTERVAL_MS) {
+        stopTypingIndicator();
+        return;
+      }
+      sendTypingIndicator();
+    }, TYPING_INDICATOR_INTERVAL_MS);
+  }
 
   async function sendMessage() {
     const body = message.trim();
     if (!hasSendableContent || sending) return;
 
+    stopTypingIndicator();
     setSending(true);
     try {
       let payload: Record<string, unknown>;
@@ -425,8 +462,21 @@ export function ChatMessageComposer({
   }
 
   function handleMessageChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
-    setMessage(event.target.value);
+    const nextMessage = event.target.value;
+    setMessage(nextMessage);
     setIsMultiline(event.target.scrollHeight > 40);
+
+    if (!nextMessage.trim()) {
+      stopTypingIndicator();
+      return;
+    }
+
+    const now = Date.now();
+    if (!typingActiveRef.current || now - lastTypingAtRef.current >= TYPING_INDICATOR_INTERVAL_MS) {
+      startTypingIndicator(now);
+    } else {
+      lastTypingAtRef.current = now;
+    }
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {

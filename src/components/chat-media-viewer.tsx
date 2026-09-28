@@ -144,7 +144,7 @@ export function ChatMediaViewer({
             <img
               src={resolvedMediaUrl}
               alt="Image attachment"
-              className="block h-auto max-h-[288px] w-full max-w-full"
+              className="block h-auto max-h-[288px] w-full max-w-[400px]"
               loading="lazy"
             />
           )}
