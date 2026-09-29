@@ -1,6 +1,6 @@
 "use client";
 
-import { Circle, Filter, Phone, Search, X } from "lucide-react";
+import { Bot, Circle, Filter, Phone, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
@@ -138,6 +138,17 @@ export function PhoneNumberList({
                       <AssignedUsersSummary phoneNumber={number} />
                     </div>
                   ) : null}
+                  <span
+                    role="img"
+                    aria-label={number.agent_running ? "Business agent running" : "Business agent stopped"}
+                    title={number.agent_running ? "Business agent running" : "Business agent stopped"}
+                    className={`ml-auto shrink-0 ${number.agent_running ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}
+                  >
+                    <Bot
+                      aria-hidden="true"
+                      className={`size-5 ${number.agent_running ? "animate-pulse" : ""}`}
+                    />
+                  </span>
                 </div>
               }
             />

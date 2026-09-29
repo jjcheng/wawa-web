@@ -13,7 +13,7 @@ export function PageHeader({
     <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
       <div>
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
           {titleAction}
         </div>
         {description ? (

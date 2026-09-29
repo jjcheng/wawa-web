@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, LogOut, RefreshCw, Settings, Sparkles } from "lucide-react";
+import { Bot, ExternalLink, LogOut, RefreshCw, Settings, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "@/lib/toast";
@@ -21,9 +21,10 @@ import {
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import { logoutAction } from "@/lib/auth/actions";
+import { publishBusinessAgentStatus, subscribeBusinessAgentStatus } from "@/lib/business-agent-status";
 import { formatPhoneNumber } from "@/lib/format";
 import { metaBusinessManagerUrl } from "@/lib/meta-links";
-import type { BusinessAccount, User } from "@/lib/api/types";
+import type { BusinessAccount, PhoneNumber, User } from "@/lib/api/types";
 
 function initials(user: User) {
   const source =
@@ -76,7 +77,35 @@ function hasBusinessContextIds(context: BusinessContext) {
 export function Topbar({ user }: { user: User }) {
   const [businessContext, setBusinessContext] = useState<BusinessContext | null>(null);
   const [refreshingBusinessContext, setRefreshingBusinessContext] = useState(false);
+  const [assignedPhoneNumbers, setAssignedPhoneNumbers] = useState<PhoneNumber[]>(
+    () => user.assigned_phone_numbers ?? [],
+  );
+  const [pendingAgentIds, setPendingAgentIds] = useState<Set<number>>(() => new Set());
   const logoutFormRef = useRef<HTMLFormElement>(null);
+  const agentRunning = assignedPhoneNumbers.some((phoneNumber) => phoneNumber.agent_running === true);
+  const onboardedPhoneNumbers = assignedPhoneNumbers.filter((phoneNumber) => phoneNumber.meta_agent_id?.trim());
+
+  useEffect(() => {
+    setAssignedPhoneNumbers(user.assigned_phone_numbers ?? []);
+  }, [user.assigned_phone_numbers]);
+
+  useEffect(
+    () =>
+      subscribeBusinessAgentStatus((change) => {
+        setAssignedPhoneNumbers((current) =>
+          current.map((item) =>
+            Number(item.id) === change.phoneNumberId
+              ? {
+                  ...item,
+                  ...(change.agent_running !== undefined ? { agent_running: change.agent_running } : {}),
+                  ...(change.meta_agent_id !== undefined ? { meta_agent_id: change.meta_agent_id } : {}),
+                }
+              : item,
+          ),
+        );
+      }),
+    [],
+  );
 
   useEffect(() => {
     const cached = readBusinessContext(user);
@@ -133,6 +162,32 @@ export function Topbar({ user }: { user: User }) {
       toast.error(toApiError(error).message);
     } finally {
       setRefreshingBusinessContext(false);
+    }
+  }
+
+  async function toggleBusinessAgent(phoneNumber: PhoneNumber) {
+    const phoneNumberId = Number(phoneNumber.id);
+    if (!Number.isInteger(phoneNumberId) || pendingAgentIds.has(phoneNumberId)) return;
+
+    const on = phoneNumber.agent_running !== true;
+    setPendingAgentIds((current) => new Set(current).add(phoneNumberId));
+    try {
+      await apiFetch("v1/wa/business-agent/status", {
+        method: "PATCH",
+        query: {
+          phone_number_id: String(phoneNumberId),
+          on: String(on),
+        },
+      });
+      publishBusinessAgentStatus({ phoneNumberId, agent_running: on });
+    } catch (error) {
+      toast.error(toApiError(error).message);
+    } finally {
+      setPendingAgentIds((current) => {
+        const next = new Set(current);
+        next.delete(phoneNumberId);
+        return next;
+      });
     }
   }
 
@@ -209,15 +264,69 @@ export function Topbar({ user }: { user: User }) {
       <div className="ml-auto flex items-center gap-1">
         <Popover>
           <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className={agentRunning ? "text-green-600 dark:text-green-400 [&_svg]:animate-pulse" : undefined}
+              aria-label="Business agent"
+              title={agentRunning ? "Business agent is running" : "Business agent"}
+            >
+              <Bot className="size-5" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-80 space-y-2 p-3">
+            <p className="text-sm font-medium">Running business agents</p>
+            {onboardedPhoneNumbers.length === 0 ? (
+              <p className="text-muted-foreground text-sm">No phone numbers have onboarded a business agent.</p>
+            ) : (
+              <ul className="divide-y">
+                {onboardedPhoneNumbers.map((phoneNumber) => {
+                  const phoneNumberId = Number(phoneNumber.id);
+                  const isRunning = phoneNumber.agent_running === true;
+                  const label = phoneNumber.name ||
+                    formatPhoneNumber(phoneNumber.display_phone_number || phoneNumber.phone_number) ||
+                    "Unnamed phone number";
+
+                  return (
+                    <li key={phoneNumber.id} className="flex items-center gap-3 py-2">
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium">{label}</span>
+                        {phoneNumber.name && (phoneNumber.display_phone_number || phoneNumber.phone_number) ? (
+                          <span className="text-muted-foreground block truncate text-xs">
+                            {formatPhoneNumber(phoneNumber.display_phone_number || phoneNumber.phone_number)}
+                          </span>
+                        ) : null}
+                      </span>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={isRunning}
+                        aria-label={`${isRunning ? "Turn off" : "Turn on"} business agent for ${label}`}
+                        disabled={pendingAgentIds.has(phoneNumberId)}
+                        onClick={() => void toggleBusinessAgent(phoneNumber)}
+                        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60 ${isRunning ? "bg-green-600" : "bg-muted-foreground/40"}`}
+                      >
+                        <span className={`size-4 rounded-full bg-white shadow transition-transform ${isRunning ? "translate-x-4" : "translate-x-0.5"}`} />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </PopoverContent>
+        </Popover>
+        {/* <Popover>
+          <PopoverTrigger asChild>
             <Button type="button" variant="ghost" size="icon" aria-label="AI Worker" title="AI Worker">
-              <Sparkles className="size-4" />
+              <Sparkles className="size-5" />
             </Button>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-48 space-y-1.5 p-3">
             <p className="text-sm font-medium">AI Worker</p>
             <p className="text-muted-foreground text-sm">Under development</p>
           </PopoverContent>
-        </Popover>
+        </Popover> */}
         <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

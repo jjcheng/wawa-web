@@ -163,6 +163,8 @@ export type PhoneNumber = DtoBase & {
   meta_business_portfolio_id?: string;
   waba_id?: string;
   meta_phone_number_id?: string;
+  meta_agent_id?: string;
+  agent_running?: boolean;
   phone_number?: string;
   name?: string;
   user_name?: string;

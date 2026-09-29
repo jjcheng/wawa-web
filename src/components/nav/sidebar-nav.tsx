@@ -2,6 +2,7 @@
 
 import {
   ChevronDown,
+  Bot,
   FileText,
   Gauge,
   LayoutGrid,
@@ -44,7 +45,8 @@ const MAIN_ITEMS = [
 ];
 
 const ASSET_ITEMS = [
-  { href: "/assets/phone-numbers", label: "Phone Numbers", icon: Phone },
+  { href: "/assets/phone-numbers", label: "Phone numbers", icon: Phone },
+  { href: "/assets/business-agent", label: "Business agent", icon: Bot },
   { href: "/assets/users", label: "Users", icon: UsersRound, masterOnly: true },
   { href: "/assets/templates", label: "Templates", icon: FileText },
   { href: "/assets/broadcasts", label: "Broadcasts", icon: Megaphone },

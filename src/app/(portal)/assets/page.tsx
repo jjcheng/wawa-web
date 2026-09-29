@@ -1,4 +1,4 @@
-import { FileText, Gauge, Megaphone, Phone, UsersRound } from "lucide-react";
+import { Bot, FileText, Gauge, Megaphone, Phone, UsersRound } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -15,6 +15,12 @@ const ASSET_LINKS = [
     label: "Phone numbers",
     description: "Connected WhatsApp Business numbers.",
     icon: Phone,
+  },
+  {
+    href: "/assets/business-agent",
+    label: "Business agent",
+    description: "Automate your conversations using Meta AI.",
+    icon: Bot,
   },
   {
     href: "/assets/users",

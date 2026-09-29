@@ -43,9 +43,9 @@ export function WebsiteSetupForm({
       <div className="space-y-2">
         <Label htmlFor="website-subdomain">Subdomain</Label>
         <SubdomainInput domain={domain} />
-        <p className="text-muted-foreground text-sm">
+        {/* <p className="text-muted-foreground text-sm">
           You can configure your own custom domain later.
-        </p>
+        </p> */}
       </div>
 
       <div className="space-y-2">
