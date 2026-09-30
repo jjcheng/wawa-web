@@ -18,7 +18,7 @@ export default async function CreateWebsitePage({
   params: Promise<{ catalogId: string }>;
 }) {
   const user = await requireUser();
-  if (user.type !== "MASTER") redirect("/dashboard");
+  if (user.type !== "MASTER") redirect("/chats");
 
   const { catalogId } = await params;
   let catalogName = "";

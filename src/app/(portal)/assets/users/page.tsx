@@ -15,7 +15,7 @@ export const metadata: Metadata = { title: "Users" };
 
 export default async function UsersPage() {
   const currentUser = await requireUser();
-  if (currentUser.type !== "MASTER") redirect("/dashboard");
+  if (currentUser.type !== "MASTER") redirect("/chats");
 
   let users: User[] = [];
   let loadError: string | null = null;

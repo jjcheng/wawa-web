@@ -22,6 +22,7 @@ import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import { logoutAction } from "@/lib/auth/actions";
 import { publishBusinessAgentStatus, subscribeBusinessAgentStatus } from "@/lib/business-agent-status";
+import { BUSINESS_AGENT_ENABLED } from "@/lib/feature-flags";
 import { formatPhoneNumber } from "@/lib/format";
 import { metaBusinessManagerUrl } from "@/lib/meta-links";
 import type { BusinessAccount, PhoneNumber, User } from "@/lib/api/types";
@@ -262,6 +263,7 @@ export function Topbar({ user }: { user: User }) {
       ) : null}
 
       <div className="ml-auto flex items-center gap-1">
+        {BUSINESS_AGENT_ENABLED ? (
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -316,6 +318,7 @@ export function Topbar({ user }: { user: User }) {
             )}
           </PopoverContent>
         </Popover>
+        ) : null}
         {/* <Popover>
           <PopoverTrigger asChild>
             <Button type="button" variant="ghost" size="icon" aria-label="AI Worker" title="AI Worker">

@@ -21,7 +21,7 @@ export default async function CatalogsPage({
   searchParams: Promise<{ notice?: string }>;
 }) {
   const user = await requireUser();
-  if (user.type !== "MASTER") redirect("/dashboard");
+  if (user.type !== "MASTER") redirect("/chats");
 
   const { notice } = await searchParams;
 

@@ -26,7 +26,6 @@ function portalLlmsText(origin: string) {
     "Portal pages require authentication and should not be indexed. Do not infer or expose private customer, chat, broadcast, usage, template, phone-number, catalog, or website-management data from authenticated portal routes.",
     "",
     "## Main authenticated areas",
-    `- Dashboard: ${new URL("/dashboard", origin).toString()}`,
     `- Inbox notifications: ${new URL("/inbox", origin).toString()}`,
     `- Customers and chats: ${new URL("/customers", origin).toString()}`,
     `- Broadcasts: ${new URL("/assets/broadcasts", origin).toString()}`,

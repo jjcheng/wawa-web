@@ -20,7 +20,7 @@ export default async function EditUserPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const currentUser = await requireUser();
-  if (currentUser.type !== "MASTER") redirect("/dashboard");
+  if (currentUser.type !== "MASTER") redirect("/chats");
 
   const { userId } = await params;
   const { tab } = await searchParams;

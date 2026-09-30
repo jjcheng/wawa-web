@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { PhoneNumber } from "@/lib/api/types";
+import { BUSINESS_AGENT_ENABLED } from "@/lib/feature-flags";
 import { formatPhoneNumber } from "@/lib/format";
 import { AssignedUsersSummary } from "./assigned-users-button";
 import { PhoneNumberStatusFilter } from "./phone-number-status-filter";
@@ -138,17 +139,19 @@ export function PhoneNumberList({
                       <AssignedUsersSummary phoneNumber={number} />
                     </div>
                   ) : null}
-                  <span
-                    role="img"
-                    aria-label={number.agent_running ? "Business agent running" : "Business agent stopped"}
-                    title={number.agent_running ? "Business agent running" : "Business agent stopped"}
-                    className={`ml-auto shrink-0 ${number.agent_running ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}
-                  >
-                    <Bot
-                      aria-hidden="true"
-                      className={`size-5 ${number.agent_running ? "animate-pulse" : ""}`}
-                    />
-                  </span>
+                  {BUSINESS_AGENT_ENABLED ? (
+                    <span
+                      role="img"
+                      aria-label={number.agent_running ? "Business agent running" : "Business agent stopped"}
+                      title={number.agent_running ? "Business agent running" : "Business agent stopped"}
+                      className={`ml-auto shrink-0 ${number.agent_running ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}
+                    >
+                      <Bot
+                        aria-hidden="true"
+                        className={`size-5 ${number.agent_running ? "animate-pulse" : ""}`}
+                      />
+                    </span>
+                  ) : null}
                 </div>
               }
             />

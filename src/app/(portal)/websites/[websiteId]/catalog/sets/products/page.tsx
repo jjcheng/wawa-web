@@ -25,7 +25,7 @@ export default async function WebsiteCatalogProductsPage({
   searchParams: Promise<{ limit?: string }>;
 }) {
   const user = await requireUser();
-  if (user.type !== "MASTER") redirect("/dashboard");
+  if (user.type !== "MASTER") redirect("/chats");
 
   const { websiteId } = await params;
   const { limit: requestedLimit } = await searchParams;

@@ -34,7 +34,7 @@ type PhoneNumberListResponse = {
 
 export default async function UsagePage({ searchParams }: PageProps<"/assets/usage">) {
   const user = await requireUser();
-  if (user.type !== "MASTER") redirect("/dashboard");
+  if (user.type !== "MASTER") redirect("/chats");
 
   const params = await searchParams;
   const view = resolveAnalyticsView(typeof params.view === "string" ? params.view : undefined);

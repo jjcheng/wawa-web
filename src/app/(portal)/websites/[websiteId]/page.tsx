@@ -20,7 +20,7 @@ export default async function WebsitePage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const user = await requireUser();
-  if (user.type !== "MASTER") redirect("/dashboard");
+  if (user.type !== "MASTER") redirect("/chats");
 
   const { websiteId } = await params;
   const { tab } = await searchParams;

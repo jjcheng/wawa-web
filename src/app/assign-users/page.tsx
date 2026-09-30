@@ -20,7 +20,7 @@ export default async function AssignUsersPage({
   searchParams: Promise<{ phone_number_id?: string }>;
 }) {
   const currentUser = await requireUser();
-  if (currentUser.type !== "MASTER") redirect("/dashboard");
+  if (currentUser.type !== "MASTER") redirect("/chats");
 
   const { phone_number_id: phoneNumberId } = await searchParams;
   if (!phoneNumberId || !/^\d+$/.test(phoneNumberId)) redirect("/assets/phone-numbers");

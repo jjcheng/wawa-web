@@ -18,7 +18,7 @@ export default async function EditWebsitePage({
   searchParams: Promise<{ return_to?: string }>;
 }) {
   const user = await requireUser();
-  if (user.type !== "MASTER") redirect("/dashboard");
+  if (user.type !== "MASTER") redirect("/chats");
 
   const { websiteId, pageId } = await params;
   const { return_to: returnTo } = await searchParams;

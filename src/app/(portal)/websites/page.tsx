@@ -26,7 +26,7 @@ export const metadata: Metadata = { title: "Websites" };
 
 export default async function WebsitesPage() {
   const user = await requireUser();
-  if (user.type !== "MASTER") redirect("/dashboard");
+  if (user.type !== "MASTER") redirect("/chats");
 
   let websites: Website[] = [];
   let loadError: string | null = null;

@@ -38,13 +38,6 @@ export type User = DtoBase & {
   assigned_phone_numbers?: PhoneNumber[];
 };
 
-export type Dashboard = {
-  active_phone_numbers?: number;
-  active_customers?: number;
-  messages_sent_last_30_days?: number;
-  messages_delivered_last_30_days?: number;
-};
-
 export type BusinessPortfolio = DtoBase & {
   meta_business_portfolio_id?: string;
   name?: string;

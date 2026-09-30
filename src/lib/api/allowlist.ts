@@ -22,7 +22,6 @@ const ALLOWED: { method: string; pattern: RegExp }[] = [
   { method: "GET", pattern: /^v1\/admin\/assigned-users$/ },
   { method: "POST", pattern: /^v1\/admin\/assign-users$/ },
   { method: "POST", pattern: /^v1\/admin\/assign-phone-numbers$/ },
-  { method: "GET", pattern: /^v1\/account\/users\/me\/dashboard$/ },
   { method: "POST", pattern: /^v1\/account\/users$/ },
   { method: "PATCH", pattern: /^v1\/account\/users\/\d+$/ },
   { method: "PATCH", pattern: /^v1\/account\/users\/me\/profile$/ },

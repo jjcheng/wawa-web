@@ -70,7 +70,7 @@ function AssignPhoneNumberButton({
     onSuccess: () => {
       setOpen(false);
       toast.success(`${phoneNumberLabel} assigned.`);
-      router.push("/dashboard");
+      router.push("/chats");
       router.refresh();
     },
     onError: (error) => toast.error(toApiError(error).message),

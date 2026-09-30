@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth/session";
+import { BUSINESS_AGENT_ENABLED } from "@/lib/feature-flags";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Assets" };
@@ -21,6 +22,7 @@ const ASSET_LINKS = [
     label: "Business agent",
     description: "Automate your conversations using Meta AI.",
     icon: Bot,
+    hidden: !BUSINESS_AGENT_ENABLED,
   },
   {
     href: "/assets/users",
@@ -52,7 +54,7 @@ const ASSET_LINKS = [
 
 export default async function AssetsPage() {
   const user = await requireUser();
-  const links = ASSET_LINKS.filter((link) => !link.masterOnly || user.type === "MASTER");
+  const links = ASSET_LINKS.filter((link) => !link.hidden && (!link.masterOnly || user.type === "MASTER"));
 
   return (
     <>

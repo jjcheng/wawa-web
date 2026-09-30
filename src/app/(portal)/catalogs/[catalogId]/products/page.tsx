@@ -29,7 +29,7 @@ export default async function CatalogProductsPage({
   searchParams: Promise<{ limit?: string }>;
 }) {
   const user = await requireUser();
-  if (user.type !== "MASTER") redirect("/dashboard");
+  if (user.type !== "MASTER") redirect("/chats");
 
   const { catalogId } = await params;
   const { limit: requestedLimit } = await searchParams;

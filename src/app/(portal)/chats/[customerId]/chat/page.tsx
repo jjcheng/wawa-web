@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ApiError, toApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type { Customer, PhoneNumberListResponse } from "@/lib/api/types";
+import { BUSINESS_AGENT_ENABLED } from "@/lib/feature-flags";
 
 type MessageListResponse = {
 	items: ChatMessage[];
@@ -75,7 +76,7 @@ export default async function CustomerChatPage({
 		loadError = error instanceof ApiError || error instanceof Error ? error.message : "Could not load messages.";
 	}
 
-	const showAgentSwitch = Boolean(customer.sending_phone_number?.meta_agent_id?.trim());
+	const showAgentSwitch = BUSINESS_AGENT_ENABLED && Boolean(customer.sending_phone_number?.meta_agent_id?.trim());
 
 	return (
 		<>

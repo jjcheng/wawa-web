@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Assign phone numbers" };
 
 export default async function AssignPhoneNumbersPage() {
   const user = await requireUser();
-  if (user.type !== "MASTER") redirect("/dashboard");
+  if (user.type !== "MASTER") redirect("/chats");
 
   let phoneNumbers: PhoneNumber[] = [];
   let users: User[] = [];

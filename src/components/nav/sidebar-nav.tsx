@@ -35,6 +35,7 @@ import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import type { User } from "@/lib/api/types";
 import { toast } from "@/lib/toast";
+import { BUSINESS_AGENT_ENABLED } from "@/lib/feature-flags";
 import { useUnreadNotificationsCount } from "@/lib/unread-notifications-store";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +47,7 @@ const MAIN_ITEMS = [
 
 const ASSET_ITEMS = [
   { href: "/assets/phone-numbers", label: "Phone numbers", icon: Phone },
-  { href: "/assets/business-agent", label: "Business agent", icon: Bot },
+  ...(BUSINESS_AGENT_ENABLED ? [{ href: "/assets/business-agent", label: "Business agent", icon: Bot }] : []),
   { href: "/assets/users", label: "Users", icon: UsersRound, masterOnly: true },
   { href: "/assets/templates", label: "Templates", icon: FileText },
   { href: "/assets/broadcasts", label: "Broadcasts", icon: Megaphone },

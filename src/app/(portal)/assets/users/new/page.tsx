@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Create user" };
 
 export default async function NewUserPage() {
   const currentUser = await requireUser();
-  if (currentUser.type !== "MASTER") redirect("/dashboard");
+  if (currentUser.type !== "MASTER") redirect("/chats");
 
   return (
     <>

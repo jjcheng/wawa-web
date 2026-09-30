@@ -19,6 +19,7 @@ import { LocalDateTime } from "@/components/local-date-time";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import type { PhoneNumber } from "@/lib/api/types";
+import { BUSINESS_AGENT_ENABLED } from "@/lib/feature-flags";
 import { toast } from "@/lib/toast";
 import { AssignedUsersSummary } from "./assigned-users-button";
 
@@ -174,6 +175,8 @@ export function PhoneNumberViewButton({
                     );
                   })()}
                 </dd>
+                {BUSINESS_AGENT_ENABLED ? (
+                <>
                 <dt className="text-muted-foreground">Business agent</dt>
                 <dd className="min-w-0 break-words">
                   <div className="flex items-center gap-1">
@@ -205,6 +208,8 @@ export function PhoneNumberViewButton({
                     </Popover>
                   </div>
                 </dd>
+                </>
+                ) : null}
                 <dt className="text-muted-foreground">Assigned to</dt>
                 <dd className="min-w-0 break-words">
                   <div>

@@ -23,6 +23,7 @@ type ChatMessage = {
   text: string;
   created_at: number;
   failed?: boolean;
+  note?: string;
 };
 
 type StoredConversation = {
@@ -152,12 +153,17 @@ export function TestChat({ phoneNumberId, displayNumber }: { phoneNumberId: numb
         writeConversation(key, { ...current, conversation_id: response.conversation_id });
       }
       const agentResponse = response?.agent_response?.trim();
-      if (agentResponse) {
+      const note = [response?.handoff_reason, response?.no_response_reason]
+        .map((value) => value?.trim())
+        .filter(Boolean)
+        .join(" · ");
+      if (agentResponse || note) {
         appendMessage(key, {
           id: response?.message_id || crypto.randomUUID(),
           role: "agent",
-          text: agentResponse,
+          text: agentResponse || "(No reply)",
           created_at: response?.timestamp ? response.timestamp * 1000 : Date.now(),
+          note: note || undefined,
         });
       }
     } catch (error) {
@@ -223,6 +229,11 @@ export function TestChat({ phoneNumberId, displayNumber }: { phoneNumberId: numb
                       }`}
                     >
                       <p className="break-words whitespace-pre-wrap">{message.text}</p>
+                      {message.note ? (
+                        <p className="mt-1 border-t border-black/10 pt-1 text-xs text-[#667781] italic break-words dark:border-white/10 dark:text-[#8696a0]">
+                          {message.note}
+                        </p>
+                      ) : null}
                       <p className="mt-0.5 text-right text-[0.6875rem] text-[#667781] dark:text-[#8696a0]">
                         {formatTime(message.created_at)}
                       </p>
