@@ -26,6 +26,8 @@ type ChatMessage = {
 };
 
 type StoredConversation = {
+  // Local id used to ignore replies that arrive after the chat was cleared.
+  session_id: string;
   conversation_id: string;
   messages: ChatMessage[];
 };
@@ -58,9 +60,10 @@ function parseConversation(raw: string | null): StoredConversation | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as Partial<StoredConversation>;
-    if (typeof parsed.conversation_id !== "string" || !parsed.conversation_id) return null;
+    if (typeof parsed.session_id !== "string" || !parsed.session_id) return null;
     return {
-      conversation_id: parsed.conversation_id,
+      session_id: parsed.session_id,
+      conversation_id: typeof parsed.conversation_id === "string" ? parsed.conversation_id : "",
       messages: Array.isArray(parsed.messages) ? parsed.messages : [],
     };
   } catch {
@@ -74,10 +77,14 @@ function writeConversation(key: string, conversation: StoredConversation | null)
   window.dispatchEvent(new Event(STORAGE_EVENT));
 }
 
+function newConversation(): StoredConversation {
+  return { session_id: crypto.randomUUID(), conversation_id: "", messages: [] };
+}
+
 function readOrCreateConversation(key: string): StoredConversation {
   const existing = parseConversation(window.localStorage.getItem(key));
   if (existing) return existing;
-  const created = { conversation_id: crypto.randomUUID(), messages: [] };
+  const created = newConversation();
   writeConversation(key, created);
   return created;
 }
@@ -127,7 +134,7 @@ export function TestChat({ phoneNumberId, displayNumber }: { phoneNumberId: numb
   async function send() {
     const text = draft.trim();
     if (!text || sending) return;
-    const { conversation_id } = readOrCreateConversation(key);
+    const { session_id, conversation_id } = readOrCreateConversation(key);
     const userMessage: ChatMessage = { id: crypto.randomUUID(), role: "user", text, created_at: Date.now() };
     appendMessage(key, userMessage);
     setDraft("");
@@ -136,10 +143,14 @@ export function TestChat({ phoneNumberId, displayNumber }: { phoneNumberId: numb
       const response = await apiFetch<TestResponse>("v1/wa/business-agent/test", {
         method: "POST",
         query: { phone_number_id: String(phoneNumberId) },
-        body: { user_message: text, conversation_id },
+        body: conversation_id ? { user_message: text, conversation_id } : { user_message: text },
       });
+      const current = readOrCreateConversation(key);
       // Ignore replies for a conversation that was cleared while waiting.
-      if (readOrCreateConversation(key).conversation_id !== conversation_id) return;
+      if (current.session_id !== session_id) return;
+      if (response?.conversation_id && response.conversation_id !== current.conversation_id) {
+        writeConversation(key, { ...current, conversation_id: response.conversation_id });
+      }
       const agentResponse = response?.agent_response?.trim();
       if (agentResponse) {
         appendMessage(key, {
@@ -158,7 +169,7 @@ export function TestChat({ phoneNumberId, displayNumber }: { phoneNumberId: numb
   }
 
   function clearChat() {
-    writeConversation(key, { conversation_id: crypto.randomUUID(), messages: [] });
+    writeConversation(key, newConversation());
     setConfirmClear(false);
   }
 

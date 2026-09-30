@@ -202,7 +202,8 @@ export type Customer = {
   display_name: string;
   country_code: string;
   phone_number: string;
-  sending_phone_number?: { display_phone_number?: string } | null;
+  sending_phone_number?: Partial<PhoneNumber> | null;
+  agent_running?: boolean;
   meta_user_id?: string;
   wa_id?: string;
   status?: string;

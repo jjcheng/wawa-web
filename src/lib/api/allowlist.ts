@@ -59,6 +59,7 @@ const ALLOWED: { method: string; pattern: RegExp }[] = [
   { method: "GET", pattern: /^v1\/wa\/phone-numbers\/\d+\/local$/ },
   { method: "GET", pattern: /^v1\/wa\/phone-numbers$/ },
   { method: "PATCH", pattern: /^v1\/wa\/business-agent\/status$/ },
+  { method: "POST", pattern: /^v1\/wa\/business-agent\/pass-control$/ },
   { method: "GET", pattern: /^v1\/wa\/business-agent\/eligibility$/ },
   { method: "GET", pattern: /^v1\/wa\/business-agent\/budgets$/ },
   { method: "PUT", pattern: /^v1\/wa\/business-agent\/budgets$/ },

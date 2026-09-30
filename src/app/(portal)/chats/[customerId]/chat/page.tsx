@@ -5,6 +5,7 @@ import { BackBar } from "@/components/back-bar";
 import { Chat } from "@/components/chat";
 import { ChatComposeProvider, type ChatMessage } from "@/components/chat-compose-context";
 import { ChatMessageComposer } from "@/components/chat-message-composer";
+import { CustomerAgentSwitch } from "@/components/customer-agent-switch";
 import { CustomerDetailsButton } from "@/components/customer-details-button";
 import { CustomerInfo } from "@/components/customer-info";
 import { PageHeader } from "@/components/page-header";
@@ -74,12 +75,20 @@ export default async function CustomerChatPage({
 		loadError = error instanceof ApiError || error instanceof Error ? error.message : "Could not load messages.";
 	}
 
+	const showAgentSwitch = Boolean(customer.sending_phone_number?.meta_agent_id?.trim());
+
 	return (
 		<>
 			<BackBar
 				href={backHref}
 				actions={
 					<div className="flex items-center gap-2">
+						{showAgentSwitch ? (
+							<CustomerAgentSwitch
+								customerId={customer.id}
+								initialOn={customer.agent_running === true}
+							/>
+						) : null}
 						<CustomerDetailsButton
 							customer={customer}
 							startInEditMode
