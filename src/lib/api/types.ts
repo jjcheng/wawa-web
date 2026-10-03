@@ -217,6 +217,13 @@ export type CustomerListResponse = {
   additional_data?: Record<string, unknown>;
 };
 
+export type AiConversation = {
+  id: number;
+  added_at: string;
+  last_updated_at: string;
+  title: string;
+};
+
 export type Notification = {
   id: number;
   added_at?: string;

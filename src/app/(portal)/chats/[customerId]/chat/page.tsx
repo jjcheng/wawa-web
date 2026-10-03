@@ -93,6 +93,7 @@ export default async function CustomerChatPage({
 						<CustomerDetailsButton
 							customer={customer}
 							startInEditMode
+							deletedRedirectHref={backHref}
 							trigger={
 								<Button size="icon" variant="ghost" className="rounded-full bg-muted" aria-label="Edit customer" title="Edit customer">
 									<Pencil className="size-4" />

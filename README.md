@@ -26,7 +26,6 @@ npm run dev
 | `NEXT_META_EMBEDDED_SIGNUP_CONFIG_ID` | Meta login configuration ID |
 | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Maps key with Places API enabled for broadcast locations |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key rendered on the login page |
-| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key used to verify tokens server-side |
 
 ### Authentication header
 
@@ -48,8 +47,6 @@ new header, while keeping the older `x-user-access-token` name as a compatibilit
   against `/auth/v1/me`. A stale token is cleared by `/session/end`.
 - **Data fetching** — server components use `serverFetch()`; client components use
   `apiFetch()` through TanStack Query.
-- **Time zone** — all user-visible timestamps render in US Eastern (`America/New_York`)
-  via `src/lib/format.ts`.
 
 ## Scripts
 

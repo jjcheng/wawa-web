@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { AiWorkerPanel } from "@/components/ai-worker/ai-worker-panel";
+import { AiWorkerPanelProvider } from "@/components/ai-worker/ai-worker-panel-context";
 import { BottomTabBar } from "@/components/nav/bottom-tab-bar";
 import { NavigationProgressProvider } from "@/components/nav/navigation-progress";
 import { PortalMain } from "@/components/nav/portal-main";
@@ -25,18 +27,21 @@ export default async function PortalLayout({ children }: LayoutProps<"/">) {
     <NavigationProgressProvider>
       <NotificationsRealtimeProvider user={user} />
       <PhoneNumberMessagesProvider user={user} />
-      <div className="flex min-h-svh">
-        <aside className="glass-surface hidden w-56 shrink-0 shadow-[12px_0_28px_-24px_var(--glass-shadow)] lg:block xl:w-64">
-          <div className="sticky top-0">
-            <SidebarNav user={user} />
+      <AiWorkerPanelProvider>
+        <div className="flex min-h-svh">
+          <aside className="glass-surface hidden w-56 shrink-0 shadow-[12px_0_28px_-24px_var(--glass-shadow)] lg:block xl:w-64">
+            <div className="sticky top-0">
+              <SidebarNav user={user} />
+            </div>
+          </aside>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <Topbar user={user} />
+            <PortalMain>{children}</PortalMain>
           </div>
-        </aside>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <Topbar user={user} />
-          <PortalMain>{children}</PortalMain>
+          <AiWorkerPanel />
         </div>
-      </div>
-      <BottomTabBar />
+        <BottomTabBar />
+      </AiWorkerPanelProvider>
     </NavigationProgressProvider>
   );
 }

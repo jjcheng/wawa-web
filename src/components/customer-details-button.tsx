@@ -2,6 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { Loader2, Plus, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { toast } from "@/lib/toast";
 
@@ -42,15 +43,18 @@ export function CustomerDetailsButton({
   customer,
   onDeleted,
   onUpdated,
+  deletedRedirectHref,
   trigger,
   startInEditMode = false,
 }: {
   customer: Customer;
   onDeleted?: () => void;
   onUpdated?: (customer: Customer) => void;
+  deletedRedirectHref?: string;
   trigger?: ReactNode;
   startInEditMode?: boolean;
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -132,6 +136,7 @@ export function CustomerDetailsButton({
       setOpen(false);
       onDeleted?.();
       toast.success("Customer deleted.");
+      if (deletedRedirectHref) router.replace(deletedRedirectHref);
     },
     onError: (error) => toast.error(toApiError(error).message),
   });

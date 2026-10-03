@@ -5,6 +5,11 @@
 const ALLOWED: { method: string; pattern: RegExp }[] = [
   { method: "POST", pattern: /^v1\/auth\/login$/ },
   { method: "POST", pattern: /^v1\/auth\/logout$/ },
+  { method: "GET", pattern: /^v1\/ai\/conversations$/ },
+  { method: "GET", pattern: /^v1\/ai\/conversations\/\d+\/messages$/ },
+  { method: "POST", pattern: /^v1\/ai\/conversations\/chat$/ },
+  { method: "DELETE", pattern: /^v1\/ai\/conversations\/\d+$/ },
+  { method: "POST", pattern: /^v1\/ai\/worker\/execute$/ },
   { method: "GET", pattern: /^v1\/account\/me$/ },
   { method: "GET", pattern: /^v1\/account\/notifications$/ },
   { method: "GET", pattern: /^v1\/account\/notifications\/unread-count$/ },

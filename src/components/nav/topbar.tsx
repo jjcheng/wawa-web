@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "@/lib/toast";
 
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useAiWorkerPanel } from "@/components/ai-worker/ai-worker-panel-context";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,7 @@ export function Topbar({ user }: { user: User }) {
   );
   const [pendingAgentIds, setPendingAgentIds] = useState<Set<number>>(() => new Set());
   const logoutFormRef = useRef<HTMLFormElement>(null);
+  const aiWorkerPanel = useAiWorkerPanel();
   const agentRunning = assignedPhoneNumbers.some((phoneNumber) => phoneNumber.agent_running === true);
   const onboardedPhoneNumbers = assignedPhoneNumbers.filter((phoneNumber) => phoneNumber.meta_agent_id?.trim());
 
@@ -330,6 +332,17 @@ export function Topbar({ user }: { user: User }) {
             <p className="text-muted-foreground text-sm">Under development</p>
           </PopoverContent>
         </Popover> */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="AI Worker"
+          title="AI Worker"
+          aria-expanded={aiWorkerPanel.open}
+          onClick={aiWorkerPanel.toggle}
+        >
+          <Sparkles className="size-4" />
+        </Button>
         <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
