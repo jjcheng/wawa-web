@@ -1,6 +1,6 @@
 "use client";
 
-import type { FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
 
 import { LocalDateTime } from "@/components/local-date-time";
 import { useHydrated } from "@/components/use-hydrated";
@@ -23,7 +23,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import type { InputError } from "@/lib/api/types";
 import { toast } from "@/lib/toast";
+import { cn } from "@/lib/utils";
 
 export type AiDisplayType =
   | "TEXTBOX"
@@ -37,37 +39,21 @@ export type AiInputFieldType = "TEXT" | "INT" | "FLOAT" | "DATE" | "DATETIME" | 
 export type AiPartInput = {
   name: string;
   description?: string;
+  example?: string | null;
   type?: AiInputFieldType;
   display_type?: AiDisplayType;
   reference_field_name?: string;
 };
 
 export type AiMessagePart = {
-  // Only present on messages stored before display_type replaced it.
-  type?: string;
   titles?: string[] | null;
+  field_names?: string[] | null;
+  color?: string | null;
   content: unknown;
   input?: AiPartInput | null;
 };
 
 type PartKind = "TEXT" | "OBJECT" | "TABLE" | "SINGLE_CHOICE" | "MULTI_CHOICE" | "FIELD";
-
-const LEGACY_DISPLAY_TYPES: Record<string, AiDisplayType> = {
-  SINGLE_CHOICE_TABLE: "SINGLE_CHOICE_TABLE",
-  MULTI_CHOICE_TABLE: "MULTI_CHOICE_TABLE",
-  LIST: "READONLY_TABLE",
-  TEXT_INPUT: "TEXTBOX",
-  INT_INPUT: "TEXTBOX",
-  DECIMAL_INPUT: "TEXTBOX",
-  DATE_INPUT: "TEXTBOX",
-};
-
-const LEGACY_FIELD_TYPES: Record<string, AiInputFieldType> = {
-  TEXT_INPUT: "TEXT",
-  INT_INPUT: "INT",
-  DECIMAL_INPUT: "FLOAT",
-  DATE_INPUT: "DATE",
-};
 
 // Content may arrive as structured JSON or as a JSON-encoded string.
 function parseContent(content: unknown) {
@@ -80,7 +66,23 @@ function parseContent(content: unknown) {
 }
 
 function displayType(part: AiMessagePart) {
-  return part.input?.display_type ?? (part.type ? LEGACY_DISPLAY_TYPES[part.type] : undefined);
+  return part.input?.display_type;
+}
+
+function isDictionary(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function tableTitles(part: AiMessagePart): string[] {
+  if (part.titles?.length) return part.titles;
+  if (part.field_names?.length) return part.field_names;
+  const parsed = parseContent(part.content);
+  const dictionary = Array.isArray(parsed) ? parsed.find(isDictionary) : parsed;
+  return isDictionary(dictionary) ? Object.keys(dictionary) : [];
+}
+
+function tableFields(part: AiMessagePart): string[] {
+  return tableTitles(part).map((title, index) => part.field_names?.[index] ?? title);
 }
 
 function partKind(part: AiMessagePart): PartKind {
@@ -89,14 +91,14 @@ function partKind(part: AiMessagePart): PartKind {
 
   if (display === "SINGLE_CHOICE_TABLE" || display === "MULTI_CHOICE_TABLE" || display === "READONLY_TABLE") {
     // The title text above a table carries the same input as the table itself.
-    if (!Array.isArray(parsed)) return "TEXT";
+    if (!Array.isArray(parsed) && !isDictionary(parsed)) return "TEXT";
     if (display === "SINGLE_CHOICE_TABLE") return "SINGLE_CHOICE";
-    return display === "MULTI_CHOICE_TABLE" ? "MULTI_CHOICE" : "TABLE";
+    if (display === "MULTI_CHOICE_TABLE") return "MULTI_CHOICE";
+    return isDictionary(parsed) ? "OBJECT" : "TABLE";
   }
-  if (part.type === "TEXT") return "TEXT";
   if (display === "TEXTBOX" || display === "TEXTAREA" || part.input) return "FIELD";
-  if (part.type === "OBJECT") return "OBJECT";
-  if (Array.isArray(parsed)) return parsed.every(Array.isArray) ? "TABLE" : "OBJECT";
+  if (isDictionary(parsed)) return "OBJECT";
+  if (Array.isArray(parsed)) return "TABLE";
   return "TEXT";
 }
 
@@ -105,24 +107,28 @@ function isChoiceKind(kind: PartKind) {
 }
 
 function fieldType(part: AiMessagePart): AiInputFieldType {
-  return part.input?.type ?? (part.type ? LEGACY_FIELD_TYPES[part.type] : undefined) ?? "TEXT";
+  return part.input?.type ?? "TEXT";
 }
 
 function inputName(part: AiMessagePart, index: number) {
   return part.input?.name || `part-${index}`;
 }
 
-function toRows(content: unknown): unknown[][] {
-  const parsed = parseContent(content);
-  if (!Array.isArray(parsed)) return [];
-  return parsed.map((row) => (Array.isArray(row) ? row : [row]));
+function toRows(part: AiMessagePart): unknown[][] {
+  const parsed = parseContent(part.content);
+  const rows = Array.isArray(parsed) ? parsed : isDictionary(parsed) ? [parsed] : [];
+  const fields = tableFields(part);
+  return rows.map((row) => {
+    if (isDictionary(row)) return fields.map((field) => row[field]);
+    return Array.isArray(row) ? row : [row];
+  });
 }
 
-function toObjectValues(content: unknown, titles: string[]): unknown[] {
-  const parsed = parseContent(content);
+function toObjectValues(part: AiMessagePart): unknown[] {
+  const parsed = parseContent(part.content);
   if (Array.isArray(parsed)) return parsed;
-  if (parsed && typeof parsed === "object") {
-    return titles.map((title) => (parsed as Record<string, unknown>)[title]);
+  if (isDictionary(parsed)) {
+    return tableFields(part).map((field) => parsed[field]);
   }
   return [];
 }
@@ -136,7 +142,8 @@ function formatValue(value: unknown) {
 function referenceColumn(part: AiMessagePart) {
   const reference = part.input?.reference_field_name?.trim().toLowerCase();
   if (!reference) return 0;
-  return (part.titles ?? []).findIndex((title) => title.trim().toLowerCase() === reference);
+  const fields = part.field_names?.length ? part.field_names : tableFields(part);
+  return fields.findIndex((field) => field.trim().toLowerCase() === reference);
 }
 
 // Hides parts whose value is already supplied by another part.
@@ -204,13 +211,17 @@ export function AiMessagePartsView({
   parts,
   feature,
   disabled,
+  emphasizeFirstText = false,
   onSubmitForm,
 }: {
   parts: AiMessagePart[];
   feature?: string;
   disabled: boolean;
-  onSubmitForm: (feature: string, form: Record<string, unknown>) => void;
+  emphasizeFirstText?: boolean;
+  onSubmitForm: (feature: string, form: Record<string, unknown>) => Promise<InputError[]>;
 }) {
+  const [inputErrors, setInputErrors] = useState<InputError[]>([]);
+  const formId = useId();
   const hydrated = useHydrated();
   const isLocalhost = hydrated && window.location.hostname === "localhost";
   const kinds = parts.map(partKind);
@@ -220,20 +231,47 @@ export function AiMessagePartsView({
     (index) => kinds[index] === "FIELD" || isChoiceKind(kinds[index]),
   );
 
-  const content = visibleIndexes.map((index) => (
-    <AiMessagePartView
-      key={index}
-      part={parts[index]}
-      kind={kinds[index]}
-      name={inputName(parts[index], index)}
-      disabled={disabled}
-    />
-  ));
+  const content = visibleIndexes.map((index) => {
+    const name = inputName(parts[index], index);
+    const errors = inputErrors.filter((error) => error.field === name);
+    const errorId = errors.length > 0 ? `${formId}-${index}-error` : undefined;
+    const partView = (
+      <AiMessagePartView
+        key={index}
+        part={parts[index]}
+        kind={kinds[index]}
+        name={name}
+        disabled={disabled}
+        errorId={errorId}
+        mediumText={
+          emphasizeFirstText && index === 0 && parts.length > 1 && typeof parts[index].content === "string"
+        }
+      />
+    );
+    if (!interactiveIndexes.includes(index)) return partView;
+    return (
+      <div
+        key={index}
+        className="space-y-1.5"
+        onChangeCapture={() => {
+          setInputErrors((current) => current.filter((error) => error.field !== name));
+        }}
+      >
+        {partView}
+        {errorId ? (
+          <p id={errorId} role="alert" className="text-destructive text-sm whitespace-pre-wrap">
+            {errors.map((error) => error.message).join("\n")}
+          </p>
+        ) : null}
+      </div>
+    );
+  });
 
   if (interactiveIndexes.length === 0) return content;
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setInputErrors([]);
     const formData = new FormData(event.currentTarget);
     const form: Record<string, unknown> = {};
 
@@ -251,7 +289,7 @@ export function AiMessagePartsView({
         toast.error(`Cannot find the "${part.input?.reference_field_name}" column to submit ${name}.`);
         return;
       }
-      const rows = toRows(part.content);
+      const rows = toRows(part);
       const selected = formData.getAll(name).map((rowIndex) => rows[Number(rowIndex)]?.[column]);
       if (selected.length === 0) {
         toast.error("Please select at least one row.");
@@ -260,7 +298,7 @@ export function AiMessagePartsView({
       form[name] = kinds[index] === "MULTI_CHOICE" ? selected : selected[0];
     }
 
-    onSubmitForm(String(formData.get("feature") ?? ""), form);
+    setInputErrors(await onSubmitForm(String(formData.get("feature") ?? ""), form));
   }
 
   return (
@@ -305,25 +343,39 @@ function AiMessagePartView({
   kind,
   name,
   disabled,
+  errorId,
+  mediumText,
 }: {
   part: AiMessagePart;
   kind: PartKind;
   name: string;
   disabled: boolean;
+  errorId?: string;
+  mediumText?: boolean;
 }) {
-  const titles = part.titles ?? [];
+  const titles = tableTitles(part);
 
   if (kind === "FIELD") {
-    return <AiInputField part={part} name={name} disabled={disabled} />;
+    return <AiInputField part={part} name={name} disabled={disabled} errorId={errorId} />;
   }
 
   if (kind === "TEXT") {
     const text = typeof part.content === "string" ? part.content : parseContent(part.content);
-    return <p className="whitespace-pre-wrap">{formatValue(text)}</p>;
+    return (
+      <p
+        className={cn(
+          "whitespace-pre-wrap",
+          mediumText && "font-medium",
+          part.color === "green" && "text-green-600 dark:text-green-400",
+        )}
+      >
+        {formatValue(text)}
+      </p>
+    );
   }
 
   if (kind === "OBJECT") {
-    const values = toObjectValues(part.content, titles);
+    const values = toObjectValues(part);
     return (
       <Table containerClassName="rounded-md border bg-background">
         <TableBody>
@@ -340,7 +392,7 @@ function AiMessagePartView({
     );
   }
 
-  const rows = toRows(part.content);
+  const rows = toRows(part);
   const choice = isChoiceKind(kind);
 
   return (
@@ -349,7 +401,7 @@ function AiMessagePartView({
         <TableHeader>
           <TableRow>
             {choice ? (
-              <TableHead className="w-10">
+              <TableHead className="sticky left-0 z-10 w-10 min-w-10 bg-background">
                 <span className="sr-only">Select</span>
               </TableHead>
             ) : null}
@@ -363,12 +415,14 @@ function AiMessagePartView({
         {rows.map((row, rowIndex) => (
           <TableRow key={rowIndex}>
             {choice ? (
-              <TableCell>
+              <TableCell className="sticky left-0 z-10 w-10 min-w-10 bg-background">
                 {kind === "MULTI_CHOICE" ? (
                   <Checkbox
                     name={name}
                     value={rowIndex}
                     aria-label={`Select row ${rowIndex + 1}`}
+                    aria-invalid={!!errorId}
+                    aria-describedby={errorId}
                     disabled={disabled}
                   />
                 ) : (
@@ -378,8 +432,10 @@ function AiMessagePartView({
                     value={rowIndex}
                     required
                     aria-label={`Select row ${rowIndex + 1}`}
+                    data-invalid={!!errorId}
+                    aria-describedby={errorId}
                     disabled={disabled}
-                    className="accent-primary size-4 cursor-pointer"
+                    className="accent-primary size-4 cursor-pointer data-[invalid=true]:outline data-[invalid=true]:outline-destructive"
                   />
                 )}
               </TableCell>
@@ -400,13 +456,17 @@ function AiInputField({
   part,
   name,
   disabled,
+  errorId,
 }: {
   part: AiMessagePart;
   name: string;
   disabled: boolean;
+  errorId?: string;
 }) {
   const type = fieldType(part);
   const description = part.input?.description;
+  const placeholder = part.input?.example ?? "Required";
+  const errorProps = { "aria-invalid": !!errorId, "aria-describedby": errorId };
   const parsed = parseContent(part.content);
   const defaultValue = typeof parsed === "string" || typeof parsed === "number" ? parsed : undefined;
 
@@ -414,12 +474,13 @@ function AiInputField({
   if (type === "BOOL") {
     control = (
       <select
+        {...errorProps}
         name={name}
         required
         disabled={disabled}
         defaultValue={typeof parsed === "boolean" ? String(parsed) : ""}
         aria-label={description}
-        className="border-input bg-background text-foreground h-9 w-full rounded-lg border px-2.5 text-sm"
+        className="border-input bg-background text-foreground h-9 w-full rounded-lg border px-2.5 text-sm aria-invalid:border-destructive"
       >
         <option value="" disabled>
           Required
@@ -432,12 +493,13 @@ function AiInputField({
     const allowDecimal = type === "FLOAT";
     control = (
       <Input
+        {...errorProps}
         type="text"
         inputMode={allowDecimal ? "decimal" : "numeric"}
         pattern={allowDecimal ? "-?\\d*\\.?\\d+" : "-?\\d+"}
         title={allowDecimal ? "Enter a number" : "Enter a whole number"}
         name={name}
-        placeholder="Required"
+        placeholder={placeholder}
         required
         disabled={disabled}
         defaultValue={defaultValue}
@@ -451,8 +513,9 @@ function AiInputField({
   } else if (type === "TEXT" && displayType(part) === "TEXTAREA") {
     control = (
       <Textarea
+        {...errorProps}
         name={name}
-        placeholder="Required"
+        placeholder={placeholder}
         required
         disabled={disabled}
         defaultValue={defaultValue}
@@ -463,9 +526,10 @@ function AiInputField({
   } else {
     control = (
       <Input
+        {...errorProps}
         type={type === "DATE" ? "date" : type === "DATETIME" ? "datetime-local" : "text"}
         name={name}
-        placeholder="Required"
+        placeholder={placeholder}
         required
         disabled={disabled}
         defaultValue={defaultValue}

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
+import type { InputError } from "@/lib/api/types";
 import { toast } from "@/lib/toast";
 
 type AiConversationMessage = {
@@ -116,7 +117,7 @@ export function AiChatRoom({
     setSending(true);
     setMessages((current) => [
       ...current,
-      { role: "USER", parts: [{ type: "TEXT", content }] },
+      { role: "USER", parts: [{ content }] },
     ]);
     setMessage("");
     try {
@@ -146,11 +147,11 @@ export function AiChatRoom({
     void sendMessage(message.trim());
   }
 
-  async function executeForm(feature: string, form: Record<string, unknown>) {
-    if (sending) return;
+  async function executeForm(feature: string, form: Record<string, unknown>): Promise<InputError[]> {
+    if (sending) return [];
     if (!feature) {
       toast.error("This form is missing its feature and cannot be submitted.");
-      return;
+      return [];
     }
 
     setSending(true);
@@ -163,8 +164,11 @@ export function AiChatRoom({
         ...current,
         { role: "ASSISTANT", parts: result.parts ?? [], feature: result.feature, url: result.url },
       ]);
+      return [];
     } catch (error) {
-      toast.error(toApiError(error).message);
+      const apiError = toApiError(error);
+      toast.error(apiError.message);
+      return apiError.inputErrors;
     } finally {
       setSending(false);
     }
@@ -194,14 +198,15 @@ export function AiChatRoom({
                 className={
                   chatMessage.role === "USER"
                     ? "max-w-[85%] space-y-3 rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-sm text-primary-foreground"
-                    : "max-w-[92%] min-w-0 space-y-3 rounded-xl rounded-bl-sm bg-muted px-4 py-2.5 text-sm"
+                    : "max-w-full min-w-0 space-y-3 rounded-xl rounded-bl-sm bg-muted px-4 py-2.5 text-sm"
                 }
               >
                 <AiMessagePartsView
                   parts={chatMessage.parts}
                   feature={chatMessage.feature}
                   disabled={sending}
-                  onSubmitForm={(feature, form) => void executeForm(feature, form)}
+                  emphasizeFirstText={chatMessage.role === "ASSISTANT"}
+                  onSubmitForm={executeForm}
                 />
                 {chatMessage.url?.trim() ? <MessageLink url={chatMessage.url} /> : null}
               </div>

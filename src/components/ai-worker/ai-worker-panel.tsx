@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Loader2, MessageCircle, Plus, Sparkles, X } from "lucide-react";
 
 import { AiChatRoom } from "@/components/ai-worker/ai-chat-room";
 import { AiConversationDeleteButton } from "@/components/ai-worker/ai-conversation-delete-button";
-import { AI_WORKER_PANEL_WIDTH, useAiWorkerPanel } from "@/components/ai-worker/ai-worker-panel-context";
+import { AI_WORKER_PANEL_MAX_WIDTH, AI_WORKER_PANEL_MIN_WIDTH, useAiWorkerPanel } from "@/components/ai-worker/ai-worker-panel-context";
 import { RelativeTime } from "@/components/relative-time";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
@@ -14,16 +14,66 @@ import { toApiError } from "@/lib/api/errors";
 import type { AiConversation } from "@/lib/api/types";
 
 export function AiWorkerPanel() {
-  const { open, isDesktop, setOpen } = useAiWorkerPanel();
+  const { open, isDesktop, panelWidth, setPanelWidth, setOpen } = useAiWorkerPanel();
+  const dragRef = useRef<{ pointerId: number; startX: number; width: number } | null>(null);
+
+  function resize(width: number) {
+    setPanelWidth(Math.max(AI_WORKER_PANEL_MIN_WIDTH, Math.min(AI_WORKER_PANEL_MAX_WIDTH, window.innerWidth - 150, width)));
+  }
 
   if (isDesktop) {
     if (!open) return null;
     return (
       <aside
         aria-label="AI Worker"
-        style={{ width: AI_WORKER_PANEL_WIDTH }}
+        id="ai-worker-panel"
+        style={{ width: panelWidth, minWidth: AI_WORKER_PANEL_MIN_WIDTH, maxWidth: AI_WORKER_PANEL_MAX_WIDTH }}
         className="bg-background sticky top-0 flex h-svh shrink-0 flex-col self-start border-l"
       >
+        <div
+          role="separator"
+          tabIndex={0}
+          aria-label="Resize AI Worker panel"
+          aria-orientation="vertical"
+          aria-controls="ai-worker-panel"
+          aria-valuemin={AI_WORKER_PANEL_MIN_WIDTH}
+          aria-valuemax={AI_WORKER_PANEL_MAX_WIDTH}
+          aria-valuenow={panelWidth}
+          title="Resize AI Worker panel"
+          className="hover:bg-primary/20 focus-visible:bg-primary/20 focus-visible:ring-ring absolute inset-y-0 -left-1 z-30 w-2 touch-none cursor-col-resize select-none focus-visible:ring-2 focus-visible:outline-none"
+          onPointerDown={(event) => {
+            if (event.button !== 0) return;
+            event.preventDefault();
+            event.currentTarget.focus();
+            event.currentTarget.setPointerCapture(event.pointerId);
+            dragRef.current = {
+              pointerId: event.pointerId,
+              startX: event.clientX,
+              width: panelWidth,
+            };
+          }}
+          onPointerMove={(event) => {
+            const drag = dragRef.current;
+            if (!drag || drag.pointerId !== event.pointerId) return;
+            resize(drag.width + drag.startX - event.clientX);
+          }}
+          onPointerUp={(event) => {
+            if (dragRef.current?.pointerId !== event.pointerId) return;
+            dragRef.current = null;
+            event.currentTarget.releasePointerCapture(event.pointerId);
+          }}
+          onPointerCancel={() => { dragRef.current = null; }}
+          onLostPointerCapture={() => { dragRef.current = null; }}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+              event.preventDefault();
+              resize(panelWidth + (event.key === "ArrowLeft" ? 16 : -16));
+            } else if (event.key === "Home") {
+              event.preventDefault();
+              resize(AI_WORKER_PANEL_MIN_WIDTH);
+            }
+          }}
+        />
         <AiWorkerPanelBody onClose={() => setOpen(false)} />
       </aside>
     );
@@ -90,7 +140,7 @@ function AiWorkerPanelBody({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex h-14 shrink-0 items-center gap-1 border-b px-2">
+      <div className="flex min-h-14 shrink-0 flex-wrap items-center gap-1 border-b px-2 py-2">
         {chat ? (
           <Button
             type="button"
