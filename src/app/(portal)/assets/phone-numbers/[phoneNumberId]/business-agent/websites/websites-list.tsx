@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Search, X } from "lucide-react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { ChevronDown, Loader2, Search, X } from "lucide-react";
 
 import { LocalDateTime } from "@/components/local-date-time";
 import { Button } from "@/components/ui/button";
@@ -108,6 +108,10 @@ function WebsiteDialogBody({
     excluded_url_patterns: toLines(website?.excluded_url_patterns),
     single_urls: toLines(website?.single_urls),
   }));
+  const [advancedOpen, setAdvancedOpen] = useState(() =>
+    Object.values(rules).some((rule) => fromLines(rule).length > 0),
+  );
+  const advancedId = useId();
   const [showErrors, setShowErrors] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -126,6 +130,7 @@ function WebsiteDialogBody({
     if (submitting) return;
     if (hasErrors || !url) {
       setShowErrors(true);
+      if (Object.keys(ruleErrors).length > 0) setAdvancedOpen(true);
       return;
     }
     const payload = {
@@ -175,7 +180,19 @@ function WebsiteDialogBody({
           />
           {showErrors && urlError ? <span className="text-destructive text-xs font-normal">{urlError}</span> : null}
         </label>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="justify-self-start"
+          aria-expanded={advancedOpen}
+          aria-controls={advancedId}
+          onClick={() => setAdvancedOpen((current) => !current)}
+        >
+          Advanced settings
+          <ChevronDown aria-hidden="true" className={`size-4 transition-transform ${advancedOpen ? "rotate-180" : ""}`} />
+        </Button>
+        <div id={advancedId} className={advancedOpen ? "grid gap-4 sm:grid-cols-2" : "hidden"}>
           {RULE_FIELDS.map(({ field, label, placeholder }) => {
             const error = showErrors ? ruleErrors[field] : undefined;
             return (

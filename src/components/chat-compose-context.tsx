@@ -12,6 +12,7 @@ export type ChatMessage = {
   wa_message_id: string;
   sending: boolean;
   timestamp: number;
+  by_agent?: boolean;
   type: string;
   payload: Record<string, unknown>;
   attachment_url?: string;

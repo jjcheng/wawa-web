@@ -40,7 +40,7 @@ export default async function PortalLayout({ children }: LayoutProps<"/">) {
           </div>
           <AiWorkerPanel />
         </div>
-        <BottomTabBar />
+        <BottomTabBar userType={user.type} />
       </AiWorkerPanelProvider>
     </NavigationProgressProvider>
   );

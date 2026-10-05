@@ -7,7 +7,7 @@ import { loadBusinessAgentPhoneNumber } from "../load-phone-number";
 import { GeneralSettings } from "./general-settings";
 import { ScheduleSettings } from "./schedule-settings";
 
-export const metadata: Metadata = { title: "General settings" };
+export const metadata: Metadata = { title: "Other settings" };
 
 export default async function BusinessAgentSettingsPage({
   params,
@@ -23,11 +23,11 @@ export default async function BusinessAgentSettingsPage({
     <>
       <BackBar href={`/assets/phone-numbers/${phoneNumber.id}/business-agent`} />
       <PageHeader
-        title="General settings"
-        description={`General settings for the business agent of ${displayNumber}.`}
+        title="Other settings"
+        description={`Other settings for the business agent of ${displayNumber}.`}
       />
       <Tabs defaultValue="conversation" className="w-full">
-        <TabsList aria-label="Settings sections" className="w-fit">
+        <TabsList aria-label="Settings sections" className="hidden">
           <TabsTrigger value="conversation">Conversation</TabsTrigger>
           <TabsTrigger value="schedule">Schedule</TabsTrigger>
         </TabsList>

@@ -188,7 +188,7 @@ export function GeneralSettings({ phoneNumberId }: { phoneNumberId: number }) {
       <div className="bg-card divide-border divide-y overflow-hidden rounded-lg border">
         <Section
           title="Handoff"
-          description="Whether the agent will release thread control after sending a handoff message."
+          description="If the business agent cannot handle a query form customer, it will send a message to inform user. Set this to On = agent still responds to customer after sending the message, Off = agent will not respond to customer anymore."
           toggle={
             <Toggle
               checked={form.handoffEnabled}
@@ -198,9 +198,9 @@ export function GeneralSettings({ phoneNumberId }: { phoneNumberId: number }) {
             />
           }
         >
-          {form.handoffEnabled ? (
+         
             <label className="grid gap-1.5 text-sm font-medium">
-              Message
+              Handoff message
               <Textarea
                 rows={2}
                 placeholder="Connecting you to a human agent"
@@ -213,7 +213,7 @@ export function GeneralSettings({ phoneNumberId }: { phoneNumberId: number }) {
                 <span className="text-destructive text-xs font-normal">{handoffMessageError}</span>
               ) : null}
             </label>
-          ) : null}
+          
         </Section>
         <Section
           title="Follow-up"

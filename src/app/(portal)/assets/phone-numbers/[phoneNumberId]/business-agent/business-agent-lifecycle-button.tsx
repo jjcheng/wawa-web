@@ -49,7 +49,7 @@ export function BusinessAgentLifecycleButton({
     () =>
       subscribeBusinessAgentStatus((change) => {
         if (change.phoneNumberId !== phoneNumberId) return;
-        if (change.agent_running !== undefined) setAgentRunning(change.agent_running);
+        if (change.agent_enabled !== undefined) setAgentRunning(change.agent_enabled);
         if (change.meta_agent_id !== undefined) setMetaAgentId(change.meta_agent_id);
       }),
     [phoneNumberId],
@@ -64,7 +64,7 @@ export function BusinessAgentLifecycleButton({
         method: "PATCH",
         query: { phone_number_id: String(phoneNumberId), on: String(on) },
       });
-      publishBusinessAgentStatus({ phoneNumberId, agent_running: on });
+      publishBusinessAgentStatus({ phoneNumberId, agent_enabled: on });
     } catch (error) {
       toast.error(toApiError(error).message);
     } finally {
@@ -85,11 +85,11 @@ export function BusinessAgentLifecycleButton({
       setMetaAgentId(isOnboarded ? "" : response.meta_agent_id || "onboarded");
       publishBusinessAgentStatus(
         isOnboarded
-          ? { phoneNumberId, meta_agent_id: "", agent_running: false }
+          ? { phoneNumberId, meta_agent_id: "", agent_enabled: false }
           : { phoneNumberId, meta_agent_id: response.meta_agent_id || "onboarded" },
       );
       setConfirmOffboard(false);
-      toast.success(isOnboarded ? "Business agent offboarded." : "Business agent onboarded.");
+      toast.success(isOnboarded ? "Phone number offboarded from business agent AI." : "Phone number onboarded business agent AI.");
     } catch (error) {
       toast.error(toApiError(error).message);
     } finally {
@@ -100,7 +100,7 @@ export function BusinessAgentLifecycleButton({
   return (
     <>
       <PageHeader
-        title="Business agent for phone number"
+        title="Business agent settings"
         titleAction={<BusinessAgentInfoButton />}
         action={
           isOnboarded ? (

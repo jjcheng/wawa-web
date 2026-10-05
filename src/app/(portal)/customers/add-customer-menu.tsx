@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "@/lib/toast";
 
 import { Button } from "@/components/ui/button";
+import { CustomerAgentEnabledField } from "@/components/customer-agent-enabled-field";
 import { CustomerTagsSelect } from "@/components/customer-tags-select";
 import { PhoneNumberFields } from "@/components/phone-number-fields";
 import {
@@ -153,6 +154,7 @@ export function AddCustomerMenu({
   const [countryCode, setCountryCode] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [tags, setTags] = useState<string[]>([]);
+  const [agentEnabled, setAgentEnabled] = useState(false);
   const [assignedPhoneNumbers, setAssignedPhoneNumbers] = useState<PhoneNumber[]>([]);
   const [selectedAssignedPhoneNumberId, setSelectedAssignedPhoneNumberId] = useState<number | null>(null);
   const [assignedPhoneNumbersLoading, setAssignedPhoneNumbersLoading] = useState(false);
@@ -269,6 +271,7 @@ export function AddCustomerMenu({
           phone_number: phoneNumber.trim(),
           phone_number_id: selectedAssignedPhoneNumberId,
           tags,
+          agent_enabled: agentEnabled,
         },
       }),
     onSuccess: (customer) => {
@@ -278,6 +281,7 @@ export function AddCustomerMenu({
       setCountryCode("");
       setPhoneNumber("");
       setTags([]);
+      setAgentEnabled(false);
       setAssignedPhoneNumbers([]);
       setSelectedAssignedPhoneNumberId(null);
       toast.success("Customer created.");
@@ -347,6 +351,11 @@ export function AddCustomerMenu({
                 disabled={mutation.isPending}
               />
             </div>
+            <CustomerAgentEnabledField
+              enabled={agentEnabled}
+              onChange={setAgentEnabled}
+              disabled={mutation.isPending}
+            />
             <div className="space-y-2">
               <Label>Assign to</Label>
               {assignedPhoneNumbersLoading ? (

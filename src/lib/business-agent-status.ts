@@ -1,6 +1,6 @@
 export type BusinessAgentStatusChange = {
   phoneNumberId: number;
-  agent_running?: boolean;
+  agent_enabled?: boolean;
   meta_agent_id?: string;
 };
 

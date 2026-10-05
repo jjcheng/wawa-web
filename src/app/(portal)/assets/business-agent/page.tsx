@@ -21,7 +21,7 @@ export default async function BusinessAgentPage() {
       <PageHeader
         title="Business agent"
         titleAction={<BusinessAgentInfoButton />}
-        description="Settings apply to business agents of all phone numbers."
+        description="Business agent settings for business account. To manage each phone number, go to Phone numbers page."
       />
       <BusinessAgentSettings />
     </>

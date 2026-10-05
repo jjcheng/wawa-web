@@ -1,9 +1,9 @@
 "use client";
 
 import EmojiPicker, { EmojiStyle, Theme, type EmojiClickData } from "emoji-picker-react";
-import { ArrowDown, Check, CheckCheck, ContactRound, Info, Loader2, MessageCircle, Phone, Reply, SmilePlus } from "lucide-react";
+import { ArrowDown, Bot, Check, CheckCheck, ContactRound, Info, Loader2, MessageCircle, Phone, Reply, SmilePlus } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
-import { useEffect, useEffectEvent, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useEffectEvent, useRef, useState, useSyncExternalStore } from "react";
 import { toast } from "@/lib/toast";
 
 import {
@@ -15,6 +15,7 @@ import { LocalDateTime } from "@/components/local-date-time";
 import { createAblyConversationProvider } from "@/lib/ably-realtime";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
+import { formatWhatsAppText } from "@/lib/whatsapp-text";
 import type { MessageDetail } from "@/lib/api/types";
 import { applyGoogleMapsTheme } from "@/lib/google-maps";
 import { ChatMediaViewer } from "@/components/chat-media-viewer";
@@ -193,54 +194,6 @@ function buttonDetails(message: Message) {
 
 function isEmojiOnly(value: string) {
   return value.trim().length > 0 && /^(?:[\p{Extended_Pictographic}\p{Emoji_Presentation}\uFE0F\u200D\s])+$/u.test(value);
-}
-
-function formatWhatsAppText(value: string) {
-  const parts: ReactNode[] = [];
-  let remaining = value;
-  let key = 0;
-
-  while (remaining.length > 0) {
-    if (remaining.startsWith("```")) {
-      const closingIndex = remaining.indexOf("```", 3);
-      if (closingIndex >= 0) {
-        parts.push(
-          <code
-            key={key++}
-            className="rounded bg-black/10 px-1 font-mono text-[0.9em] dark:bg-white/10"
-          >
-            {remaining.slice(3, closingIndex)}
-          </code>,
-        );
-        remaining = remaining.slice(closingIndex + 3);
-        continue;
-      }
-    }
-
-    const marker = remaining[0];
-    if (marker === "*" || marker === "_" || marker === "~") {
-      const closingIndex = remaining.indexOf(marker, 1);
-      if (closingIndex > 1) {
-        const content = remaining.slice(1, closingIndex);
-        if (marker === "*") {
-          parts.push(<strong key={key++}>{content}</strong>);
-        } else if (marker === "_") {
-          parts.push(<em key={key++}>{content}</em>);
-        } else {
-          parts.push(<del key={key++}>{content}</del>);
-        }
-        remaining = remaining.slice(closingIndex + 1);
-        continue;
-      }
-    }
-
-    const nextSpecial = remaining.search(/[\*_~`]/);
-    const textLength = nextSpecial < 0 ? remaining.length : nextSpecial === 0 ? 1 : nextSpecial;
-    parts.push(remaining.slice(0, textLength));
-    remaining = remaining.slice(textLength);
-  }
-
-  return parts;
 }
 
 function locationStaticMapUrl(
@@ -1109,6 +1062,12 @@ export function Chat({
 
                   const timeAndStatus = (
                     <span className="flex items-center gap-1 text-[0.6875rem] leading-none text-[#667781] dark:text-[#aebac1]">
+                      {message.by_agent === true ? (
+                        <span title="Sent by business agent" className="inline-flex items-center">
+                          <Bot aria-hidden="true" className="size-3 shrink-0" />
+                          <span className="sr-only">Sent by business agent</span>
+                        </span>
+                      ) : null}
                       {messageTime(message.timestamp, hydrated)}
                       {message.sending ? (
                         <>

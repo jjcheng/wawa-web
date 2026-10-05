@@ -4,7 +4,7 @@ import { BackBar } from "@/components/back-bar";
 import { BusinessAgentLifecycleButton } from "./business-agent-lifecycle-button";
 import { loadBusinessAgentPhoneNumber } from "./load-phone-number";
 
-export const metadata: Metadata = { title: "Business agent for phone number" };
+export const metadata: Metadata = { title: "Business agent settings" };
 
 export default async function PhoneNumberBusinessAgentPage({
   params,
@@ -19,7 +19,7 @@ export default async function PhoneNumberBusinessAgentPage({
         phoneNumberId={phoneNumber.id}
         displayNumber={displayNumber}
         initialMetaAgentId={phoneNumber.meta_agent_id ?? ""}
-        initialAgentRunning={phoneNumber.agent_running === true}
+        initialAgentRunning={phoneNumber.agent_enabled === true}
       />
     </>
   );

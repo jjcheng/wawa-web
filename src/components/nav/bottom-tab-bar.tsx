@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { MAIN_ROUTES } from "@/components/nav/main-routes";
+import type { User } from "@/lib/api/types";
 import { useUnreadNotificationsCount } from "@/lib/unread-notifications-store";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +16,7 @@ const TABS = [
   { href: "/assets", label: "Assets", icon: LayoutGrid },
 ] as const;
 
-export function BottomTabBar() {
+export function BottomTabBar({ userType }: { userType: User["type"] }) {
   const pathname = usePathname();
   const unreadNotificationsCount = useUnreadNotificationsCount();
 
@@ -27,7 +28,7 @@ export function BottomTabBar() {
         aria-label="Primary"
         className="glass-surface-float glass-surface-float-subtle flex w-full max-w-md items-stretch justify-around gap-1 rounded-full p-1.5"
       >
-        {TABS.map((tab) => {
+        {TABS.filter((tab) => tab.href !== "/catalogs" || userType === "MASTER").map((tab) => {
           const active = pathname === tab.href;
           return (
             <Link

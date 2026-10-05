@@ -8,6 +8,7 @@ import { toast } from "@/lib/toast";
 
 import { Button } from "@/components/ui/button";
 import { CountryCodeSelect } from "@/components/country-code-select";
+import { CustomerAgentEnabledField } from "@/components/customer-agent-enabled-field";
 import { CustomerInfo } from "@/components/customer-info";
 import { CustomerTagsSelect } from "@/components/customer-tags-select";
 import {
@@ -62,6 +63,7 @@ export function CustomerDetailsButton({
   const [countryCode, setCountryCode] = useState(customer.country_code);
   const [phoneNumber, setPhoneNumber] = useState(customer.phone_number);
   const [tags, setTags] = useState(customer.tags ?? []);
+  const [agentEnabled, setAgentEnabled] = useState(customer.agent_enabled ?? false);
   const [status, setStatus] = useState(customer.status || "ACTIVE");
   const [remarks, setRemarks] = useState(customer.remarks ?? "");
   const [additionalDataRows, setAdditionalDataRows] = useState<AdditionalDataRow[]>([]);
@@ -109,6 +111,7 @@ export function CustomerDetailsButton({
           country_code: countryCode.trim(),
           phone_number: phoneNumber.trim(),
           tags,
+          agent_enabled: agentEnabled,
           status,
           remarks,
           additional_data: Object.fromEntries(
@@ -149,6 +152,7 @@ export function CustomerDetailsButton({
       setCountryCode(customer.country_code);
       setPhoneNumber(customer.phone_number);
       setTags(customer.tags ?? []);
+      setAgentEnabled(customer.agent_enabled ?? false);
       setStatus(customer.status || "ACTIVE");
       setRemarks(customer.remarks ?? "");
       setAdditionalDataRows(additionalDataRowsFromCustomer());
@@ -190,19 +194,19 @@ export function CustomerDetailsButton({
       >
         <ModalHeader
           title={editing ? "Edit customer" : customer.display_name}
-          subtitle="Customer details"
+          subtitle={editing ? `Phone number: ${formatPhoneNumber(phoneNumber, countryCode)}` : "Customer details"}
         />
         <div className="min-h-0 flex-1 !overflow-y-auto">
         {editing ? <div className="grid gap-3">
           <label className="grid gap-1 text-sm">
-            <span className="text-muted-foreground">Name</span>
+            <span>Name</span>
             <input required value={displayName} onChange={(event) => setDisplayName(event.target.value)} className="border-input h-9 rounded-md border bg-transparent px-3" />
             {saveErrors.name ? <p className="text-destructive text-sm">{saveErrors.name}</p> : null}
           </label>
           {customer.country_code === "." ? (
             <div className="grid grid-cols-2 gap-2">
               <label className="grid gap-1 text-sm">
-                <span className="text-muted-foreground">Country code</span>
+                <span>Country code</span>
                 <CountryCodeSelect
                   name="customer-country-code"
                   value={countryCode}
@@ -212,7 +216,7 @@ export function CustomerDetailsButton({
                 {saveErrors.countryCode ? <p className="text-destructive text-sm">{saveErrors.countryCode}</p> : null}
               </label>
               <label className="grid gap-1 text-sm">
-                <span className="text-muted-foreground">Phone number</span>
+                <span>Phone number</span>
                 <input
                   required
                   maxLength={13}
@@ -228,15 +232,18 @@ export function CustomerDetailsButton({
                 {saveErrors.phoneNumber ? <p className="text-destructive text-sm">{saveErrors.phoneNumber}</p> : null}
               </label>
             </div>
-          ) : (
-            <p className="text-sm">Phone: {formatPhoneNumber(customer.phone_number, customer.country_code)}</p>
-          )}
+          ) : null}
           <label className="grid gap-1 text-sm">
-            <span className="text-muted-foreground">Tags</span>
+            <span>Tags</span>
             <CustomerTagsSelect value={tags} onChange={setTags} />
           </label>
+          <CustomerAgentEnabledField
+            enabled={agentEnabled}
+            onChange={setAgentEnabled}
+            disabled={updateMutation.isPending}
+          />
           <label className="grid gap-1 text-sm">
-            <span className="text-muted-foreground">Status</span>
+            <span>Status</span>
             <Select value={status} onValueChange={setStatus}>
               <SelectTrigger className="w-full" aria-label="Customer status">
                 <SelectValue />
@@ -248,12 +255,12 @@ export function CustomerDetailsButton({
             </Select>
           </label>
           <label className="grid gap-1 text-sm">
-            <span className="text-muted-foreground">Remarks</span>
+            <span>Remarks</span>
             <Textarea value={remarks} onChange={(event) => setRemarks(event.target.value)} rows={4} />
           </label>
           <div className="grid gap-2 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Additional data</span>
+              <span>Additional data</span>
               <Button type="button" variant="outline" size="sm" onClick={addAdditionalDataRow}>
                 <Plus className="size-4" />
                 Add field

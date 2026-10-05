@@ -80,14 +80,14 @@ export function ScheduleSettings({ phoneNumberId }: { phoneNumberId: number }) {
     <div className="bg-card divide-border divide-y overflow-hidden rounded-lg border">
       <section className="flex items-start justify-between gap-3 px-4 py-4">
         <div className="min-w-0">
-          <h2 className="text-sm font-medium">Turn on business agent on schedule</h2>
+          <h2 className="text-sm font-medium">Schedule to turn on/off business agent</h2>
           <p className="text-muted-foreground text-sm">
             The agent only replies to customers during the selected days and hours.
           </p>
         </div>
         <Toggle
           checked={scheduleEnabled}
-          label="Turn on business agent on schedule"
+          label="Schedule to turn on/off business agent"
           onChange={setScheduleEnabled}
         />
       </section>

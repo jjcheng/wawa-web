@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import { toast } from "@/lib/toast";
+import { formatWhatsAppText } from "@/lib/whatsapp-text";
 
 type ChatMessage = {
   id: string;
@@ -182,7 +183,7 @@ export function TestChat({ phoneNumberId, displayNumber }: { phoneNumberId: numb
   return (
     <>
       <div className="mb-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Test business agent</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Test</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           Chat with the business agent for {displayNumber} before it replies to real customers. Tokens consumed while testing are not billed.
         </p>
@@ -228,7 +229,7 @@ export function TestChat({ phoneNumberId, displayNumber }: { phoneNumberId: numb
                           : "rounded-tl-none bg-white text-[#111b21] dark:bg-[#202c33] dark:text-[#e9edef]"
                       }`}
                     >
-                      <p className="break-words whitespace-pre-wrap">{message.text}</p>
+                      <p className="break-words whitespace-pre-wrap">{formatWhatsAppText(message.text)}</p>
                       {message.note ? (
                         <p className="mt-1 border-t border-black/10 pt-1 text-xs text-[#667781] italic break-words dark:border-white/10 dark:text-[#8696a0]">
                           {message.note}

@@ -16,7 +16,7 @@ type BusinessInfo = {
   purchase_info: string;
   delivery_and_shipping: string;
   business_description: string;
-  business_contact_info: {
+  contact_info: {
     email: string;
     hours_of_operation: string;
     address: string;
@@ -29,7 +29,7 @@ const EMPTY_BUSINESS_INFO: BusinessInfo = {
   purchase_info: "",
   delivery_and_shipping: "",
   business_description: "",
-  business_contact_info: { email: "", hours_of_operation: "", address: "" },
+  contact_info: { email: "", hours_of_operation: "", address: "" },
 };
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -41,7 +41,7 @@ export function BusinessProfileForm({ phoneNumberId }: { phoneNumberId: number }
   const [saving, setSaving] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
 
-  const email = businessInfo.business_contact_info.email.trim();
+  const email = businessInfo.contact_info.email.trim();
   const emailError = email && !EMAIL_PATTERN.test(email) ? "Enter a valid email address." : null;
   const showEmailError = emailTouched && emailError;
 
@@ -57,9 +57,9 @@ export function BusinessProfileForm({ phoneNumberId }: { phoneNumberId: number }
           setBusinessInfo({
             ...EMPTY_BUSINESS_INFO,
             ...response,
-            business_contact_info: {
-              ...EMPTY_BUSINESS_INFO.business_contact_info,
-              ...response.business_contact_info,
+            contact_info: {
+              ...EMPTY_BUSINESS_INFO.contact_info,
+              ...response.contact_info,
             },
           });
         }
@@ -76,14 +76,14 @@ export function BusinessProfileForm({ phoneNumberId }: { phoneNumberId: number }
     };
   }, [phoneNumberId]);
 
-  function updateField(field: Exclude<keyof BusinessInfo, "business_contact_info">, value: string) {
+  function updateField(field: Exclude<keyof BusinessInfo, "contact_info">, value: string) {
     setBusinessInfo((current) => ({ ...current, [field]: value }));
   }
 
-  function updateContactField(field: keyof BusinessInfo["business_contact_info"], value: string) {
+  function updateContactField(field: keyof BusinessInfo["contact_info"], value: string) {
     setBusinessInfo((current) => ({
       ...current,
-      business_contact_info: { ...current.business_contact_info, [field]: value },
+      contact_info: { ...current.contact_info, [field]: value },
     }));
   }
 
@@ -100,7 +100,7 @@ export function BusinessProfileForm({ phoneNumberId }: { phoneNumberId: number }
         query: { phone_number_id: String(phoneNumberId) },
         body: {
           ...businessInfo,
-          business_contact_info: { ...businessInfo.business_contact_info, email },
+          contact_info: { ...businessInfo.contact_info, email },
         },
       });
       toast.success("Business profile saved.");
@@ -149,7 +149,7 @@ export function BusinessProfileForm({ phoneNumberId }: { phoneNumberId: number }
           <Input
             type="email"
             placeholder="Enter your email"
-            value={businessInfo.business_contact_info.email}
+            value={businessInfo.contact_info.email}
             aria-invalid={showEmailError ? true : undefined}
             aria-describedby={showEmailError ? "business-contact-email-error" : undefined}
             onBlur={() => setEmailTouched(true)}
@@ -163,11 +163,11 @@ export function BusinessProfileForm({ phoneNumberId }: { phoneNumberId: number }
         </label>
         <label className="grid gap-1.5 text-sm font-medium">
           Hours of operation
-          <Input placeholder="Mon-Fri 9am-5pm" value={businessInfo.business_contact_info.hours_of_operation} onChange={(event) => updateContactField("hours_of_operation", event.target.value)} />
+          <Input placeholder="Mon-Fri 9am-5pm" value={businessInfo.contact_info.hours_of_operation} onChange={(event) => updateContactField("hours_of_operation", event.target.value)} />
         </label>
         <label className="grid gap-1.5 text-sm font-medium sm:col-span-2">
           Address
-          <Textarea placeholder="Enter store address" rows={2} value={businessInfo.business_contact_info.address} onChange={(event) => updateContactField("address", event.target.value)} />
+          <Textarea placeholder="Enter store address" rows={2} value={businessInfo.contact_info.address} onChange={(event) => updateContactField("address", event.target.value)} />
         </label>
       </div>
       <div className="flex justify-start px-5 pb-5">

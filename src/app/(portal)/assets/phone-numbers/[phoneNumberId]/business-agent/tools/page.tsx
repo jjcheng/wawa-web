@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 
 import { BackBar } from "@/components/back-bar";
+import { PageHeader } from "@/components/page-header";
 import { loadBusinessAgentPhoneNumber } from "../load-phone-number";
-import { SkillsList } from "./skills-list";
 
-export const metadata: Metadata = { title: "Skills" };
+export const metadata: Metadata = { title: "Tools" };
 
-export default async function SkillsPage({
+export default async function ToolsPage({
   params,
 }: {
   params: Promise<{ phoneNumberId: string }>;
@@ -19,10 +19,8 @@ export default async function SkillsPage({
   return (
     <>
       <BackBar href={`/assets/phone-numbers/${phoneNumber.id}/business-agent`} />
-      <SkillsList
-        phoneNumberId={phoneNumber.id}
-        description={`Tasks the business agent for ${displayNumber} can handle for your customers.`}
-      />
+      <PageHeader title="Tools" description={`Tools for the business agent of ${displayNumber}.`} />
+      <p className="text-muted-foreground mt-5 text-sm">Coming soon.</p>
     </>
   );
 }

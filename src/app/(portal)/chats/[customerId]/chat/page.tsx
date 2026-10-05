@@ -87,7 +87,7 @@ export default async function CustomerChatPage({
 						{showAgentSwitch ? (
 							<CustomerAgentSwitch
 								customerId={customer.id}
-								initialOn={customer.agent_running === true}
+								initialOn={customer.agent_enabled === true}
 							/>
 						) : null}
 						<CustomerDetailsButton

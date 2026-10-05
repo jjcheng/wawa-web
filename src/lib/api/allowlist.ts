@@ -83,6 +83,7 @@ const ALLOWED: { method: string; pattern: RegExp }[] = [
   { method: "DELETE", pattern: /^v1\/wa\/business-agent\/websites\/[\w-]+$/ },
   { method: "GET", pattern: /^v1\/wa\/business-agent\/skills$/ },
   { method: "POST", pattern: /^v1\/wa\/business-agent\/skills$/ },
+  { method: "POST", pattern: /^v1\/wa\/business-agent\/phone-numbers\/\d+\/common-skills$/ },
   { method: "PUT", pattern: /^v1\/wa\/business-agent\/skills$/ },
   { method: "DELETE", pattern: /^v1\/wa\/business-agent\/skills\/[\w-]+$/ },
   { method: "GET", pattern: /^v1\/wa\/business-agent\/ui-skills$/ },

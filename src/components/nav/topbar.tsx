@@ -85,7 +85,7 @@ export function Topbar({ user }: { user: User }) {
   const [pendingAgentIds, setPendingAgentIds] = useState<Set<number>>(() => new Set());
   const logoutFormRef = useRef<HTMLFormElement>(null);
   const aiWorkerPanel = useAiWorkerPanel();
-  const agentRunning = assignedPhoneNumbers.some((phoneNumber) => phoneNumber.agent_running === true);
+  const agentRunning = assignedPhoneNumbers.some((phoneNumber) => phoneNumber.agent_enabled === true);
   const onboardedPhoneNumbers = assignedPhoneNumbers.filter((phoneNumber) => phoneNumber.meta_agent_id?.trim());
 
   useEffect(() => {
@@ -100,7 +100,7 @@ export function Topbar({ user }: { user: User }) {
             Number(item.id) === change.phoneNumberId
               ? {
                   ...item,
-                  ...(change.agent_running !== undefined ? { agent_running: change.agent_running } : {}),
+                  ...(change.agent_enabled !== undefined ? { agent_enabled: change.agent_enabled } : {}),
                   ...(change.meta_agent_id !== undefined ? { meta_agent_id: change.meta_agent_id } : {}),
                 }
               : item,
@@ -172,7 +172,7 @@ export function Topbar({ user }: { user: User }) {
     const phoneNumberId = Number(phoneNumber.id);
     if (!Number.isInteger(phoneNumberId) || pendingAgentIds.has(phoneNumberId)) return;
 
-    const on = phoneNumber.agent_running !== true;
+    const on = phoneNumber.agent_enabled !== true;
     setPendingAgentIds((current) => new Set(current).add(phoneNumberId));
     try {
       await apiFetch("v1/wa/business-agent/status", {
@@ -182,7 +182,7 @@ export function Topbar({ user }: { user: User }) {
           on: String(on),
         },
       });
-      publishBusinessAgentStatus({ phoneNumberId, agent_running: on });
+      publishBusinessAgentStatus({ phoneNumberId, agent_enabled: on });
     } catch (error) {
       toast.error(toApiError(error).message);
     } finally {
@@ -287,7 +287,7 @@ export function Topbar({ user }: { user: User }) {
               <ul className="divide-y">
                 {onboardedPhoneNumbers.map((phoneNumber) => {
                   const phoneNumberId = Number(phoneNumber.id);
-                  const isRunning = phoneNumber.agent_running === true;
+                  const isRunning = phoneNumber.agent_enabled === true;
                   const label = phoneNumber.name ||
                     formatPhoneNumber(phoneNumber.display_phone_number || phoneNumber.phone_number) ||
                     "Unnamed phone number";

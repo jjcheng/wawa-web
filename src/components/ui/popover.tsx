@@ -31,7 +31,7 @@ function PopoverContent({
         align={align}
         sideOffset={sideOffset}
         className={cn(
-          "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 z-50 w-(--radix-popover-trigger-width) min-w-48 rounded-lg p-1",
+          "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 z-50 w-(--radix-popover-trigger-width) min-w-48 rounded-lg px-2 py-1",
           popoverSurfaceClassName,
           className,
         )}

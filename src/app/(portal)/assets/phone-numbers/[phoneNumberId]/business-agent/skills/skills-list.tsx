@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Search, X } from "lucide-react";
+import { ChevronDown, Loader2, Search, X } from "lucide-react";
 
 import { LocalDateTime } from "@/components/local-date-time";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api/client";
@@ -184,6 +190,27 @@ export function SkillsList({ phoneNumberId, description }: { phoneNumberId: numb
   const [editingSkill, setEditingSkill] = useState<BusinessAgentSkill | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<BusinessAgentSkill | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [addingCommonSkills, setAddingCommonSkills] = useState(false);
+
+  async function addCommonSkills() {
+    if (addingCommonSkills) return;
+    setAddingCommonSkills(true);
+    try {
+      await apiFetch(`v1/wa/business-agent/phone-numbers/${phoneNumberId}/common-skills`, {
+        method: "POST",
+      });
+      toast.success("Common skills added.");
+      const response = await apiFetch<BusinessAgentSkill[] | null>("v1/wa/business-agent/skills", {
+        query: { phone_number_id: String(phoneNumberId) },
+      });
+      setSkills(response ?? []);
+      setLoadError(null);
+    } catch (error) {
+      toast.error(toApiError(error).message);
+    } finally {
+      setAddingCommonSkills(false);
+    }
+  }
 
   async function confirmDelete() {
     if (!deleteTarget?.id || deleting) return;
@@ -240,18 +267,26 @@ export function SkillsList({ phoneNumberId, description }: { phoneNumberId: numb
     <>
       <div className="mb-4">
         <div className="flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">Agent skills</h1>
-          <Button
-            type="button"
-            size="sm"
-            className="shrink-0"
-            onClick={() => {
-              setEditingSkill(null);
-              setAddOpen(true);
-            }}
-          >
-            Add skill
-          </Button>
+          <h1 className="text-2xl font-semibold tracking-tight">Skills</h1>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" size="sm" className="shrink-0" disabled={addingCommonSkills}>
+                Add skill
+                {addingCommonSkills ? <Loader2 className="size-4 animate-spin" /> : <ChevronDown className="size-4" />}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-44">
+              <DropdownMenuItem onSelect={() => {
+                setEditingSkill(null);
+                setAddOpen(true);
+              }}>
+                Add skill
+              </DropdownMenuItem>
+              <DropdownMenuItem disabled={addingCommonSkills} onSelect={() => void addCommonSkills()}>
+                Add common skills
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <p className="text-muted-foreground mt-1 text-sm">{description}</p>
       </div>
