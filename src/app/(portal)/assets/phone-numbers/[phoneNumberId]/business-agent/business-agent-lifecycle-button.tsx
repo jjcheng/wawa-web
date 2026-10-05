@@ -60,9 +60,9 @@ export function BusinessAgentLifecycleButton({
     const on = !agentRunning;
     setStatusPending(true);
     try {
-      await apiFetch("v1/wa/business-agent/status", {
+      await apiFetch(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/status`, {
         method: "PATCH",
-        query: { phone_number_id: String(phoneNumberId), on: String(on) },
+        query: { on: String(on) },
       });
       publishBusinessAgentStatus({ phoneNumberId, agent_enabled: on });
     } catch (error) {
@@ -79,8 +79,8 @@ export function BusinessAgentLifecycleButton({
     const action = isOnboarded ? "offboard" : "onboard";
     try {
       const response = await apiFetch<{ meta_agent_id?: string }>(
-        `v1/wa/business-agent/${action}`,
-        { method: "POST", query: { phone_number_id: String(phoneNumberId) } },
+        `v1/wa/phone-numbers/${phoneNumberId}/business-agent/${action}`,
+        { method: "POST" },
       );
       setMetaAgentId(isOnboarded ? "" : response.meta_agent_id || "onboarded");
       publishBusinessAgentStatus(

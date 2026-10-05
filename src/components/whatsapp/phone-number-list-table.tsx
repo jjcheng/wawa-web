@@ -76,9 +76,8 @@ export function PhoneNumberListTable({
     activeUsageRequestsRef.current += 1;
     setUsageLoading(true);
     try {
-      const response = await apiFetch<MessageAnalytics>("/v1/wa/phone-numbers/usage", {
+      const response = await apiFetch<MessageAnalytics>(`/v1/wa/phone-numbers/${phoneId}/usage`, {
         query: {
-          id: String(phoneId),
           start: String(start),
           end: String(end),
           granularity,
@@ -105,9 +104,8 @@ export function PhoneNumberListTable({
     setDetailPoints([]);
     setDetailLoading(true);
     try {
-      const response = await apiFetch<MessageAnalytics>("/v1/wa/phone-numbers/usage", {
+      const response = await apiFetch<MessageAnalytics>(`/v1/wa/phone-numbers/${phoneNumber.id}/usage`, {
         query: {
-          id: String(phoneNumber.id),
           start: String(start),
           end: String(end),
           granularity,

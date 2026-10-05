@@ -63,13 +63,11 @@ function getTitleError(title: string) {
 function SkillDialogBody({
   phoneNumberId,
   skill,
-  onCancel,
   onSaved,
   onDelete,
 }: {
   phoneNumberId: number;
   skill: BusinessAgentSkill | null;
-  onCancel: () => void;
   onSaved: (skill: BusinessAgentSkill) => void;
   onDelete?: () => void;
 }) {
@@ -102,9 +100,8 @@ function SkillDialogBody({
     };
     setSubmitting(true);
     try {
-      const response = await apiFetch<Partial<BusinessAgentSkill> | null>("v1/wa/business-agent/skills", {
+      const response = await apiFetch<Partial<BusinessAgentSkill> | null>(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/skills`, {
         method: skill ? "PUT" : "POST",
-        query: { phone_number_id: String(phoneNumberId) },
         body: skill ? { id: String(skill.id), ...payload } : payload,
       });
       onSaved(
@@ -169,9 +166,6 @@ function SkillDialogBody({
             Delete
           </Button>
         ) : null}
-        <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
-          Cancel
-        </Button>
         <Button type="button" onClick={() => void submit()} disabled={submitting}>
           {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
           {skill ? "Update" : "Add"}
@@ -196,13 +190,11 @@ export function SkillsList({ phoneNumberId, description }: { phoneNumberId: numb
     if (addingCommonSkills) return;
     setAddingCommonSkills(true);
     try {
-      await apiFetch(`v1/wa/business-agent/phone-numbers/${phoneNumberId}/common-skills`, {
+      await apiFetch(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/common-skills`, {
         method: "POST",
       });
       toast.success("Common skills added.");
-      const response = await apiFetch<BusinessAgentSkill[] | null>("v1/wa/business-agent/skills", {
-        query: { phone_number_id: String(phoneNumberId) },
-      });
+      const response = await apiFetch<BusinessAgentSkill[] | null>(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/skills`);
       setSkills(response ?? []);
       setLoadError(null);
     } catch (error) {
@@ -216,9 +208,8 @@ export function SkillsList({ phoneNumberId, description }: { phoneNumberId: numb
     if (!deleteTarget?.id || deleting) return;
     setDeleting(true);
     try {
-      await apiFetch(`v1/wa/business-agent/skills/${encodeURIComponent(deleteTarget.id)}`, {
+      await apiFetch(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/skills/${encodeURIComponent(deleteTarget.id)}`, {
         method: "DELETE",
-        query: { phone_number_id: String(phoneNumberId) },
       });
       setSkills((current) => current.filter((skill) => skill !== deleteTarget));
       setDeleteTarget(null);
@@ -235,9 +226,7 @@ export function SkillsList({ phoneNumberId, description }: { phoneNumberId: numb
 
     async function loadSkills() {
       try {
-        const response = await apiFetch<BusinessAgentSkill[] | null>("v1/wa/business-agent/skills", {
-          query: { phone_number_id: String(phoneNumberId) },
-        });
+        const response = await apiFetch<BusinessAgentSkill[] | null>(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/skills`);
         if (active) setSkills(response ?? []);
       } catch (error) {
         if (active) setLoadError(toApiError(error).message);
@@ -380,7 +369,6 @@ export function SkillsList({ phoneNumberId, description }: { phoneNumberId: numb
               key={editingSkill?.id ?? "new"}
               phoneNumberId={phoneNumberId}
               skill={editingSkill}
-              onCancel={() => setAddOpen(false)}
               onSaved={(saved) => {
                 setSkills((current) =>
                   editingSkill

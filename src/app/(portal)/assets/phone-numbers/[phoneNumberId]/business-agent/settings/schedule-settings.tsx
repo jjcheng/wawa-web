@@ -58,9 +58,8 @@ export function ScheduleSettings({ phoneNumberId }: { phoneNumberId: number }) {
     }
     setSaving(true);
     try {
-      await apiFetch("v1/wa/business-agent/schedule", {
+      await apiFetch(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/schedule`, {
         method: "PUT",
-        query: { phone_number_id: String(phoneNumberId) },
         body: {
           enabled: scheduleEnabled,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,

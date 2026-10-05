@@ -108,9 +108,7 @@ export function GeneralSettings({ phoneNumberId }: { phoneNumberId: number }) {
 
     async function loadSettings() {
       try {
-        const response = await apiFetch<AgentSettings | null>("v1/wa/business-agent/settings", {
-          query: { phone_number_id: String(phoneNumberId) },
-        });
+        const response = await apiFetch<AgentSettings | null>(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/settings`);
         if (active) setValues(toFormValues(response ?? {}));
       } catch (error) {
         if (active) setLoadError(toApiError(error).message);
@@ -169,9 +167,8 @@ export function GeneralSettings({ phoneNumberId }: { phoneNumberId: number }) {
     };
     setSaving(true);
     try {
-      await apiFetch("v1/wa/business-agent/settings", {
+      await apiFetch(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/settings`, {
         method: "PUT",
-        query: { phone_number_id: String(phoneNumberId) },
         body: payload,
       });
       setShowErrors(false);

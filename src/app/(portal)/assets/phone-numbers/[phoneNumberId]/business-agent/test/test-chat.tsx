@@ -142,9 +142,8 @@ export function TestChat({ phoneNumberId, displayNumber }: { phoneNumberId: numb
     setDraft("");
     setSending(true);
     try {
-      const response = await apiFetch<TestResponse>("v1/wa/business-agent/test", {
+      const response = await apiFetch<TestResponse>(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/test`, {
         method: "POST",
-        query: { phone_number_id: String(phoneNumberId) },
         body: conversation_id ? { user_message: text, conversation_id } : { user_message: text },
       });
       const current = readOrCreateConversation(key);

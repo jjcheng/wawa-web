@@ -105,7 +105,7 @@ function FaqDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="flex max-h-[90vh] flex-col overflow-hidden">
         {open ? (
           <FaqDialogBody
             key={faq?.key ?? "new"}
@@ -159,7 +159,7 @@ function FaqDialogBody({
         <DialogTitle>{faq ? "Edit FAQ" : "Add FAQ"}</DialogTitle>
         <DialogDescription>The agent uses this answer when customers ask a similar question.</DialogDescription>
       </DialogHeader>
-      <div className="grid gap-4">
+      <div className="-mx-1 grid min-h-0 flex-1 content-start gap-4 overflow-y-auto px-1 pb-1">
         <label className="grid gap-1.5 text-sm font-medium">
           Question
           <Input
@@ -222,9 +222,7 @@ export function FaqsForm({ phoneNumberId, description }: { phoneNumberId: number
 
     async function loadFaqs() {
       try {
-        const response = await apiFetch<Faq[] | { faqs?: Faq[] | null } | null>("v1/wa/business-agent/faqs", {
-          query: { phone_number_id: String(phoneNumberId) },
-        });
+        const response = await apiFetch<Faq[] | { faqs?: Faq[] | null } | null>(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/faqs`);
         const list = Array.isArray(response) ? response : response?.faqs ?? [];
         if (active) {
           setFaqs(list.map((faq) => toFaqRow({ id: faq.id, question: faq.question ?? "", answer: faq.answer ?? "" })));
@@ -265,9 +263,9 @@ export function FaqsForm({ phoneNumberId, description }: { phoneNumberId: number
   async function submitFaq(values: FaqValues) {
     if (editingFaq) {
       try {
-        await apiFetch(`v1/wa/business-agent/faqs/${encodeURIComponent(String(editingFaq.id))}`, {
+        await apiFetch(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/faqs/${encodeURIComponent(String(editingFaq.id))}`, {
           method: "PUT",
-          body: { phone_number_id: phoneNumberId, ...values },
+          body: values,
         });
         setFaqs((current) => current.map((faq) => (faq.key === editingFaq.key ? { ...faq, ...values } : faq)));
         setDialogOpen(false);
@@ -278,9 +276,8 @@ export function FaqsForm({ phoneNumberId, description }: { phoneNumberId: number
       return;
     }
     try {
-      const created = await apiFetch<{ id: number | string }>("v1/wa/business-agent/faqs", {
+      const created = await apiFetch<{ id: number | string }>(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/faqs`, {
         method: "POST",
-        query: { phone_number_id: String(phoneNumberId) },
         body: values,
       });
       setFaqs((current) => [...current, toFaqRow({ ...values, id: created.id })]);
@@ -317,9 +314,8 @@ export function FaqsForm({ phoneNumberId, description }: { phoneNumberId: number
     let imported = 0;
     try {
       for (const values of rows) {
-        const created = await apiFetch<{ id: number | string }>("v1/wa/business-agent/faqs", {
+        const created = await apiFetch<{ id: number | string }>(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/faqs`, {
           method: "POST",
-          query: { phone_number_id: String(phoneNumberId) },
           body: values,
         });
         setFaqs((current) => [...current, toFaqRow({ ...values, id: created.id })]);
@@ -350,9 +346,8 @@ export function FaqsForm({ phoneNumberId, description }: { phoneNumberId: number
     if (!deleteTarget || deleting) return;
     setDeleting(true);
     try {
-      await apiFetch(`v1/wa/business-agent/faqs/${encodeURIComponent(String(deleteTarget.id))}`, {
+      await apiFetch(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/faqs/${encodeURIComponent(String(deleteTarget.id))}`, {
         method: "DELETE",
-        query: { phone_number_id: String(phoneNumberId) },
       });
       setFaqs((current) => current.filter((faq) => faq.key !== deleteTarget.key));
       setDeleteTarget(null);
@@ -598,4 +593,3 @@ export function FaqsForm({ phoneNumberId, description }: { phoneNumberId: number
     </>
   );
 }
-

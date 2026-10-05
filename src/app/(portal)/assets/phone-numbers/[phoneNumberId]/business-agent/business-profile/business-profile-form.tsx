@@ -50,9 +50,7 @@ export function BusinessProfileForm({ phoneNumberId }: { phoneNumberId: number }
 
     async function loadBusinessInfo() {
       try {
-        const response = await apiFetch<BusinessInfo>("v1/wa/business-agent/business-info", {
-          query: { phone_number_id: String(phoneNumberId) },
-        });
+        const response = await apiFetch<BusinessInfo>(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/business-info`);
         if (active) {
           setBusinessInfo({
             ...EMPTY_BUSINESS_INFO,
@@ -95,9 +93,8 @@ export function BusinessProfileForm({ phoneNumberId }: { phoneNumberId: number }
     }
     setSaving(true);
     try {
-      await apiFetch("v1/wa/business-agent/business-info", {
+      await apiFetch(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/business-info`, {
         method: "PUT",
-        query: { phone_number_id: String(phoneNumberId) },
         body: {
           ...businessInfo,
           contact_info: { ...businessInfo.contact_info, email },

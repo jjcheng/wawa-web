@@ -8,10 +8,10 @@ import {
   FlaskConical,
   Globe,
   MessageCircleQuestion,
+  Plug,
   Settings,
   Sparkles,
   Store,
-  Wrench,
 } from "lucide-react";
 
 type SectionIcon = ComponentType<{ className?: string }>;
@@ -49,7 +49,7 @@ export function BusinessAgentSections({ phoneNumberId }: { phoneNumberId: number
       <SectionLink href={`${basePath}/files`} icon={FileText} title="Files" description="Documents this business agent can learn from." />
       <SectionLink href={`${basePath}/websites`} icon={Globe} title="Websites" description="Web pages this business agent can reference." />
       <SectionLink href={`${basePath}/skills`} icon={Sparkles} title="Skills" description="Tell this business agent how to handle your customers." />
-      <SectionLink href={`${basePath}/tools`} icon={Wrench} title="Tools" description="Actions this business agent can use." />
+      <SectionLink href={`${basePath}/connectors`} icon={Plug} title="Connectors" description="Connections this business agent can use." />
       {/* Hidden for now: Agent UI skills (`${basePath}/ui-skills`). */}
       <SectionLink href={`${basePath}/settings`} icon={Settings} title="Other settings" description="Other configurations of this business agent." />
       <SectionLink href={`${basePath}/test`} icon={FlaskConical} title="Test " description="Chat with this business agent before going live." />

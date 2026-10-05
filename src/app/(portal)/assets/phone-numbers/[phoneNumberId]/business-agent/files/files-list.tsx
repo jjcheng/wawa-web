@@ -82,9 +82,8 @@ function AddFileDialogBody({
       formData.append("file", selected, selected.name);
       // Serialize via Response to get the multipart boundary in the content type.
       const encoded = new Response(formData);
-      const response = await apiFetch<BusinessAgentFile | null>("v1/wa/business-agent/files", {
+      const response = await apiFetch<BusinessAgentFile | null>(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/files`, {
         method: "POST",
-        query: { phone_number_id: String(phoneNumberId) },
         rawBody: await encoded.arrayBuffer(),
         contentType: encoded.headers.get("content-type") ?? undefined,
       });
@@ -162,8 +161,7 @@ export function FilesList({ phoneNumberId, description }: { phoneNumberId: numbe
     async function loadFiles() {
       try {
         const response = await apiFetch<BusinessAgentFile[] | { files?: BusinessAgentFile[] | null } | null>(
-          "v1/wa/business-agent/files",
-          { query: { phone_number_id: String(phoneNumberId) } },
+          `v1/wa/phone-numbers/${phoneNumberId}/business-agent/files`,
         );
         if (active) setFiles(Array.isArray(response) ? response : response?.files ?? []);
       } catch (error) {
@@ -190,9 +188,8 @@ export function FilesList({ phoneNumberId, description }: { phoneNumberId: numbe
     if (!deleteTarget || deleteTarget.id == null || deleting) return;
     setDeleting(true);
     try {
-      await apiFetch(`v1/wa/business-agent/files/${encodeURIComponent(String(deleteTarget.id))}`, {
+      await apiFetch(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/files/${encodeURIComponent(String(deleteTarget.id))}`, {
         method: "DELETE",
-        query: { phone_number_id: String(phoneNumberId) },
       });
       setFiles((current) => current.filter((file) => file !== deleteTarget));
       setDeleteTarget(null);

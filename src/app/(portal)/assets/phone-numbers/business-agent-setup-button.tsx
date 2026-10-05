@@ -28,8 +28,7 @@ export function BusinessAgentSetupButton({
     setChecking(true);
     try {
       const eligibility = await apiFetch<{ is_eligible: boolean }>(
-        "v1/wa/business-agent/eligibility",
-        { query: { phone_number_id: String(phoneNumberId) } },
+        `/v1/wa/phone-numbers/${phoneNumberId}/business-agent/eligibility`,
       );
       if (eligibility.is_eligible) {
         router.push(`/assets/phone-numbers/${phoneNumberId}/business-agent`);

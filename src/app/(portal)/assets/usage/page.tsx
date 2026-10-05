@@ -150,13 +150,13 @@ export default async function UsagePage({ searchParams }: PageProps<"/assets/usa
       ) : null}
 
       {view === "overall" ? (
-        <Card className="mt-6 rounded-md py-0">
-          <CardContent className="overflow-x-auto p-0">
-            {accountPoints.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                Meta reported no message usage for this account in the selected period.
-              </p>
-            ) : (
+        accountPoints.length === 0 ? (
+          <p className="text-muted-foreground mt-6 text-sm">
+            Meta reported no message usage for this account in the selected period.
+          </p>
+        ) : (
+          <Card className="mt-6 rounded-md py-0">
+            <CardContent className="overflow-x-auto p-0">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -185,9 +185,9 @@ export default async function UsagePage({ searchParams }: PageProps<"/assets/usa
                   ))}
                 </TableBody>
               </Table>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )
       ) : null}
 
       {view === "phone" ? (

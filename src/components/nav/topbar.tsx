@@ -175,10 +175,9 @@ export function Topbar({ user }: { user: User }) {
     const on = phoneNumber.agent_enabled !== true;
     setPendingAgentIds((current) => new Set(current).add(phoneNumberId));
     try {
-      await apiFetch("v1/wa/business-agent/status", {
+      await apiFetch(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/status`, {
         method: "PATCH",
         query: {
-          phone_number_id: String(phoneNumberId),
           on: String(on),
         },
       });

@@ -48,6 +48,34 @@ new header, while keeping the older `x-user-access-token` name as a compatibilit
 - **Data fetching** — server components use `serverFetch()`; client components use
   `apiFetch()` through TanStack Query.
 
+### Business agent API routes
+
+Phone-number-scoped business agent requests use
+`/v1/wa/phone-numbers/{id}/business-agent/...`, with the local phone number ID in
+the path rather than a `phone_number_id` query or body field. This includes
+status, onboarding/offboarding, eligibility, business info, FAQs, files, websites,
+skills/common skills, UI skills, settings, schedules, test chat, and connectors.
+Account-wide budgets and customer-scoped pass-control retain
+`/v1/wa/business-agent/budgets` and `/v1/wa/business-agent/pass-control`.
+The API must expose the migrated routes before these screens can be used.
+
+### Business agent connectors
+
+On a phone number's **Business agent > Connectors** page, **Add connector** opens
+a dedicated page at `/assets/phone-numbers/{id}/business-agent/connectors/new`.
+It submits configuration to `POST /v1/wa/phone-numbers/{id}/business-agent/connectors`
+through the BFF proxy, then returns to the connector list. The form supports OAuth 2.0 client
+credentials, API key parameters in headers/query/body, or **None** authentication
+(which omits `auth_config` entirely), optional mTLS certificates,
+and optional user-authentication injection. IDs, sync/connection status, and
+certificate metadata are supplied by the API, not sent during creation or updates.
+Selecting a connector opens `/assets/phone-numbers/{id}/business-agent/connectors/{connector_id}/edit`,
+prefilled from the array returned by the connector list API. Saving uses
+`PUT /v1/wa/phone-numbers/{id}/business-agent/connectors/{connector_id}`.
+The connector table has no column header row and shows an empty-state row when empty.
+If the API omits credentials or certificates, re-enter the required values before
+saving. Failed requests preserve the form for correction or retry.
+
 ## Scripts
 
 | Command | Description |

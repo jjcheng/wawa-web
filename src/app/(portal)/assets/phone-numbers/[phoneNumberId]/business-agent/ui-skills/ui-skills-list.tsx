@@ -63,8 +63,6 @@ function formatLabel(value?: string | null) {
 
 type UiSkillValues = { title: string; component_type: string; status: string; instruction: string };
 
-const ENDPOINT = "v1/wa/business-agent/ui-skills";
-
 const TITLE_PATTERN = /^[a-z0-9](?:[a-z0-9_-]*[a-z0-9])?$/;
 
 function getTitleError(title: string) {
@@ -120,9 +118,8 @@ function UiSkillDialogBody({
     };
     setSubmitting(true);
     try {
-      const response = await apiFetch<Partial<BusinessAgentUiSkill> | null>(ENDPOINT, {
+      const response = await apiFetch<Partial<BusinessAgentUiSkill> | null>(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/ui-skills`, {
         method: skill ? "PUT" : "POST",
-        query: { phone_number_id: String(phoneNumberId) },
         body: skill ? { id: String(skill.id), ...payload } : payload,
       });
       onSaved(
@@ -241,9 +238,8 @@ export function UiSkillsList({ phoneNumberId, description }: { phoneNumberId: nu
     if (!deleteTarget?.id || deleting) return;
     setDeleting(true);
     try {
-      await apiFetch(`${ENDPOINT}/${encodeURIComponent(deleteTarget.id)}`, {
+      await apiFetch(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/ui-skills/${encodeURIComponent(deleteTarget.id)}`, {
         method: "DELETE",
-        query: { phone_number_id: String(phoneNumberId) },
       });
       setSkills((current) => current.filter((skill) => skill !== deleteTarget));
       setDeleteTarget(null);
@@ -260,9 +256,7 @@ export function UiSkillsList({ phoneNumberId, description }: { phoneNumberId: nu
 
     async function loadSkills() {
       try {
-        const response = await apiFetch<BusinessAgentUiSkill[] | null>(ENDPOINT, {
-          query: { phone_number_id: String(phoneNumberId) },
-        });
+        const response = await apiFetch<BusinessAgentUiSkill[] | null>(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/ui-skills`);
         if (active) setSkills(response ?? []);
       } catch (error) {
         if (active) setLoadError(toApiError(error).message);

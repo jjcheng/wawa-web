@@ -90,13 +90,11 @@ function normalizeUrl(value: string) {
 function WebsiteDialogBody({
   phoneNumberId,
   website,
-  onCancel,
   onSaved,
   onDelete,
 }: {
   phoneNumberId: number;
   website: BusinessAgentWebsite | null;
-  onCancel: () => void;
   onSaved: (website: BusinessAgentWebsite) => void;
   onDelete?: () => void;
 }) {
@@ -144,9 +142,8 @@ function WebsiteDialogBody({
     };
     setSubmitting(true);
     try {
-      const response = await apiFetch<BusinessAgentWebsite | null>("v1/wa/business-agent/websites", {
+      const response = await apiFetch<BusinessAgentWebsite | null>(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/websites`, {
         method: website ? "PUT" : "POST",
-        query: { phone_number_id: String(phoneNumberId) },
         body: payload,
       });
       onSaved({ ...website, ...payload, id: website?.id ?? payload.id, ...response });
@@ -220,9 +217,6 @@ function WebsiteDialogBody({
             Delete
           </Button>
         ) : null}
-        <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
-          Cancel
-        </Button>
         <Button type="button" onClick={() => void submit()} disabled={submitting}>
           {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
           {website ? "Update" : "Add"}
@@ -245,9 +239,8 @@ export function WebsitesList({ phoneNumberId, description }: { phoneNumberId: nu
     if (!deleteTarget || deleteTarget.id == null || deleting) return;
     setDeleting(true);
     try {
-      await apiFetch(`v1/wa/business-agent/websites/${encodeURIComponent(String(deleteTarget.id))}`, {
+      await apiFetch(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/websites/${encodeURIComponent(String(deleteTarget.id))}`, {
         method: "DELETE",
-        query: { phone_number_id: String(phoneNumberId) },
       });
       setWebsites((current) => current.filter((website) => website !== deleteTarget));
       setDeleteTarget(null);
@@ -273,8 +266,7 @@ export function WebsitesList({ phoneNumberId, description }: { phoneNumberId: nu
     const requestId = ++detailRequestRef.current;
     try {
       const response = await apiFetch<BusinessAgentWebsite | null>(
-        `v1/wa/business-agent/websites/${encodeURIComponent(String(website.id))}`,
-        { query: { phone_number_id: String(phoneNumberId) } },
+        `v1/wa/phone-numbers/${phoneNumberId}/business-agent/websites/${encodeURIComponent(String(website.id))}`,
       );
       if (requestId === detailRequestRef.current) setWebsiteDetail({ ...website, ...response });
     } catch (error) {
@@ -290,8 +282,7 @@ export function WebsitesList({ phoneNumberId, description }: { phoneNumberId: nu
     async function loadWebsites() {
       try {
         const response = await apiFetch<BusinessAgentWebsite[] | { websites?: BusinessAgentWebsite[] | null } | null>(
-          "v1/wa/business-agent/websites",
-          { query: { phone_number_id: String(phoneNumberId) } },
+          `v1/wa/phone-numbers/${phoneNumberId}/business-agent/websites`,
         );
         if (active) setWebsites(Array.isArray(response) ? response : response?.websites ?? []);
       } catch (error) {
@@ -448,7 +439,6 @@ export function WebsitesList({ phoneNumberId, description }: { phoneNumberId: nu
               key={editingWebsite ? String(editingWebsite.id ?? editingWebsite.url) : "new"}
               phoneNumberId={phoneNumberId}
               website={editingWebsite ? websiteDetail : null}
-              onCancel={() => setAddOpen(false)}
               onSaved={(website) => {
                 setWebsites((current) =>
                   editingWebsite

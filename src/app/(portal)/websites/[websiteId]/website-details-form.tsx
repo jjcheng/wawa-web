@@ -189,9 +189,7 @@ export function WebsiteDetailsForm({
     setSyncPending(true);
     setSyncError(null);
     try {
-      const profile = await apiFetch<BusinessProfile>("v1/wa/phone-numbers/business-profile", {
-        query: { phone_number_id: phoneNumberId },
-      });
+      const profile = await apiFetch<BusinessProfile>(`v1/wa/phone-numbers/${phoneNumberId}/business-profile`);
       setValues((current) => ({
         ...current,
         about: profile.about ?? "",
