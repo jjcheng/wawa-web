@@ -1,5 +1,13 @@
 import type { AuthType, ConnectorPayload, Parameters } from "./connector-types";
 
+export function normalizeConnectorName(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[\s-]/g, "_")
+    .replace(/[^a-z0-9_]/g, "")
+    .replace(/^\d+/, "");
+}
+
 export function buildConnectorPayload(
   form: FormData,
   {
@@ -15,15 +23,23 @@ export function buildConnectorPayload(
   },
 ): ConnectorPayload {
   const text = (name: string) => String(form.get(name) ?? "");
+  const name = normalizeConnectorName(text("name"));
+  if (!name) throw new Error("Connector name is required.");
+  const description = text("description").trim();
+  if (!description) throw new Error("Connector description is required.");
+  const protocol = text("connector_protocol").trim();
+  if (protocol !== "HTTP" && protocol !== "MCP") {
+    throw new Error("Connector protocol must be HTTP or MCP.");
+  }
   if (authType === "API_KEY" && !Object.values(parameters).some((rows) => rows.length > 0)) {
     throw new Error("Add at least one API key parameter.");
   }
 
   return {
-    name: text("name").trim(),
-    description: text("description").trim(),
+    name,
+    description,
     base_url: text("base_url").trim(),
-    connector_protocol: text("connector_protocol").trim(),
+    connector_protocol: protocol,
     auth_type: authType,
     ...(authType === "NONE"
       ? {}

@@ -20,9 +20,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import { toast } from "@/lib/toast";
-import { buildConnectorPayload } from "./connector-payload";
+import { buildConnectorPayload, normalizeConnectorName } from "./connector-payload";
 import type {
   AuthType,
+  ConnectorProtocol,
   BusinessAgentConnector,
   Parameter,
   ParameterLocation,
@@ -114,8 +115,12 @@ export function ConnectorForm({
   const apiKey = connector?.auth_config?.api_key;
   const injection = connector?.user_auth_injection_config;
   const [submitting, setSubmitting] = useState(false);
+  const [name, setName] = useState(() => normalizeConnectorName(connector?.name ?? ""));
+  const [protocol, setProtocol] = useState<ConnectorProtocol>(
+    connector?.connector_protocol ?? "HTTP",
+  );
   const [authType, setAuthType] = useState<AuthType>(
-    connector?.auth_type ?? "OAUTH2_CLIENT_CREDENTIALS",
+    connector?.auth_type ?? "API_KEY",
   );
   const [parameters, setParameters] = useState<Parameters>({
     headers: apiKey?.headers ?? [],
@@ -168,17 +173,27 @@ export function ConnectorForm({
               <Input
                 id="connector-name"
                 name="name"
-                defaultValue={connector?.name}
+                value={name}
+                onChange={(event) => setName(normalizeConnectorName(event.target.value))}
                 required
-                pattern=".*\S.*"
-                placeholder="My Shopify Connector"
+                pattern="[a-z_][a-z0-9_]*"
+                autoCapitalize="none"
+                spellCheck={false}
+                aria-describedby="connector-name-help"
+                placeholder="my_shopify_connector"
               />
+              <p id="connector-name-help" className="text-muted-foreground text-xs">
+                Use lowercase letters, numbers, or underscores. Names cannot start with
+                a number. Spaces and dashes become underscores; unsupported characters and leading numbers are
+                removed automatically.
+              </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="connector-description">Description (optional)</Label>
+              <Label htmlFor="connector-description">Description</Label>
               <Textarea
                 id="connector-description"
                 name="description"
+                required
                 defaultValue={connector?.description}
                 placeholder="Connects to Shopify for order management"
               />
@@ -197,13 +212,22 @@ export function ConnectorForm({
             </div>
             <div className="space-y-2">
               <Label htmlFor="connector-protocol">Connector protocol</Label>
-              <Input
-                id="connector-protocol"
+              <Select
                 name="connector_protocol"
-                defaultValue={connector?.connector_protocol ?? "HTTP"}
-                required
-                pattern=".*\S.*"
-              />
+                value={protocol}
+                disabled={submitting}
+                onValueChange={(value) => {
+                  if (value === "HTTP" || value === "MCP") setProtocol(value);
+                }}
+              >
+                <SelectTrigger id="connector-protocol" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="HTTP">HTTP</SelectItem>
+                  <SelectItem value="MCP">MCP</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="connector-auth-type">Authentication</Label>

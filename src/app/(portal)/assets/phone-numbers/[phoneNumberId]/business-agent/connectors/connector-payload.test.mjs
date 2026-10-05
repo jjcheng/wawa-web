@@ -3,12 +3,12 @@ import test from "node:test";
 
 import { isAllowedUpstream } from "../../../../../../../lib/api/allowlist.ts";
 import { getConnectorList } from "./connector-list.ts";
-import { buildConnectorPayload } from "./connector-payload.ts";
+import { buildConnectorPayload, normalizeConnectorName } from "./connector-payload.ts";
 
 function formData(values = {}) {
   const form = new FormData();
   for (const [key, value] of Object.entries({
-    name: " My Shopify Connector ",
+    name: "My Shopify Connector",
     description: " Order management ",
     base_url: "https://api.shopify.com/v1",
     connector_protocol: "HTTP",
@@ -29,6 +29,73 @@ const defaults = {
   mtls: false,
   userAuth: false,
 };
+
+test("connector description rejects empty, whitespace-only, and missing values", () => {
+  for (const description of ["", " \n\t "]) {
+    assert.throws(
+      () => buildConnectorPayload(formData({ description }), defaults),
+      /Connector description is required/,
+    );
+  }
+  const form = formData();
+  form.delete("description");
+  assert.throws(
+    () => buildConnectorPayload(form, defaults),
+    /Connector description is required/,
+  );
+});
+
+test("changing to MCP only changes the protocol in the submitted configuration", () => {
+  const http = buildConnectorPayload(formData(), defaults);
+  const mcp = buildConnectorPayload(formData({ connector_protocol: "MCP" }), defaults);
+  assert.deepEqual(mcp, { ...http, connector_protocol: "MCP" });
+});
+
+test("connector protocol accepts HTTP and MCP and omits MCP sync metadata", () => {
+  for (const protocol of ["HTTP", "MCP"]) {
+    const payload = buildConnectorPayload(
+      formData({ connector_protocol: protocol, mcp_tool_sync: '{"status":"SYNCED"}' }),
+      defaults,
+    );
+    assert.equal(payload.connector_protocol, protocol);
+    assert.equal(Object.hasOwn(payload, "mcp_tool_sync"), false);
+  }
+});
+
+test("connector protocol rejects missing or unsupported values", () => {
+  for (const protocol of ["", "http", "FTP", "OTHER"]) {
+    assert.throws(
+      () => buildConnectorPayload(formData({ connector_protocol: protocol }), defaults),
+      /Connector protocol must be HTTP or MCP/,
+    );
+  }
+});
+
+test("connector names are auto-corrected and normalized idempotently", () => {
+  for (const [input, expected] of [
+    ["My Shopify Connector", "my_shopify_connector"],
+    ["123Shopify!@.Connector", "shopifyconnector"],
+    ["!42ABC", "abc"],
+    ["_My-Connector_2", "_my_connector_2"],
+    ["-2Shopify", "_2shopify"],
+    ["123", ""],
+    ["!@#$", ""],
+    ["", ""],
+  ]) {
+    assert.equal(normalizeConnectorName(input), expected);
+    assert.equal(normalizeConnectorName(expected), expected);
+    if (expected) assert.match(expected, /^[a-z_][a-z0-9_]*$/);
+  }
+});
+
+test("payload normalizes names and rejects names emptied by correction", () => {
+  const payload = buildConnectorPayload(formData({ name: "42MY Connector!" }), defaults);
+  assert.equal(payload.name, "my_connector");
+  assert.throws(
+    () => buildConnectorPayload(formData({ name: "123!@" }), defaults),
+    /Connector name is required/,
+  );
+});
 
 test("connector list accepts arrays and wrapped connector arrays", () => {
   const connectors = [{ id: 1, name: "Shopify" }];
@@ -75,7 +142,7 @@ test("OAuth payload includes only configuration and preserves secret whitespace"
     defaults,
   );
   assert.deepEqual(payload, {
-    name: "My Shopify Connector",
+    name: "my_shopify_connector",
     description: "Order management",
     base_url: "https://api.shopify.com/v1",
     connector_protocol: "HTTP",

@@ -1,17 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Search, X } from "lucide-react";
+import { Loader2, Plug, Search, X } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from "@/components/ui/table";
+import { PageHeader } from "@/components/page-header";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import { getConnectorList, type ConnectorListResponse } from "./connector-list";
@@ -97,17 +92,19 @@ export function ConnectorsList({
 
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Connectors</h1>
-          <p className="text-muted-foreground mt-1 text-sm">{description}</p>
-        </div>
-        <Button asChild>
-          <Link href={`/assets/phone-numbers/${phoneNumberId}/business-agent/connectors/new`}>
-            Add connector
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="Connectors"
+        description={description}
+        action={
+          <Button asChild>
+            <Link
+              href={`/assets/phone-numbers/${phoneNumberId}/business-agent/connectors/new`}
+            >
+              Add connector
+            </Link>
+          </Button>
+        }
+      />
 
       {loading ? (
         <div className="flex justify-center py-10">
@@ -155,56 +152,74 @@ export function ConnectorsList({
               </div>
             </div>
 
-            <Table>
-              <TableBody>
-                {filteredConnectors.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="h-32 text-center">
-                      <div className="flex flex-col items-center gap-2">
-                        <p className="text-muted-foreground text-base">
-                          {search ? "No connectors found." : "No connectors yet."}
-                        </p>
-                        {search ? (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setSearch("")}
-                          >
-                            Reset filter
-                          </Button>
+            {filteredConnectors.length === 0 ? (
+              <div className="flex min-h-32 flex-col items-center justify-center gap-2 p-6 text-center">
+                <p className="text-muted-foreground text-base">
+                  {search ? "No connectors found." : "No connectors yet."}
+                </p>
+                {search ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSearch("")}
+                  >
+                    Reset filter
+                  </Button>
+                ) : null}
+              </div>
+            ) : (
+              filteredConnectors.map(({ connector, index }) => {
+                const status = connectorStatus(connector);
+                const errorMessage = connector.connection_status?.error_message;
+                const content = (
+                  <>
+                    <span className="bg-accent text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-full">
+                      <Plug aria-hidden="true" className="size-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="mb-1 truncate leading-5 font-medium">
+                        {connectorTitle(connector)}
+                      </p>
+                      <p className="text-muted-foreground truncate text-sm">
+                        {connectorSummary(connector)}
+                      </p>
+                      {status || errorMessage ? (
+                        <div className="mt-1 space-y-1 text-xs md:hidden">
+                          {status ? <p className="text-muted-foreground">{status}</p> : null}
+                          {errorMessage ? (
+                            <p className="text-destructive break-words">{errorMessage}</p>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                    {status || errorMessage ? (
+                      <div className="ml-auto hidden min-w-0 w-48 shrink-0 space-y-1 text-right text-sm md:block">
+                        {status ? <p className="text-muted-foreground">{status}</p> : null}
+                        {errorMessage ? (
+                          <p className="text-destructive text-xs break-words">{errorMessage}</p>
                         ) : null}
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    ) : null}
+                  </>
+                );
+                const className = "flex min-w-0 items-center gap-3 px-4 py-3";
+                return connector.id != null ? (
+                  <Link
+                    key={connector.id}
+                    href={`/assets/phone-numbers/${phoneNumberId}/business-agent/connectors/${encodeURIComponent(String(connector.id))}/edit`}
+                    className={`${className} cursor-pointer hover:bg-accent/60 transition-colors`}
+                    aria-label={`Edit ${connectorTitle(connector)}`}
+                  >
+                    {content}
+                  </Link>
                 ) : (
-                  filteredConnectors.map(({ connector, index }) => (
-                    <TableRow key={connector.id ?? `${connectorTitle(connector)}-${index}`}>
-                      <TableCell className="text-muted-foreground w-12 pl-4">{index + 1}</TableCell>
-                      <TableCell>
-                        {connector.id != null ? (
-                          <Link
-                            href={`/assets/phone-numbers/${phoneNumberId}/business-agent/connectors/${encodeURIComponent(String(connector.id))}/edit`}
-                            className="font-medium hover:underline"
-                            aria-label={`Edit ${connectorTitle(connector)}`}
-                          >
-                            {connectorTitle(connector)}
-                          </Link>
-                        ) : (
-                          connectorTitle(connector)
-                        )}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground max-w-md whitespace-normal">
-                        {connectorSummary(connector)}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground pr-4 text-xs tracking-wide uppercase">
-                        {connectorStatus(connector) || "-"}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  <div key={`${connectorTitle(connector)}-${index}`} className={className}>
+                    {content}
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       )}

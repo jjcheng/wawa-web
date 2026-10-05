@@ -1,4 +1,5 @@
 export type AuthType = "NONE" | "OAUTH2_CLIENT_CREDENTIALS" | "API_KEY";
+export type ConnectorProtocol = "HTTP" | "MCP";
 export type Parameter = { field_name: string; value: string; prefix: string };
 export type ParameterLocation = "headers" | "query_params" | "body_params";
 export type Parameters = Record<ParameterLocation, Parameter[]>;
@@ -7,7 +8,7 @@ export type ConnectorPayload = {
   name: string;
   description: string;
   base_url: string;
-  connector_protocol: string;
+  connector_protocol: ConnectorProtocol;
   auth_type: AuthType;
   auth_config?: {
     oauth2_client_credentials?: {
@@ -35,6 +36,13 @@ export type BusinessAgentConnector = Partial<Omit<ConnectorPayload, "mtls_config
   created_at?: string | number;
   url?: string;
   connection_status?: { status?: string; error_message?: string };
+  mcp_tool_sync?: {
+    status: string;
+    last_attempted_at: number;
+    last_successful_at: number;
+    fingerprint: string;
+    tool_count: number;
+  };
   mtls_config?: Partial<NonNullable<ConnectorPayload["mtls_config"]>> & {
     has_certificate?: boolean;
   };

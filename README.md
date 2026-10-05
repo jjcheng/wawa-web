@@ -64,15 +64,23 @@ The API must expose the migrated routes before these screens can be used.
 On a phone number's **Business agent > Connectors** page, **Add connector** opens
 a dedicated page at `/assets/phone-numbers/{id}/business-agent/connectors/new`.
 It submits configuration to `POST /v1/wa/phone-numbers/{id}/business-agent/connectors`
-through the BFF proxy, then returns to the connector list. The form supports OAuth 2.0 client
-credentials, API key parameters in headers/query/body, or **None** authentication
+through the BFF proxy, then returns to the connector list.
+Connector names are automatically lowercased, spaces and dashes become underscores, unsupported
+characters are removed, and leading digits are stripped. Names allow only letters,
+numbers, and underscores and cannot start with a number.
+The form supports OAuth 2.0 client credentials, API key parameters in headers/query/body, or **None** authentication
 (which omits `auth_config` entirely), optional mTLS certificates,
 and optional user-authentication injection. IDs, sync/connection status, and
 certificate metadata are supplied by the API, not sent during creation or updates.
+Description is required. Connector protocol is limited to HTTP or MCP; changing
+protocol does not change any other fields or show additional panels.
+`mcp_tool_sync` is not included in submitted configuration.
 Selecting a connector opens `/assets/phone-numbers/{id}/business-agent/connectors/{connector_id}/edit`,
 prefilled from the array returned by the connector list API. Saving uses
 `PUT /v1/wa/phone-numbers/{id}/business-agent/connectors/{connector_id}`.
-The connector table has no column header row and shows an empty-state row when empty.
+The connector list uses the same searchable, divided-row layout as Phone numbers,
+with an icon, name, description, and connection status, and no column headers.
+An empty state is shown when no connectors match.
 If the API omits credentials or certificates, re-enter the required values before
 saving. Failed requests preserve the form for correction or retry.
 
