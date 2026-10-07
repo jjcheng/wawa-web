@@ -50,10 +50,12 @@ function formatLabel(value?: string | null) {
 type SkillValues = { title: string; description: string; skill: string };
 
 const TITLE_PATTERN = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
+const MAX_TITLE_LENGTH = 64;
 
 function getTitleError(title: string) {
   const value = title.trim();
   if (!value) return "Title is required.";
+  if (value.length > MAX_TITLE_LENGTH) return "Title must be at most 64 characters.";
   if (!TITLE_PATTERN.test(value)) {
     return "Use only lowercase letters, numbers, and hyphens, and don't start or end with a hyphen.";
   }
@@ -130,11 +132,15 @@ function SkillDialogBody({
             autoFocus
             placeholder="greeting-skill"
             value={values.title}
+            maxLength={MAX_TITLE_LENGTH}
             aria-invalid={titleError ? true : undefined}
             onChange={(event) =>
-              update("title", event.target.value.replace(/\s/g, "-").replace(/[^A-Za-z0-9_-]/g, "").toLowerCase())
+              update("title", event.target.value.replace(/\s/g, "-").replace(/[^A-Za-z0-9-]/g, "").toLowerCase().slice(0, MAX_TITLE_LENGTH))
             }
           />
+          <span className="text-xs font-normal">
+            At most 64 characters. Use only lowercase letters, numbers, and hyphens. Must not start or end with a hyphen.
+          </span>
           {titleError ? <span className="text-destructive text-xs font-normal">{titleError}</span> : null}
         </label>
         <label className="grid gap-1.5 text-sm font-medium">
@@ -157,6 +163,9 @@ function SkillDialogBody({
             aria-invalid={skillError || undefined}
             onChange={(event) => update("skill", event.target.value)}
           />
+          <span className="font-normal text-xs">
+            If your skill contains some fixed keyword like: When an appointment is requested by the user, always reply exact text: &quot;Thank you for making the appointment...&quot;, you can add the text in Keywords page, whenever a message contains this keyword, you will be notified.
+          </span>
           {skillError ? <span className="text-destructive text-xs font-normal">Skill is required.</span> : null}
         </label>
       </div>
@@ -269,7 +278,7 @@ export function SkillsList({ phoneNumberId, description }: { phoneNumberId: numb
                 setEditingSkill(null);
                 setAddOpen(true);
               }}>
-                Add skill
+                Create skill
               </DropdownMenuItem>
               <DropdownMenuItem disabled={addingCommonSkills} onSelect={() => void addCommonSkills()}>
                 Add common skills
@@ -363,7 +372,7 @@ export function SkillsList({ phoneNumberId, description }: { phoneNumberId: numb
       )}
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-[90vw]">
+        <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-2xl">
           {addOpen ? (
             <SkillDialogBody
               key={editingSkill?.id ?? "new"}

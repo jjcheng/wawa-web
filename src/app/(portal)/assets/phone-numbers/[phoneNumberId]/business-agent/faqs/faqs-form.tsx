@@ -110,7 +110,6 @@ function FaqDialog({
           <FaqDialogBody
             key={faq?.key ?? "new"}
             faq={faq}
-            onCancel={() => onOpenChange(false)}
             onSubmit={onSubmit}
             onDelete={faq?.id != null ? () => onDelete(faq) : undefined}
           />
@@ -122,12 +121,10 @@ function FaqDialog({
 
 function FaqDialogBody({
   faq,
-  onCancel,
   onSubmit,
   onDelete,
 }: {
   faq: FaqRow | null;
-  onCancel: () => void;
   onSubmit: (values: FaqValues) => Promise<void>;
   onDelete?: () => void;
 }) {
@@ -159,7 +156,7 @@ function FaqDialogBody({
         <DialogTitle>{faq ? "Edit FAQ" : "Add FAQ"}</DialogTitle>
         <DialogDescription>The agent uses this answer when customers ask a similar question.</DialogDescription>
       </DialogHeader>
-      <div className="-mx-1 grid min-h-0 flex-1 content-start gap-4 overflow-y-auto px-1 pb-1">
+      <div className="-mx-1 grid min-h-0 flex-1 content-start gap-4 !overflow-y-auto px-1 pb-1">
         <label className="grid gap-1.5 text-sm font-medium">
           Question
           <Input
@@ -189,9 +186,6 @@ function FaqDialogBody({
             Delete
           </Button>
         ) : null}
-        <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
-          Cancel
-        </Button>
         <Button type="button" onClick={() => void submit()} disabled={submitting}>
           {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
           {faq ? "Update" : "Add"}

@@ -297,9 +297,6 @@ export function TestChat({ phoneNumberId, displayNumber }: { phoneNumberId: numb
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setConfirmClear(false)}>
-              Cancel
-            </Button>
             <Button type="button" variant="destructive" onClick={clearChat}>
               Clear chat
             </Button>

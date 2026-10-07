@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Info, Loader2, Plus, Trash2 } from "lucide-react";
+import { Info, Loader2, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import { toast } from "@/lib/toast";
@@ -78,15 +79,24 @@ export function BusinessAgentSettings() {
   }, []);
 
   function updateBudget(index: number, updates: Partial<Budget>) {
-    setBudgets((current) => current.map((budget, itemIndex) =>
-      itemIndex === index ? { ...budget, ...updates } : budget,
-    ));
+    setBudgets((current) =>
+      current.map((budget, itemIndex) =>
+        itemIndex === index ? { ...budget, ...updates } : budget,
+      ),
+    );
   }
 
   async function saveBudgets() {
-    if (saving || budgets.some((budget) =>
-      budget.max_budget === "" || !Number.isInteger(budget.max_budget) || budget.max_budget < 1,
-    )) return;
+    if (
+      saving ||
+      budgets.some(
+        (budget) =>
+          budget.max_budget === "" ||
+          !Number.isInteger(budget.max_budget) ||
+          budget.max_budget < 1,
+      )
+    )
+      return;
 
     setSaving(true);
     try {
@@ -110,105 +120,154 @@ export function BusinessAgentSettings() {
   }
 
   return (
-    <section className="mt-5 space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-muted-foreground text-sm">
-          Add budgets to limit usage.
-        </p>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled={loading || Boolean(error)}
-          onClick={() => setBudgets((current) => [
-            ...current,
-            { max_budget: "", unit_type: "token", time_window: "one_day" },
-          ])}
-        >
-          Add budget
-        </Button>
-      </div>
+    <Tabs defaultValue="budgets" className="mt-5 w-full">
+      <TabsList aria-label="Business agent settings">
+        <TabsTrigger value="budgets">Budgets</TabsTrigger>
+      </TabsList>
 
-      {loading ? (
-        <div className="flex justify-center py-8"><Loader2 className="size-5 animate-spin" /></div>
-      ) : error ? (
-        <p className="text-destructive text-sm">{error}</p>
-      ) : budgets.length === 0 ? (
-        <p className="text-muted-foreground rounded-md border p-4 text-sm">No budgets configured.</p>
-      ) : (
-        <div className="divide-border divide-y rounded-md border">
-          {budgets.map((budget, index) => (
-            <div key={budget.budget_id ?? `new-${index}`} className="grid gap-3 p-3 sm:grid-cols-[minmax(8rem,1fr)_minmax(8rem,1fr)_minmax(9rem,1fr)_auto] sm:items-end">
-              <label className="grid gap-1.5 text-sm">
-                <span className="flex items-center gap-1">
-                  Max usage
-                  <BudgetFieldHelp text="The maximum allowed usage in the specified window." />
-                </span>
-                <Input
-                  type="number"
-                  value={budget.max_budget}
-                  onChange={(event) => updateBudget(index, {
-                    max_budget: event.target.value === "" ? "" : Number(event.target.value),
-                  })}
-                />
-              </label>
-              <label className="grid gap-1.5 text-sm">
-                <span className="flex items-center gap-1">
-                  Unit
-                  <BudgetFieldHelp text="Token usage across the Business Portfolio or AI agent turns within each conversation." />
-                </span>
-                <Select value={budget.unit_type} onValueChange={(value) => updateBudget(index, { unit_type: value as UnitType })}>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="token">Tokens</SelectItem>
-                    <SelectItem value="ai_turn">AI turns</SelectItem>
-                  </SelectContent>
-                </Select>
-              </label>
-              <label className="grid gap-1.5 text-sm">
-                <span className="flex items-center gap-1">
-                  Time window
-                  <BudgetFieldHelp text="The period the usage is totalled over. Windows roll rather than resetting on a fixed calendar boundary, and are measured in the timezone of the WhatsApp Business Account." />
-                </span>
-                <Select value={budget.time_window} onValueChange={(value) => updateBudget(index, { time_window: value as TimeWindow })}>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="one_day">1 day</SelectItem>
-                    <SelectItem value="seven_days">7 days</SelectItem>
-                    <SelectItem value="fourteen_days">14 days</SelectItem>
-                    <SelectItem value="thirty_days">30 days</SelectItem>
-                  </SelectContent>
-                </Select>
-              </label>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Remove budget"
-                title="Remove budget"
-                onClick={() => setBudgets((current) => current.filter((_, itemIndex) => itemIndex !== index))}
-              >
-                <Trash2 />
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {!loading && !error ? (
-        <div className="flex justify-start">
+      <TabsContent value="budgets" className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-muted-foreground text-sm">Add budgets to limit usage.</p>
           <Button
             type="button"
-            onClick={() => void saveBudgets()}
-            disabled={saving || budgets.some((budget) =>
-              budget.max_budget === "" || !Number.isInteger(budget.max_budget) || budget.max_budget < 1,
-            )}
+            size="sm"
+            variant="outline"
+            disabled={loading || Boolean(error)}
+            onClick={() =>
+              setBudgets((current) => [
+                ...current,
+                { max_budget: "", unit_type: "token", time_window: "one_day" },
+              ])
+            }
           >
-            {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-            Save
+            Add budget
           </Button>
         </div>
-      ) : null}
-    </section>
+
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="size-5 animate-spin" />
+          </div>
+        ) : error ? (
+          <p className="text-destructive text-sm">{error}</p>
+        ) : budgets.length === 0 ? (
+          <p className="text-muted-foreground rounded-md border p-4 text-sm">
+            No budgets configured.
+          </p>
+        ) : (
+          <div className="divide-border divide-y rounded-md border">
+            {budgets.map((budget, index) => (
+              <div
+                key={budget.budget_id ?? `new-${index}`}
+                className="grid gap-3 p-3 sm:grid-cols-[minmax(8rem,1fr)_minmax(8rem,1fr)_minmax(9rem,1fr)_auto] sm:items-start"
+              >
+                <label className="grid gap-1.5 text-sm">
+                  <span className="flex items-center gap-1">
+                    Max usage
+                    <BudgetFieldHelp text="The maximum allowed usage in the specified window. Each round of dialog could take average 20,000 - 25,000 tokens. Meta charges USD2.0 per million tokens, exclude message delivery charges will be included." />
+                  </span>
+                  <Input
+                    type="number"
+                    value={budget.max_budget}
+                    onChange={(event) =>
+                      updateBudget(index, {
+                        max_budget:
+                          event.target.value === "" ? "" : Number(event.target.value),
+                      })
+                    }
+                  />
+                  {budget.unit_type === "token" &&
+                  budget.max_budget !== "" &&
+                  Number.isFinite(budget.max_budget) &&
+                  budget.max_budget >= 0 ? (
+                    <span className="text-muted-foreground text-xs">
+                      Max price: ~ USD {((budget.max_budget / 1_000_000) * 2).toFixed(2)}
+                    </span>
+                  ) : null}
+                </label>
+                <label className="grid gap-1.5 text-sm">
+                  <span className="flex items-center gap-1">
+                    Unit
+                    <BudgetFieldHelp text="Token usage across the Business Portfolio or AI agent turns within each conversation." />
+                  </span>
+                  <Select
+                    value={budget.unit_type}
+                    onValueChange={(value) =>
+                      updateBudget(index, { unit_type: value as UnitType })
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="token">Tokens</SelectItem>
+                      <SelectItem value="ai_turn">AI turns</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </label>
+                <label className="grid gap-1.5 text-sm">
+                  <span className="flex items-center gap-1">
+                    Time window
+                    <BudgetFieldHelp text="The period the usage is totalled over. Windows roll rather than resetting on a fixed calendar boundary, and are measured in the timezone of the WhatsApp Business Account." />
+                  </span>
+                  <Select
+                    value={budget.time_window}
+                    onValueChange={(value) =>
+                      updateBudget(index, { time_window: value as TimeWindow })
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="one_day">1 day</SelectItem>
+                      <SelectItem value="seven_days">7 days</SelectItem>
+                      <SelectItem value="fourteen_days">14 days</SelectItem>
+                      <SelectItem value="thirty_days">30 days</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Remove budget"
+                  title="Remove budget"
+                  className="sm:mt-8"
+                  onClick={() =>
+                    setBudgets((current) =>
+                      current.filter((_, itemIndex) => itemIndex !== index),
+                    )
+                  }
+                >
+                  <Trash2 />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!loading && !error ? (
+          <div className="flex justify-start">
+            <Button
+              type="button"
+              onClick={() => void saveBudgets()}
+              disabled={
+                saving ||
+                budgets.some(
+                  (budget) =>
+                    budget.max_budget === "" ||
+                    !Number.isInteger(budget.max_budget) ||
+                    budget.max_budget < 1,
+                )
+              }
+            >
+              {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+              Save
+            </Button>
+          </div>
+        ) : null}
+      </TabsContent>
+    </Tabs>
   );
 }

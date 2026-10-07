@@ -19,7 +19,7 @@ export default async function BusinessAgentPage() {
     <>
       <BackBar href="/assets" />
       <PageHeader
-        title="Business agent"
+        title="Business agent settings"
         titleAction={<BusinessAgentInfoButton />}
         description="Business agent settings for business account. To manage each phone number, go to Phone numbers page."
       />
