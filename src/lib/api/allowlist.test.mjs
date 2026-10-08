@@ -12,6 +12,68 @@ test("phone number usage requires a numeric ID and GET", () => {
   assert.equal(isAllowedUpstream("POST", path), false);
 });
 
+test("AI agent profile routes allow collection GET/POST and ID-scoped PUT/DELETE only", () => {
+  assert.equal(isAllowedUpstream("GET", "v1/ai-agent/profiles"), true);
+  assert.equal(isAllowedUpstream("GET", "v1/ai-agent/profiles/42"), true);
+  assert.equal(isAllowedUpstream("POST", "v1/ai-agent/profiles"), true);
+  assert.equal(isAllowedUpstream("PUT", "v1/ai-agent/profiles/42"), true);
+  assert.equal(isAllowedUpstream("DELETE", "v1/ai-agent/profiles/42"), true);
+  assert.equal(isAllowedUpstream("PATCH", "v1/ai-agent/profiles/42/business-info"), true);
+  assert.equal(isAllowedUpstream("PUT", "v1/ai-agent/profiles/not-an-id"), false);
+  assert.equal(isAllowedUpstream("DELETE", "v1/ai-agent/profiles/not-an-id"), false);
+  assert.equal(isAllowedUpstream("GET", "v1/ai-agent/profiles/not-an-id"), false);
+  assert.equal(isAllowedUpstream("PATCH", "v1/ai-agent/profiles/not-an-id/business-info"), false);
+});
+
+test("AI agent budgets require PATCH, a numeric profile ID, and an exact path", () => {
+  assert.equal(isAllowedUpstream("PATCH", "v1/ai-agent/profiles/42/budgets"), true);
+  assert.equal(isAllowedUpstream("PUT", "v1/ai-agent/profiles/42/budgets"), false);
+  assert.equal(isAllowedUpstream("GET", "v1/ai-agent/profiles/42/budgets"), false);
+  assert.equal(isAllowedUpstream("PATCH", "v1/ai-agent/profiles/invalid/budgets"), false);
+  assert.equal(isAllowedUpstream("PATCH", "v1/ai-agent/profiles/42/budgets/extra"), false);
+});
+
+test("AI agent skills require GET/POST, a numeric profile ID, and an exact path", () => {
+  assert.equal(isAllowedUpstream("GET", "v1/ai-agent/profiles/42/skills"), true);
+  assert.equal(isAllowedUpstream("POST", "v1/ai-agent/profiles/42/skills"), true);
+  assert.equal(isAllowedUpstream("PUT", "v1/ai-agent/profiles/42/skills"), false);
+  assert.equal(isAllowedUpstream("POST", "v1/ai-agent/profiles/invalid/skills"), false);
+  assert.equal(isAllowedUpstream("POST", "v1/ai-agent/profiles/42/skills/extra"), false);
+  assert.equal(isAllowedUpstream("GET", "v1/ai-agent/profiles/invalid/skills"), false);
+  assert.equal(isAllowedUpstream("GET", "v1/ai-agent/profiles/42/skills/extra"), false);
+});
+
+test("skill updates and deletion require numeric profile and skill IDs", () => {
+  for (const method of ["PUT", "DELETE"]) {
+    assert.equal(isAllowedUpstream(method, "v1/ai-agent/profiles/42/skills/7"), true);
+    assert.equal(isAllowedUpstream(method, "v1/ai-agent/profiles/invalid/skills/7"), false);
+    assert.equal(isAllowedUpstream(method, "v1/ai-agent/profiles/42/skills/invalid"), false);
+    assert.equal(isAllowedUpstream(method, "v1/ai-agent/profiles/42/skills/7/extra"), false);
+  }
+  assert.equal(isAllowedUpstream("POST", "v1/ai-agent/profiles/42/skills/7"), false);
+});
+
+test("adding common profile skills requires POST and an exact numeric profile path", () => {
+  assert.equal(isAllowedUpstream("POST", "v1/ai-agent/profiles/42/common-skills"), true);
+  assert.equal(isAllowedUpstream("GET", "v1/ai-agent/profiles/42/common-skills"), false);
+  assert.equal(isAllowedUpstream("POST", "v1/ai-agent/profiles/invalid/common-skills"), false);
+  assert.equal(isAllowedUpstream("POST", "v1/ai-agent/profiles/42/common-skills/extra"), false);
+});
+
+test("profile other settings require PATCH and an exact numeric profile path", () => {
+  assert.equal(isAllowedUpstream("PATCH", "v1/ai-agent/profiles/42/other-settings"), true);
+  assert.equal(isAllowedUpstream("PUT", "v1/ai-agent/profiles/42/other-settings"), false);
+  assert.equal(isAllowedUpstream("PATCH", "v1/ai-agent/profiles/invalid/other-settings"), false);
+  assert.equal(isAllowedUpstream("PATCH", "v1/ai-agent/profiles/42/other-settings/extra"), false);
+});
+
+test("phone number agent profile updates require PATCH and an exact numeric ID", () => {
+  assert.equal(isAllowedUpstream("PATCH", "v1/wa/phone-numbers/42/agent-profile"), true);
+  assert.equal(isAllowedUpstream("PUT", "v1/wa/phone-numbers/42/agent-profile"), false);
+  assert.equal(isAllowedUpstream("PATCH", "v1/wa/phone-numbers/invalid/agent-profile"), false);
+  assert.equal(isAllowedUpstream("PATCH", "v1/wa/phone-numbers/42/agent-profile/extra"), false);
+});
+
 test("phone number business profile requires a numeric ID and GET", () => {
   const path = "v1/wa/phone-numbers/40/business-profile";
   assert.equal(isAllowedUpstream("GET", path), true);

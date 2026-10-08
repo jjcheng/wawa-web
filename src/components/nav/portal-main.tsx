@@ -3,12 +3,12 @@
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { MAIN_ROUTES } from "@/components/nav/main-routes";
+import { isMainRoute } from "@/components/nav/main-routes";
 import { cn } from "@/lib/utils";
 
 export function PortalMain({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const showTabBar = MAIN_ROUTES.includes(pathname);
+  const showTabBar = isMainRoute(pathname);
 
   return (
     <main

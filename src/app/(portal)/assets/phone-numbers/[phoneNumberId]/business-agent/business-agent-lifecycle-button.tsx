@@ -22,8 +22,8 @@ import { BusinessAgentInfoButton } from "./business-agent-info-button";
 
 const ONBOARDING_BENEFITS = [
   { icon: BookOpen, title: "Knowledge", text: "Teach the agent your business info, FAQs, files, and websites." },
-  { icon: ListChecks, title: "Instructions", text: "Define agent skills and interactive messages." },
-  { icon: Handshake, title: "Handoff & Followup", text: "Hand over to a human and follow up when customers go quiet." },
+  { icon: ListChecks, title: "Instructions", text: "Define how agent responds to your customers." },
+  { icon: Handshake, title: "Handover & Followup", text: "Hand over to a human and follow up when customers go quiet." },
   { icon: FlaskConical, title: "Test", text: "Try the agent before your customers do." },
 ];
 

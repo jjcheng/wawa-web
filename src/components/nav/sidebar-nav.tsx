@@ -131,6 +131,32 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
         );
       })}
 
+      {BUSINESS_AGENT_ENABLED && user.type === "MASTER" ? (
+        <Link
+          href="/ai-agent"
+          onClick={onNavigate}
+          aria-current={pathname === "/ai-agent" ? "page" : undefined}
+          className={cn(
+            "group relative flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-base font-medium transition-colors duration-200",
+            (pathname === "/ai-agent" || pathname.startsWith("/ai-agent/"))
+              ? "bg-transparent font-medium text-blue-600 dark:text-blue-400"
+              : "text-foreground hover:text-blue-600 dark:hover:text-blue-400",
+          )}
+        >
+          <Bot
+            width={16}
+            height={16}
+            className={cn(
+              "transition-colors",
+              (pathname === "/ai-agent" || pathname.startsWith("/ai-agent/"))
+                ? "text-blue-600 dark:text-blue-400"
+                : "text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400",
+            )}
+          />
+          AI
+        </Link>
+      ) : null}
+
       <div>
         <button
           type="button"

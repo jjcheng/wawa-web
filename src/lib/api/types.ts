@@ -157,6 +157,7 @@ export type PhoneNumber = DtoBase & {
   waba_id?: string;
   meta_phone_number_id?: string;
   meta_agent_id?: string;
+  agent_profile_id?: number | null;
   agent_enabled?: boolean;
   phone_number?: string;
   name?: string;

@@ -183,8 +183,7 @@ export function ConnectorForm({
                 placeholder="my_shopify_connector"
               />
               <p id="connector-name-help" className="text-muted-foreground text-xs">
-                Use lowercase letters, numbers, or underscores. Names cannot start with
-                a number. Spaces and dashes become underscores; unsupported characters and leading numbers are
+                Use lowercase letters, numbers, or underscores. Names cannot start with a number. Spaces and dashes become underscores; unsupported characters and leading numbers are
                 removed automatically.
               </p>
             </div>

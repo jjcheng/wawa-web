@@ -11,7 +11,7 @@ import type { PhoneNumber } from "@/lib/api/types";
 import { BUSINESS_AGENT_ENABLED } from "@/lib/feature-flags";
 import { formatPhoneNumber } from "@/lib/format";
 import { AssignedUsersSummary } from "./assigned-users-button";
-import { BusinessAgentSetupButton } from "./business-agent-setup-button";
+import { AgentProfilePopover } from "./agent-profile-popover";
 import { PhoneNumberStatusFilter } from "./phone-number-status-filter";
 import { PhoneNumberViewButton } from "./phone-number-view-button";
 
@@ -147,9 +147,9 @@ export function PhoneNumberList({
               </div>
               {BUSINESS_AGENT_ENABLED ? (
                 <div className="flex w-14 shrink-0 items-center justify-center">
-                  <BusinessAgentSetupButton
+                  <AgentProfilePopover
                     phoneNumberId={number.id}
-                    iconOnly
+                    agentProfileId={number.agent_profile_id}
                     agentEnabled={number.agent_enabled}
                     phoneNumberName={number.name || number.display_phone_number || number.phone_number || "this number"}
                   />

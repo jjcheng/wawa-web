@@ -1,11 +1,12 @@
 "use client";
 
-import { LayoutGrid, ListChecks, MessageCircle, Store } from "lucide-react";
+import { Bot, LayoutGrid, ListChecks, MessageCircle, Store } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { MAIN_ROUTES } from "@/components/nav/main-routes";
+import { isMainRoute } from "@/components/nav/main-routes";
 import type { User } from "@/lib/api/types";
+import { BUSINESS_AGENT_ENABLED } from "@/lib/feature-flags";
 import { useUnreadNotificationsCount } from "@/lib/unread-notifications-store";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +14,7 @@ const TABS = [
   { href: "/chats", label: "Chats", icon: MessageCircle },
   { href: "/tasks", label: "Tasks", icon: ListChecks },
   { href: "/catalogs", label: "Catalogs", icon: Store },
+  { href: "/ai-agent", label: "AI", icon: Bot },
   { href: "/assets", label: "Assets", icon: LayoutGrid },
 ] as const;
 
@@ -20,7 +22,7 @@ export function BottomTabBar({ userType }: { userType: User["type"] }) {
   const pathname = usePathname();
   const unreadNotificationsCount = useUnreadNotificationsCount();
 
-  if (!MAIN_ROUTES.includes(pathname)) return null;
+  if (!isMainRoute(pathname)) return null;
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:hidden">
@@ -28,7 +30,11 @@ export function BottomTabBar({ userType }: { userType: User["type"] }) {
         aria-label="Primary"
         className="glass-surface-float glass-surface-float-subtle flex w-full max-w-md items-stretch justify-around gap-1 rounded-full p-1.5"
       >
-        {TABS.filter((tab) => tab.href !== "/catalogs" || userType === "MASTER").map((tab) => {
+        {TABS.filter(
+          (tab) =>
+            (tab.href !== "/catalogs" || userType === "MASTER") &&
+            (tab.href !== "/ai-agent" || (BUSINESS_AGENT_ENABLED && userType === "MASTER")),
+        ).map((tab) => {
           const active = pathname === tab.href;
           return (
             <Link

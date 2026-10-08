@@ -32,22 +32,34 @@ export function NavigationProgressProvider({ children }: { children: ReactNode }
   const query = searchParams.toString();
   const currentRoute = query ? `${pathname}?${query}` : pathname;
 
+  const stopNavigationProgress = useCallback(() => {
+    window.clearTimeout(timeoutRef.current);
+    setPending(false);
+    setPendingRoute(null);
+  }, []);
+
   const startNavigationProgress = useCallback((route: string) => {
     if (route === currentRoute) return;
     setPending(true);
     setPendingRoute(route);
     window.clearTimeout(timeoutRef.current);
-    timeoutRef.current = window.setTimeout(() => setPending(false), 10_000);
-  }, [currentRoute]);
+    timeoutRef.current = window.setTimeout(stopNavigationProgress, 10_000);
+  }, [currentRoute, stopNavigationProgress]);
 
   useEffect(() => {
     window.clearTimeout(timeoutRef.current);
-    const resetId = window.setTimeout(() => {
-      setPending(false);
-      setPendingRoute(null);
-    }, 0);
+    const resetId = window.setTimeout(stopNavigationProgress, 0);
     return () => window.clearTimeout(resetId);
-  }, [currentRoute]);
+  }, [currentRoute, stopNavigationProgress]);
+
+  useEffect(() => {
+    window.addEventListener("popstate", stopNavigationProgress);
+    window.addEventListener("pageshow", stopNavigationProgress);
+    return () => {
+      window.removeEventListener("popstate", stopNavigationProgress);
+      window.removeEventListener("pageshow", stopNavigationProgress);
+    };
+  }, [stopNavigationProgress]);
 
   useEffect(() => {
     function handleClick(event: MouseEvent) {
