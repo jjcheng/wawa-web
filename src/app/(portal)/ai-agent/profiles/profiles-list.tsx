@@ -125,7 +125,7 @@ export function AgentProfilesList({ initialProfiles }: { initialProfiles: AgentP
           <DialogHeader>
             <DialogTitle>Create agent profile</DialogTitle>
             <DialogDescription>
-              Add a name and description for your AI agent profile.
+              Add a name and an optional description for your AI agent profile.
             </DialogDescription>
           </DialogHeader>
           <AgentProfileForm onSaved={handleSaved} />

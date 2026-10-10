@@ -26,14 +26,15 @@ export function CreateAgentProfileButton() {
         <DialogHeader>
           <DialogTitle>Create agent profile</DialogTitle>
           <DialogDescription>
-            Add a name and description for your AI agent profile.
+            Add a name and an optional description for your AI agent profile.
           </DialogDescription>
         </DialogHeader>
         <AgentProfileForm
-          onSaved={() => {
+          onSaved={(createdProfileId) => {
             setOpen(false);
-            router.push("/ai-agent");
-            router.refresh();
+            if (createdProfileId !== undefined) {
+              router.push(`/ai-agent/profiles/${createdProfileId}`);
+            }
           }}
         />
       </DialogContent>

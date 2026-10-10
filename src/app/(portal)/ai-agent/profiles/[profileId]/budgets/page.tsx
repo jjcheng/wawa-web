@@ -14,6 +14,7 @@ export const metadata: Metadata = { title: "Budgets" };
 
 type AgentProfileWithBudgets = Budgets & {
   name: string;
+  utc_offset_hours?: number;
 };
 
 export default async function AgentBudgetsPage({
@@ -58,15 +59,14 @@ export default async function AgentBudgetsPage({
       />
       <BudgetsForm
         profileId={id}
+        initialUtcOffsetHours={profile.utc_offset_hours}
         initialBudgets={{
           budget_daily: profile.budget_daily,
           budget_7_days: profile.budget_7_days,
-          budget_30_days: profile.budget_30_days,
         }}
         initialValues={{
           budget_daily: formatBudget(profile.budget_daily),
           budget_7_days: formatBudget(profile.budget_7_days),
-          budget_30_days: formatBudget(profile.budget_30_days),
         }}
       />
     </>

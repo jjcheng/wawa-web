@@ -12,7 +12,6 @@ import {
   MessageSquareText,
   Megaphone,
   Phone,
-  Store,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -20,7 +19,6 @@ import { usePathname } from "next/navigation";
 import { useState, type SubmitEvent } from "react";
 
 import { Brand } from "@/components/brand";
-import { BusinessAgentLink } from "@/components/business-agent-link";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -43,12 +41,10 @@ import { cn } from "@/lib/utils";
 const MAIN_ITEMS = [
   { href: "/chats", label: "Chats", icon: MessageCircle },
   { href: "/tasks", label: "Tasks", icon: ListChecks },
-  { href: "/catalogs", label: "Catalogs", icon: Store, masterOnly: true },
 ];
 
 const ASSET_ITEMS = [
   { href: "/assets/phone-numbers", label: "Phone numbers", icon: Phone },
-  ...(BUSINESS_AGENT_ENABLED ? [{ href: "/assets/business-agent", label: "Business agent", icon: Bot, masterOnly: true }] : []),
   { href: "/assets/users", label: "Users", icon: UsersRound, masterOnly: true },
   { href: "/assets/templates", label: "Templates", icon: FileText },
   { href: "/assets/broadcasts", label: "Broadcasts", icon: Megaphone },
@@ -91,13 +87,16 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
     !item.masterOnly || user.type === "MASTER",
   );
   const assetsActive =
-    pathname.startsWith("/websites/") || assetItems.some((item) => pathname.startsWith(item.href));
+    pathname.startsWith("/websites/") ||
+    pathname.startsWith("/assets/business-agent") ||
+    /^\/assets\/phone-numbers\/\d+\/business-agent(?:\/|$)/.test(pathname) ||
+    assetItems.some((item) => pathname.startsWith(item.href));
   const [assetsOpen, setAssetsOpen] = useState(assetsActive);
 
   return (
     <nav className="flex h-svh flex-col gap-1 overflow-y-auto px-3 py-4">
       <Brand className="mb-5 px-2" />
-      {MAIN_ITEMS.filter((item) => !item.masterOnly || user.type === "MASTER").map((item) => {
+      {MAIN_ITEMS.map((item) => {
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (
           <Link
@@ -197,16 +196,20 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
           <div className="overflow-hidden">
             <div className="border-border/70 mt-1.5 ml-5 space-y-1 border-l pl-3">
               {assetItems.map((item) => {
-                const active = pathname === item.href || pathname.startsWith(`${item.href}/`) ||
-                  (item.href === "/assets/business-agent" && user.type === "OPERATOR" && /^\/assets\/phone-numbers\/\d+\/business-agent(?:\/|$)/.test(pathname));
-                const className = cn(
+                const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={onNavigate}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
                       "group relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[0.9375rem] font-medium transition-colors duration-200",
                       active
                         ? "bg-transparent font-medium text-blue-600 dark:text-blue-400"
                         : "text-foreground hover:text-blue-600 dark:hover:text-blue-400",
-                );
-                const content = (
-                  <>
+                    )}
+                  >
                     <item.icon
                       width={15}
                       height={15}
@@ -216,22 +219,6 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
                       )}
                     />
                     {item.label}
-                  </>
-                );
-                return item.href === "/assets/business-agent" ? (
-                  <BusinessAgentLink
-                    key={item.href}
-                    userType={user.type}
-                    phoneNumbers={user.assigned_phone_numbers ?? []}
-                    onNavigate={onNavigate}
-                    aria-current={active ? "page" : undefined}
-                    className={className}
-                  >
-                    {content}
-                  </BusinessAgentLink>
-                ) : (
-                  <Link key={item.href} href={item.href} onClick={onNavigate} aria-current={active ? "page" : undefined} className={className}>
-                    {content}
                   </Link>
                 );
               })}

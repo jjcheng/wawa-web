@@ -109,14 +109,16 @@ export function AgentProfileForm({
         <p className="text-muted-foreground text-right text-xs">{name.length}/50</p>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="agent-profile-description">Description</Label>
+        <Label htmlFor="agent-profile-description">
+          {profile ? "Description" : "Description (optional)"}
+        </Label>
         <Textarea
           id="agent-profile-description"
           rows={3}
           value={description}
           onChange={(event) => setDescription(event.target.value)}
           placeholder="Describe this agent profile"
-          required
+          required={Boolean(profile)}
         />
       </div>
       {error ? <p className="text-destructive text-sm" role="alert">{error}</p> : null}

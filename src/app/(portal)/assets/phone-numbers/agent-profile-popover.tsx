@@ -5,6 +5,13 @@ import { Bot, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -17,6 +24,7 @@ import {
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import { toast } from "@/lib/toast";
+import { AgentProfileForm } from "../../ai-agent/profiles/profile-form";
 
 type AgentProfileOption = { id: number; name: string };
 
@@ -34,6 +42,7 @@ export function AgentProfilePopover({
   const id = useId();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [createProfileOpen, setCreateProfileOpen] = useState(false);
   const [profiles, setProfiles] = useState<AgentProfileOption[] | null>(null);
   const [selectedProfile, setSelectedProfile] = useState(
     agentProfileId ? String(agentProfileId) : "",
@@ -150,12 +159,21 @@ export function AgentProfilePopover({
               ))}
             </SelectContent>
           </Select>
-          {loading ? (
-            <Loader2 aria-label="Loading agent profiles" className="size-4 animate-spin" />
-          ) : null}
           {profiles?.length === 0 ? (
             <p className="text-muted-foreground text-sm">No agent profiles available.</p>
           ) : null}
+          <Button
+            type="button"
+            variant="info"
+            size="sm"
+            onClick={() => setCreateProfileOpen(true)}
+          >
+            Create AI agent profile
+          </Button>
+          {loading ? (
+            <Loader2 aria-label="Loading agent profiles" className="size-4 animate-spin" />
+          ) : null}
+          
           {error ? (
             <div className="space-y-2">
               <p className="text-destructive text-sm" role="alert">
@@ -207,6 +225,25 @@ export function AgentProfilePopover({
           {saving ? "Saving..." : "Save"}
         </Button>
       </PopoverContent>
+      <Dialog open={createProfileOpen} onOpenChange={setCreateProfileOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create agent profile</DialogTitle>
+            <DialogDescription>
+              Add a name and an optional description for your AI agent profile.
+            </DialogDescription>
+          </DialogHeader>
+          <AgentProfileForm
+            onSaved={(createdProfileId) => {
+              setCreateProfileOpen(false);
+              if (createdProfileId !== undefined) {
+                setOpen(false);
+                router.push(`/ai-agent/profiles/${createdProfileId}`);
+              }
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </Popover>
   );
 }

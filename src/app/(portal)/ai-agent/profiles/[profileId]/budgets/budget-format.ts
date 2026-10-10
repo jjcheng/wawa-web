@@ -25,7 +25,6 @@ export function parseBudget(value: string): number {
 export function validateBudgets(budgets: {
   budget_daily: number;
   budget_7_days: number;
-  budget_30_days: number;
 }): { field: string; message: string }[] {
   const errors: { field: string; message: string }[] = [];
   for (const [field, amount] of Object.entries(budgets)) {
@@ -37,12 +36,6 @@ export function validateBudgets(budgets: {
     errors.push({
       field: "budget_7_days",
       message: "7-day budget must be equal to or greater than the daily budget.",
-    });
-  }
-  if (budgets.budget_30_days < budgets.budget_7_days) {
-    errors.push({
-      field: "budget_30_days",
-      message: "30-day budget must be equal to or greater than the 7-day budget.",
     });
   }
   return errors;

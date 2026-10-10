@@ -44,22 +44,21 @@ test("invalid budget amounts are not displayed as zero or NaN", () => {
 
 test("positive budgets can be equal or increase with each time window", () => {
   for (const amounts of [
-    [10, 10, 10],
-    [10, 20, 30],
-    [1, 2, 3],
+    [10, 10],
+    [10, 20],
+    [1, 2],
   ]) {
-    const [budget_daily, budget_7_days, budget_30_days] = amounts;
-    assert.deepEqual(validateBudgets({ budget_daily, budget_7_days, budget_30_days }), []);
+    const [budget_daily, budget_7_days] = amounts;
+    assert.deepEqual(validateBudgets({ budget_daily, budget_7_days }), []);
   }
 });
 
 test("all budget fields reject zero and negative amounts", () => {
-  for (const field of ["budget_daily", "budget_7_days", "budget_30_days"]) {
+  for (const field of ["budget_daily", "budget_7_days"]) {
     for (const amount of [0, -10]) {
       const errors = validateBudgets({
         budget_daily: 1000,
         budget_7_days: 2000,
-        budget_30_days: 3000,
         [field]: amount,
       });
       assert.ok(
@@ -69,14 +68,13 @@ test("all budget fields reject zero and negative amounts", () => {
   }
 });
 
-test("decreasing budgets report both time window errors", () => {
+test("7-day budgets below the daily budget report a validation error", () => {
   const errors = validateBudgets({
     budget_daily: 3000,
     budget_7_days: 2000,
-    budget_30_days: 1000,
   });
   assert.deepEqual(
     errors.map((error) => error.field),
-    ["budget_7_days", "budget_30_days"],
+    ["budget_7_days"],
   );
 });

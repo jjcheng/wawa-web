@@ -54,7 +54,7 @@ export function OtherSettingsForm({
   }
 
   return (
-    <form className="space-y-4" onSubmit={(event) => void save(event)}>
+    <form className="w-full max-w-xl space-y-4" onSubmit={(event) => void save(event)}>
       <div className="bg-card space-y-4 rounded-xl border p-4">
         <div className="space-y-2">
           <Label htmlFor="handover-message">Handover message</Label>
@@ -82,26 +82,26 @@ export function OtherSettingsForm({
             aria-invalid={inputErrors.some((item) => item.field === "never_say_phrases")}
             onChange={(event) => setNeverSayPhrases(event.target.value)}
           />
-          <p id="never-say-phrases-note" className="text-muted-foreground text-sm">
+          <p id="never-say-phrases-note" className="text-muted-foreground text-xs">
             Enter one phrase per line. Blank lines are ignored.
           </p>
         </div>
+        {error || inputErrors.length > 0 ? (
+          <div className="text-destructive space-y-1 text-sm" role="alert">
+            {error ? <p className="whitespace-pre-line">{error}</p> : null}
+            {inputErrors.map((item, index) => (
+              <p key={`${item.field}-${index}`} className="whitespace-pre-line">
+                {item.field ? `${item.field}: ` : ""}
+                {item.message}
+              </p>
+            ))}
+          </div>
+        ) : null}
+        <Button type="submit" disabled={saving}>
+          {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+          {saving ? "Saving..." : "Save"}
+        </Button>
       </div>
-      {error || inputErrors.length > 0 ? (
-        <div className="text-destructive space-y-1 text-sm" role="alert">
-          {error ? <p className="whitespace-pre-line">{error}</p> : null}
-          {inputErrors.map((item, index) => (
-            <p key={`${item.field}-${index}`} className="whitespace-pre-line">
-              {item.field ? `${item.field}: ` : ""}
-              {item.message}
-            </p>
-          ))}
-        </div>
-      ) : null}
-      <Button type="submit" disabled={saving}>
-        {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-        {saving ? "Saving..." : "Save"}
-      </Button>
     </form>
   );
 }

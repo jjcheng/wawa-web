@@ -68,8 +68,8 @@ export function BusinessInfoForm({
     const titles = new Set<string>();
     for (const item of items) {
       const title = item.title.trim();
-      if (!title) {
-        setError("Every item must have a title.");
+      if (!title || !item.description.trim()) {
+        setError("Every item must have a title and description.");
         return;
       }
       if (title.length > TITLE_MAX_LENGTH) {
@@ -130,81 +130,95 @@ export function BusinessInfoForm({
         description={`Business information for ${profileName || "this agent profile"}.`}
       />
 
-      {items.map((item) => (
-        <section key={item.rowId} className="bg-card space-y-3 rounded-lg border p-4">
-          <div className="flex items-center justify-between gap-3">
-            <Label htmlFor={`business-info-title-${item.rowId}`}>Title</Label>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label={`Remove ${item.title || "business info"} item`}
-              onClick={() =>
-                setItems((current) => current.filter((row) => row.rowId !== item.rowId))
-              }
-            >
-              <Trash2 />
-            </Button>
-          </div>
-          <Input
-            id={`business-info-title-${item.rowId}`}
-            value={item.title}
-            maxLength={TITLE_MAX_LENGTH}
-            aria-invalid={duplicateTitles.has(item.title.trim())}
-            aria-describedby={
-              duplicateTitles.has(item.title.trim())
-                ? `business-info-title-error-${item.rowId}`
-                : undefined
-            }
-            onChange={(event) => updateItem(item.rowId, { title: event.target.value })}
-            placeholder="Enter title. e.g. business profile, operating hour, address, payment methods, return policy"
-          />
-          {duplicateTitles.has(item.title.trim()) ? (
-            <p
-              id={`business-info-title-error-${item.rowId}`}
-              className="text-destructive text-sm"
-              role="alert"
-            >
-              This title is used more than once. Titles must be unique.
-            </p>
-          ) : null}
-          <p className="text-muted-foreground text-right text-xs">
-            {item.title.length}/{TITLE_MAX_LENGTH}
-          </p>
-          <Label htmlFor={`business-info-description-${item.rowId}`}>Description</Label>
-          <Textarea
-            id={`business-info-description-${item.rowId}`}
-            rows={3}
-            value={item.description}
-            maxLength={DESCRIPTION_MAX_LENGTH}
-            onChange={(event) => updateItem(item.rowId, { description: event.target.value })}
-            placeholder="Enter description"
-          />
-          <p className="text-muted-foreground text-right text-xs">
-            {item.description.length}/{DESCRIPTION_MAX_LENGTH}
-          </p>
-        </section>
-      ))}
-
-      {error || inputErrors.length > 0 ? (
-        <div className="text-destructive space-y-1 text-sm" role="alert">
-          {error ? <p className="whitespace-pre-line">{error}</p> : null}
-          {inputErrors.map((inputError, index) => (
-            <p key={`${inputError.field}-${index}`} className="whitespace-pre-line">
-              {inputError.field ? `${inputError.field}: ` : ""}
-              {inputError.message}
-            </p>
-          ))}
-        </div>
-      ) : null}
-      <Button
-        type="button"
-        onClick={() => void saveBusinessInfo()}
-        disabled={saving || duplicateTitles.size > 0}
+      <form
+        className="w-full space-y-4 lg:w-[768px] lg:min-w-[768px]"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void saveBusinessInfo();
+        }}
       >
-        {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-        {saving ? "Saving..." : "Save"}
-      </Button>
+        {items.map((item, index) => (
+          <section key={item.rowId} className="bg-card space-y-3 rounded-lg border p-4">
+            <div className="flex items-center justify-between gap-3">
+              <Label htmlFor={`business-info-title-${item.rowId}`}>Title</Label>
+              {index > 0 ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Remove ${item.title || "business info"} item`}
+                  onClick={() =>
+                    setItems((current) =>
+                      current.filter(
+                        (row, rowIndex) => rowIndex === 0 || row.rowId !== item.rowId,
+                      ),
+                    )
+                  }
+                >
+                  <Trash2 />
+                </Button>
+              ) : null}
+            </div>
+            <Input
+              id={`business-info-title-${item.rowId}`}
+              value={item.title}
+              maxLength={TITLE_MAX_LENGTH}
+              required
+              aria-invalid={duplicateTitles.has(item.title.trim())}
+              aria-describedby={
+                duplicateTitles.has(item.title.trim())
+                  ? `business-info-title-error-${item.rowId}`
+                  : undefined
+              }
+              onChange={(event) => updateItem(item.rowId, { title: event.target.value })}
+              placeholder="Enter title. e.g. business profile, operating hour, address, payment methods, return policy"
+            />
+            {duplicateTitles.has(item.title.trim()) ? (
+              <p
+                id={`business-info-title-error-${item.rowId}`}
+                className="text-destructive text-sm"
+                role="alert"
+              >
+                This title is used more than once. Titles must be unique.
+              </p>
+            ) : null}
+            <p className="text-muted-foreground text-right text-xs">
+              {item.title.length}/{TITLE_MAX_LENGTH}
+            </p>
+            <Label htmlFor={`business-info-description-${item.rowId}`}>Description</Label>
+            <Textarea
+              id={`business-info-description-${item.rowId}`}
+              rows={3}
+              value={item.description}
+              maxLength={DESCRIPTION_MAX_LENGTH}
+              required
+              onChange={(event) => updateItem(item.rowId, { description: event.target.value })}
+              placeholder="Enter description"
+            />
+            <p className="text-muted-foreground text-right text-xs">
+              {item.description.length}/{DESCRIPTION_MAX_LENGTH}
+            </p>
+          </section>
+        ))}
+
+        <div className="space-y-4">
+          {error || inputErrors.length > 0 ? (
+            <div className="text-destructive space-y-1 text-sm" role="alert">
+              {error ? <p className="whitespace-pre-line">{error}</p> : null}
+              {inputErrors.map((inputError, index) => (
+                <p key={`${inputError.field}-${index}`} className="whitespace-pre-line">
+                  {inputError.field ? `${inputError.field}: ` : ""}
+                  {inputError.message}
+                </p>
+              ))}
+            </div>
+          ) : null}
+          <Button type="submit" disabled={saving || duplicateTitles.size > 0}>
+            {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+            {saving ? "Saving..." : "Save"}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }

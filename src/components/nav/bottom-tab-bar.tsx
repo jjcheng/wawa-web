@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, LayoutGrid, ListChecks, MessageCircle, Store } from "lucide-react";
+import { Bot, LayoutGrid, ListChecks, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -13,7 +13,6 @@ import { cn } from "@/lib/utils";
 const TABS = [
   { href: "/chats", label: "Chats", icon: MessageCircle },
   { href: "/tasks", label: "Tasks", icon: ListChecks },
-  { href: "/catalogs", label: "Catalogs", icon: Store },
   { href: "/ai-agent", label: "AI", icon: Bot },
   { href: "/assets", label: "Assets", icon: LayoutGrid },
 ] as const;
@@ -32,7 +31,6 @@ export function BottomTabBar({ userType }: { userType: User["type"] }) {
       >
         {TABS.filter(
           (tab) =>
-            (tab.href !== "/catalogs" || userType === "MASTER") &&
             (tab.href !== "/ai-agent" || (BUSINESS_AGENT_ENABLED && userType === "MASTER")),
         ).map((tab) => {
           const active = pathname === tab.href;
