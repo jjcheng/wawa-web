@@ -59,6 +59,37 @@ Account-wide budgets and customer-scoped pass-control retain
 `/v1/wa/business-agent/budgets` and `/v1/wa/business-agent/pass-control`.
 The API must expose the migrated routes before these screens can be used.
 
+### AI agent websites
+
+An AI agent profile's **Websites** page lists the websites returned by
+`GET /v1/ai-agent/profiles/{id}/websites`, including added times and optional
+excluded patterns. Select a website to open **Crawled pages** at
+`/ai-agent/profiles/{profileId}/websites/{websiteId}`.
+Empty arrays and missing or null website data show the empty-list state.
+**Add website** opens a dialog and submits `profile_id`, `url`, and optional
+`include_patterns` and `exclude_patterns` to `POST /v1/ai-agent/profiles/{id}/websites`.
+Enter one pattern per line; blank lines are ignored and empty pattern fields
+are omitted. Use full URLs in Include patterns to crawl only those specific
+pages. Successful additions refresh the list; failed
+requests keep the dialog input and show the API errors for retry.
+This page shows the crawl status, finished/total counts, and each page's title,
+URL, and status from `GET /v1/ai-agent/websites/{id}?cursor=0&limit=30`.
+Statuses are plain text labels, with `Error` shown in the danger text color.
+Selecting a crawled-page row opens a dialog
+rendering that record's `markdown` with `react-markdown` and `remark-gfm`,
+including tables, task lists, and strikethrough. Raw HTML is disabled and the
+renderer filters unsafe link protocols. The content scrolls within the dialog,
+with a Close button in the footer. Records without content show an explicit
+empty state.
+The title row shows **Cancel** while the website status is `RUNNING`, using
+`POST /v1/ai-agent/websites/{id}/cancel` and refreshing crawl progress on success.
+Otherwise it shows **Delete**, with a confirmation dialog. Deletion uses
+`DELETE /v1/ai-agent/websites/{id}` and returns to the profile's website list.
+When the response cursor is positive, **Load more** appends the next batch using
+that cursor and the same limit. Failed requests preserve the list for retry.
+These pages follow the same master-user access and feature gate as the other
+AI agent profile pages.
+
 ### Business agent connectors
 
 On a phone number's **Business agent > Connectors** page, **Add connector** opens

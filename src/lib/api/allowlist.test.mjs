@@ -53,6 +53,36 @@ test("skill updates and deletion require numeric profile and skill IDs", () => {
   assert.equal(isAllowedUpstream("POST", "v1/ai-agent/profiles/42/skills/7"), false);
 });
 
+test("AI agent website reads require GET, numeric IDs, and exact paths", () => {
+  for (const path of ["v1/ai-agent/profiles/42/websites", "v1/ai-agent/websites/7"]) {
+    assert.equal(isAllowedUpstream("GET", path), true);
+    for (const method of ["PUT", "PATCH"]) {
+      assert.equal(isAllowedUpstream(method, path), false);
+    }
+    assert.equal(isAllowedUpstream("GET", `${path}/extra`), false);
+    assert.equal(isAllowedUpstream("GET", path.replace(/\d+/, "invalid")), false);
+  }
+  assert.equal(isAllowedUpstream("DELETE", "v1/ai-agent/profiles/42/websites"), false);
+});
+
+test("website cancellation and deletion require exact numeric website paths", () => {
+  for (const [method, suffix] of [["POST", "/cancel"], ["DELETE", ""]]) {
+    assert.equal(isAllowedUpstream(method, `v1/ai-agent/websites/7${suffix}`), true);
+    assert.equal(isAllowedUpstream(method, `v1/ai-agent/websites/invalid${suffix}`), false);
+    assert.equal(isAllowedUpstream(method, `v1/ai-agent/websites/7${suffix}/extra`), false);
+  }
+  for (const method of ["GET", "DELETE", "PUT", "PATCH"]) {
+    assert.equal(isAllowedUpstream(method, "v1/ai-agent/websites/7/cancel"), false);
+  }
+});
+
+test("adding AI agent websites requires POST and an exact numeric profile path", () => {
+  assert.equal(isAllowedUpstream("POST", "v1/ai-agent/profiles/42/websites"), true);
+  assert.equal(isAllowedUpstream("POST", "v1/ai-agent/profiles/invalid/websites"), false);
+  assert.equal(isAllowedUpstream("POST", "v1/ai-agent/profiles/42/websites/extra"), false);
+  assert.equal(isAllowedUpstream("POST", "v1/ai-agent/websites/7"), false);
+});
+
 test("adding common profile skills requires POST and an exact numeric profile path", () => {
   assert.equal(isAllowedUpstream("POST", "v1/ai-agent/profiles/42/common-skills"), true);
   assert.equal(isAllowedUpstream("GET", "v1/ai-agent/profiles/42/common-skills"), false);
