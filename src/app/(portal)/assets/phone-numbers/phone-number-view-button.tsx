@@ -48,6 +48,7 @@ export function PhoneNumberViewButton({
   addedAt,
   isMaster = false,
   trigger,
+  onStatusLoaded,
 }: {
   id: number;
   name: string;
@@ -55,6 +56,7 @@ export function PhoneNumberViewButton({
   addedAt?: string;
   isMaster?: boolean;
   trigger?: React.ReactNode;
+  onStatusLoaded?: (status: PhoneNumber["status"]) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [details, setDetails] = useState<(PhoneNumber & Record<string, unknown>) | null>(null);
@@ -73,7 +75,9 @@ export function PhoneNumberViewButton({
     setError(null);
     setDetails(null);
     try {
-      setDetails(await apiFetch<PhoneNumber & Record<string, unknown>>(`v1/wa/phone-numbers/${id}`));
+      const phoneNumber = await apiFetch<PhoneNumber & Record<string, unknown>>(`v1/wa/phone-numbers/${id}`);
+      setDetails(phoneNumber);
+      onStatusLoaded?.(phoneNumber.status);
     } catch (requestError) {
       setError(toApiError(requestError).message);
     } finally {

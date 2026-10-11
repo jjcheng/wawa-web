@@ -145,16 +145,22 @@ export function EmbeddedSignupFlow({
     ) {
       return;
     }
+    console.log(session);
 
     isSubmittingRef.current = true;
     setSignupStarted(true);
-    mutation.mutate({
+    const payload = {
       type: "WA_EMBEDDED_SIGNUP",
       event: "FINISH",
       data: session,
       authorization_code: authorizationCode,
       redirect_uri: redirectUri,
-    });
+    };
+    // console.log("[embedded-signup] payload", {
+    //   ...payload,
+    //   authorization_code: "[REDACTED]",
+    // });
+    mutation.mutate(payload);
   }, [mutation]);
 
   useEffect(() => {
@@ -174,8 +180,8 @@ export function EmbeddedSignupFlow({
           (data as SignupMessage).type === "WA_EMBEDDED_SIGNUP"
         ) {
           const signupMessage = data as SignupMessage;
-          if (signupMessage.event === "FINISH") {
-            // console.log("Session Logging Response:", signupMessage);
+          if (signupMessage.event === "FINISH" || signupMessage.event == "FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING") {
+            //console.log("Session Logging Response:", signupMessage);
             sessionRef.current = signupMessage.data ?? signupMessage;
             submitSignup();
           } else if (signupMessage.event === "CANCEL") {

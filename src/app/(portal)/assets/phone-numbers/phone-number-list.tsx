@@ -25,6 +25,10 @@ export function PhoneNumberList({
   isMaster: boolean;
 }) {
   const [search, setSearch] = useState("");
+  const [latestStatuses, setLatestStatuses] = useState<
+    Record<number, { source: PhoneNumber; status: string | undefined }>
+  >({});
+
   const filteredPhoneNumbers = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return phoneNumbers;
@@ -98,9 +102,11 @@ export function PhoneNumberList({
         </div>
       ) : (
         filteredPhoneNumbers.map((number) => {
-          const connected = number.status?.toUpperCase() === "CONNECTED";
-          const displayStatus = number.status
-            ? number.status.charAt(0) + number.status.slice(1).toLowerCase()
+          const latestStatus = latestStatuses[number.id];
+          const currentStatus = latestStatus?.source === number ? latestStatus.status : number.status;
+          const connected = currentStatus?.toUpperCase() === "CONNECTED";
+          const displayStatus = currentStatus
+            ? currentStatus.charAt(0) + currentStatus.slice(1).toLowerCase()
             : "Unknown status";
 
           return (
@@ -109,7 +115,13 @@ export function PhoneNumberList({
                 <PhoneNumberViewButton
                   id={number.id}
                   name={number.name || "This number"}
-                  status={number.status}
+                  status={currentStatus}
+                  onStatusLoaded={(updatedStatus) =>
+                    setLatestStatuses((current) => ({
+                      ...current,
+                      [number.id]: { source: number, status: updatedStatus },
+                    }))
+                  }
                   addedAt={number.added_at}
                   isMaster={isMaster}
                   trigger={
