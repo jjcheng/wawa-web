@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { LoadMoreButton } from "@/components/load-more-button";
 import { CustomerDetailsButton } from "@/components/customer-details-button";
+import { CUSTOMER_UPDATED_EVENT } from "@/components/customer-updates";
 import { RelativeTime } from "@/components/relative-time";
 import { useNavigationProgress } from "@/components/nav/navigation-progress";
 import { apiFetch } from "@/lib/api/client";
@@ -28,6 +29,7 @@ import { toast } from "@/lib/toast";
 import { AddCustomerMenu } from "../customers/add-customer-menu";
 import { ChatsFilterPopover } from "./chats-filter-popover";
 import { ChatsSearchInput } from "./chats-search-input";
+import { applyCustomerNotification, type CustomerNotification } from "./customer-notifications";
 
 export function ChatsView({
   customers: initialCustomers,
@@ -63,6 +65,9 @@ export function ChatsView({
   const searchParams = useSearchParams();
   const filterKey = JSON.stringify({ name, selectedTags, status });
   const previousSelection = useRef({ selectedCustomerId, filterKey });
+  const notifications = useRef(new Map<number, CustomerNotification>());
+  const notificationOrder = useRef(0);
+  const listGeneration = useRef(0);
   const filteredCustomers = useMemo(() => {
     const query = nameInput.trim().toLowerCase();
     return customers.filter((customer) =>
@@ -89,6 +94,8 @@ export function ChatsView({
       return;
     }
     queueMicrotask(() => {
+      listGeneration.current += 1;
+      notifications.current.clear();
       setCustomers(initialCustomers);
       setCurrentPage(1);
       setNumberOfPages(initialNumberOfPages);
@@ -96,27 +103,58 @@ export function ChatsView({
     });
   }, [initialCustomers, initialNumberOfPages, selectedCustomerId, filterKey]);
 
-  const handleIncomingMessage = useEffectEvent((message: IncomingChatMessage) => {
-    setCustomers((current) => {
-      if (!current.some((row) => row.id === message.customer_id)) return current;
-      return current.map((row) =>
-        row.id === message.customer_id
-          ? { ...row, latest_message_content: message.notification_content }
-          : row,
-      );
+  const handleIncomingMessage = useEffectEvent(async (
+    message: IncomingChatMessage,
+    signal: AbortSignal,
+    pendingCustomers: Set<number>,
+  ) => {
+    const generation = listGeneration.current;
+    notifications.current.set(message.customer_id, {
+      message,
+      receivedAt: new Date().toISOString(),
+      order: ++notificationOrder.current,
     });
-    if (String(message.customer_id) !== selectedCustomerId) {
+    setCustomers((current) => applyCustomerNotification(
+      current, message.customer_id, notifications.current, status, selectedTags,
+    ));
+    if (!message.sending && String(message.customer_id) !== selectedCustomerId) {
       setUnreadIds((current) => new Set(current).add(message.customer_id));
+    }
+    if (customers.some((row) => row.id === message.customer_id) ||
+      pendingCustomers.has(message.customer_id)) return;
+    pendingCustomers.add(message.customer_id);
+    try {
+      const customer = await apiFetch<Customer>(`v1/customers/${message.customer_id}`, {
+        query: { id: String(message.customer_id) },
+        signal,
+      });
+      if (signal.aborted || generation !== listGeneration.current) return;
+      setCustomers((current) => applyCustomerNotification(
+        current, message.customer_id, notifications.current, status, selectedTags, customer,
+      ));
+    } catch (error) {
+      if (!signal.aborted && generation === listGeneration.current) {
+        toast.error(toApiError(error).message);
+      }
+    } finally {
+      pendingCustomers.delete(message.customer_id);
     }
   });
 
   useEffect(() => {
+    const controller = new AbortController();
+    const pendingCustomers = new Set<number>();
     function onIncomingMessage(event: Event) {
-      handleIncomingMessage((event as CustomEvent<IncomingChatMessage>).detail);
+      void handleIncomingMessage(
+        (event as CustomEvent<IncomingChatMessage>).detail, controller.signal, pendingCustomers,
+      );
     }
     window.addEventListener(PHONE_NUMBER_MESSAGE_EVENT, onIncomingMessage);
-    return () => window.removeEventListener(PHONE_NUMBER_MESSAGE_EVENT, onIncomingMessage);
-  }, []);
+    return () => {
+      controller.abort();
+      window.removeEventListener(PHONE_NUMBER_MESSAGE_EVENT, onIncomingMessage);
+    };
+  }, [filterKey]);
 
   function clearUnread(customerId: number) {
     setUnreadIds((current) => {
@@ -126,6 +164,20 @@ export function ChatsView({
       return next;
     });
   }
+
+  useEffect(() => {
+    function onCustomerUpdated(event: Event) {
+      const updated = (event as CustomEvent<Customer>).detail;
+      setCustomers((current) => current.flatMap((customer) => {
+        if (customer.id !== updated.id) return [customer];
+        if (updated.status !== status ||
+          !selectedTags.every((tag) => updated.tags?.includes(tag))) return [];
+        return [{ ...customer, ...updated }];
+      }));
+    }
+    window.addEventListener(CUSTOMER_UPDATED_EVENT, onCustomerUpdated);
+    return () => window.removeEventListener(CUSTOMER_UPDATED_EVENT, onCustomerUpdated);
+  }, [status, selectedTags]);
 
   async function loadMore() {
     if (isLoadingMore || currentPage >= numberOfPages) return;
@@ -140,7 +192,10 @@ export function ChatsView({
           tags: selectedTags,
         },
       });
-      setCustomers((current) => [...current, ...result.items]);
+      setCustomers((current) => {
+        const existingIds = new Set(current.map((customer) => customer.id));
+        return [...current, ...result.items.filter((customer) => !existingIds.has(customer.id))];
+      });
       setCurrentPage(nextPage);
       setNumberOfPages(result.number_of_pages ?? numberOfPages);
     } catch (error) {
@@ -250,7 +305,6 @@ export function ChatsView({
                   <CustomerDetailsButton
                     customer={singleSelectedCustomer}
                     startInEditMode
-                    onUpdated={() => router.refresh()}
                     onDeleted={() => router.refresh()}
                     trigger={
                       <Button

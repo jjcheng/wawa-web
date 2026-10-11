@@ -21,7 +21,7 @@ export function CustomerAgentEnabledField({
 
   return (
     <div className="flex items-center gap-2">
-      <Label htmlFor={id} className="min-w-0 flex-1">Business Agent enabled</Label>
+      <Label htmlFor={id} className="min-w-0 flex-1">AI Agent enabled</Label>
       <button
         id={id}
         name="agent_enabled"
@@ -47,7 +47,7 @@ export function CustomerAgentEnabledField({
           </Button>
         </PopoverTrigger>
         <PopoverContent align="end" className="w-72 text-sm leading-5">
-          Enable Meta Business Agent (Meta AI) to automatically engage your new or existing customer at specific days and hours.
+          Enable AI to handle this customer. You also need to enable AI agent for the assigned phone number in order for AI to work.
         </PopoverContent>
       </Popover>
     </div>

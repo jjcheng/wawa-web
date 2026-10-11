@@ -1,28 +1,19 @@
-import { Info, Pencil } from "lucide-react";
-
 import { ApiErrorToast } from "@/components/api-error-toast";
 import { BackBar } from "@/components/back-bar";
 import { Chat } from "@/components/chat";
 import { ChatViewport } from "@/components/chat-viewport";
 import { ChatComposeProvider, type ChatMessage } from "@/components/chat-compose-context";
 import { ChatMessageComposer } from "@/components/chat-message-composer";
-import { CustomerAgentSwitch } from "@/components/customer-agent-switch";
-import { CustomerDetailsButton } from "@/components/customer-details-button";
-import { CustomerInfo } from "@/components/customer-info";
+import { ChatCustomerHeader } from "@/components/chat-customer-header";
 import { PageHeader } from "@/components/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ApiError, toApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type { Customer, PhoneNumberListResponse } from "@/lib/api/types";
-import { BUSINESS_AGENT_ENABLED } from "@/lib/feature-flags";
-import { formatPhoneNumber } from "@/lib/format";
 
 type MessageListResponse = {
   items: ChatMessage[];
-  number_of_pages: number;
+  number_of_pages?: number;
   number_of_items: number;
 };
 
@@ -47,7 +38,7 @@ export async function ChatPanel({
 
   if (!customer) {
     return (
-      <div className={embedded ? "flex h-full min-h-0 flex-col" : undefined}>
+      <div className={embedded ? "flex h-full min-h-0 flex-col p-4" : undefined}>
         {!embedded ? <BackBar href={backHref} /> : null}
         <PageHeader title="Customer chat" />
         <ApiErrorToast message={customerLoadError} />
@@ -56,7 +47,7 @@ export async function ChatPanel({
   }
 
   let messages: ChatMessage[] = [];
-  let numberOfMessagePages = 1;
+  let numberOfMessagePages: number | undefined = 1;
   let phoneNumberId = "";
   let loadError: string | null = null;
   try {
@@ -77,87 +68,13 @@ export async function ChatPanel({
         : "Could not load messages.";
   }
 
-  const showAgentSwitch =
-    BUSINESS_AGENT_ENABLED && Boolean(customer.sending_phone_number?.meta_agent_id?.trim());
-
-  const customerActions = (
-    <div className="flex items-center gap-2">
-      {showAgentSwitch ? (
-        <CustomerAgentSwitch
-          customerId={customer.id}
-          initialOn={customer.agent_enabled === true}
-        />
-      ) : null}
-      <CustomerDetailsButton
-        customer={customer}
-        startInEditMode
-        deletedRedirectHref={backHref}
-        trigger={
-          <Button
-            size="icon"
-            variant="ghost"
-            className="bg-muted rounded-full"
-            aria-label="Edit customer"
-            title="Edit customer"
-          >
-            <Pencil className="size-4" />
-          </Button>
-        }
-      />
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="bg-muted rounded-full"
-            aria-label="Customer details"
-          >
-            <Info className="size-4" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent align="end" className="w-72 p-3">
-          <CustomerInfo customer={customer} />
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-
   return (
     <div className={embedded ? "flex h-full min-h-0 flex-col" : undefined}>
-      {!embedded ? <BackBar href={backHref} actions={customerActions} /> : null}
-      <PageHeader
-        title={customer.display_name}
-        titleClassName="text-lg"
-        action={embedded ? customerActions : undefined}
-        description={
-          customer.sending_phone_number?.display_phone_number
-            ? `Sending from: ${customer.sending_phone_number.display_phone_number}`
-            : undefined
-        }
-        titleAction={
-          <>
-            {customer.phone_number ? (
-              <span className="text-muted-foreground text-sm">
-                {formatPhoneNumber(customer.phone_number, customer.country_code)}
-              </span>
-            ) : null}
-            {customer.tags?.length ? (
-              <div className="flex flex-wrap gap-1.5">
-                {customer.tags.map((tag) => (
-                  <Badge
-                    key={tag}
-                    className="h-5 bg-green-100 px-1.5 text-[10px] leading-none text-green-700 dark:bg-green-950 dark:text-green-300"
-                  >
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            ) : null}
-          </>
-        }
-      />
+      <div className={embedded ? "shrink-0 px-4 pt-4" : undefined}>
+        <ChatCustomerHeader customer={customer} embedded={embedded} backHref={backHref} />
+      </div>
       {loadError ? (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className={embedded ? "mx-4 w-auto" : undefined}>
           <AlertDescription>{loadError}</AlertDescription>
         </Alert>
       ) : (

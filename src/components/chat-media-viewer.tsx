@@ -1,48 +1,60 @@
 "use client";
 
-import { Download, FileText, ImageIcon, LoaderCircle, Play, Sticker } from "lucide-react";
-import { useEffect, useEffectEvent, useState } from "react";
+import { Download, FileText, ImageIcon, LoaderCircle, Sticker } from "lucide-react";
+import { useRef, useState } from "react";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api/client";
+import { resolveDirectChatMediaUrl } from "@/lib/chat-media-url";
+import { toApiError } from "@/lib/api/errors";
+import { toast } from "@/lib/toast";
 
 type ChatMediaViewerProps = {
   mediaId?: string;
   messageId?: number;
   waMessageId?: string;
   mediaUrl?: string;
+  attachmentUrl?: string;
   type: "document" | "image" | "sticker" | "audio" | "video";
   mimeType: string;
   filename?: string;
-  autoLoad?: boolean;
 };
 
 export function ChatMediaViewer({
   mediaId,
   messageId,
   mediaUrl,
+  attachmentUrl,
   type,
   mimeType,
   filename,
-  autoLoad = false,
 }: ChatMediaViewerProps) {
-  const [loaded, setLoaded] = useState(Boolean(mediaUrl));
+  const directMediaUrl = resolveDirectChatMediaUrl(attachmentUrl, mediaId, mediaUrl);
+  const requestPending = useRef(false);
+  const [mediaLoaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
-  const [resolvedMediaUrl, setResolvedMediaUrl] = useState(mediaUrl || "");
-  const label = type === "sticker" ? "View Sticker" : type === "image" ? "View Image" : type === "video" ? "Play Video" : "Play Audio";
+  const [fetchedMediaUrl, setResolvedMediaUrl] = useState("");
+  const resolvedMediaUrl = directMediaUrl || fetchedMediaUrl;
+  const loaded = Boolean(attachmentUrl?.trim()) || mediaLoaded;
+  const label = type === "sticker" ? "View Sticker" : type === "image" ? "View Image" : type === "video" ? "Download video" : "Download audio";
 
   async function loadMedia() {
-    if (mediaUrl) {
-      setResolvedMediaUrl(mediaUrl);
+    if (requestPending.current) return;
+    if (directMediaUrl) {
+      setResolvedMediaUrl(directMediaUrl);
       setLoaded(true);
       return;
     }
 
-    if (!mediaId || messageId === undefined) return;
+    if (!mediaId || messageId === undefined) {
+      toast.error("Cannot load media without a media ID and message ID.");
+      return;
+    }
 
+    requestPending.current = true;
     setLoading(true);
     try {
       const response = await apiFetch<{ url: string }>("/v1/wa/media", {
@@ -51,37 +63,39 @@ export function ChatMediaViewer({
           wa_media_id: mediaId,
         },
       });
-      setResolvedMediaUrl(response.url || "");
-      setLoaded(Boolean(response.url));
-    } catch {
+      if (!response.url?.trim()) throw new Error("Media request did not return a URL.");
+      setResolvedMediaUrl(response.url);
+      setLoaded(true);
+    } catch (error) {
       setResolvedMediaUrl("");
       setLoaded(false);
+      toast.error(toApiError(error).message);
     } finally {
+      requestPending.current = false;
       setLoading(false);
     }
   }
 
-  const loadStickerMedia = useEffectEvent(() => {
-    void loadMedia();
-  });
-
-  useEffect(() => {
-    if (autoLoad && !loaded) queueMicrotask(loadStickerMedia);
-  }, [autoLoad, loaded]);
-
-  if (!mediaUrl && !resolvedMediaUrl && !mediaId) return null;
-
-  if (mediaUrl && !loaded) {
-    setLoaded(true);
-  }
+  if (!resolvedMediaUrl && !mediaId) return null;
 
   if (type === "document") {
+    const documentClassName = "inline-flex h-auto w-72 max-w-full items-center gap-3 rounded-none bg-transparent px-3 py-2 text-left text-inherit hover:bg-transparent hover:text-inherit dark:bg-transparent dark:hover:bg-transparent";
+    const documentContent = (
+      <>
+        {loading ? <LoaderCircle className="size-5 shrink-0 animate-spin" /> : <FileText className="size-5 shrink-0" />}
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-medium">{filename || "Document"}</span>
+          <span className="block truncate text-xs font-normal opacity-70">{mimeType || "Document"}</span>
+        </span>
+        <Download className="size-4 shrink-0" />
+      </>
+    );
     if (!loaded) {
       return (
         <Button
           type="button"
           variant="ghost"
-          className="h-24 w-72 max-w-full bg-black/5 px-3 text-inherit opacity-65 hover:bg-black/10 hover:opacity-80 dark:bg-white/5 dark:hover:bg-white/10"
+          className={documentClassName}
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
@@ -89,15 +103,7 @@ export function ChatMediaViewer({
           }}
           disabled={loading}
         >
-          <div className="flex w-full items-center gap-3 text-left">
-            <div className="flex shrink-0 items-center justify-center">
-              {loading ? <LoaderCircle className="size-5 animate-spin" /> : <FileText className="size-5" />}
-            </div>
-            <div className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium">{filename || "Document"}</span>
-              <span className="block truncate text-xs opacity-70">{mimeType || "Document"}</span>
-            </div>
-          </div>
+          {documentContent}
         </Button>
       );
     }
@@ -107,14 +113,9 @@ export function ChatMediaViewer({
         href={resolvedMediaUrl}
         target="_blank"
         rel="noreferrer"
-        className="flex items-center gap-3 rounded-md bg-black/5 p-2 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/15"
+        className={documentClassName}
       >
-        <FileText className="size-8 shrink-0" />
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium">{filename || "Document"}</span>
-          <span className="block text-xs opacity-70">{mimeType}</span>
-        </span>
-        <Download className="size-4 shrink-0" />
+        {documentContent}
       </a>
     );
   }
@@ -125,6 +126,7 @@ export function ChatMediaViewer({
         <>
           <button
             type="button"
+            data-loaded-sticker={type === "sticker" ? "" : undefined}
             className={`relative block cursor-pointer ${type === "sticker" ? "aspect-square w-48" : "w-full max-w-full overflow-hidden"}`}
             aria-label={type === "sticker" ? "View sticker fullscreen" : "View image fullscreen"}
             onClick={(event) => {
@@ -138,14 +140,14 @@ export function ChatMediaViewer({
               src={resolvedMediaUrl}
               alt="Sticker attachment"
               className="absolute inset-0 size-full object-contain"
-              loading="lazy"
+              loading={attachmentUrl?.trim() ? "eager" : "lazy"}
             />
           ) : (
             <img
               src={resolvedMediaUrl}
               alt="Image attachment"
               className="block h-auto max-h-[288px] w-full object-cover"
-              loading="lazy"
+              loading={attachmentUrl?.trim() ? "eager" : "lazy"}
             />
           )}
           </button>
@@ -171,7 +173,9 @@ export function ChatMediaViewer({
       <Button
         type="button"
         variant="ghost"
-        className="h-24 w-72 max-w-full bg-black/5 text-inherit opacity-65 hover:bg-black/10 hover:opacity-80 dark:bg-white/5 dark:hover:bg-white/10"
+        className={`h-24 w-72 max-w-full rounded-none text-inherit opacity-65 hover:opacity-80 ${type === "audio"
+          ? "bg-transparent hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
+          : "bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10"}`}
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();
@@ -179,7 +183,7 @@ export function ChatMediaViewer({
         }}
         disabled={loading}
       >
-        {loading ? <LoaderCircle className="size-5 animate-spin" /> : type === "sticker" ? <Sticker className="size-5" /> : type === "image" ? <ImageIcon className="size-5" /> : <Play className="size-5" />}
+        {loading ? <LoaderCircle className="size-5 animate-spin" /> : type === "sticker" ? <Sticker className="size-5" /> : type === "image" ? <ImageIcon className="size-5" /> : <Download className="size-5" />}
         <span className="text-lg">{loading ? "Loading..." : label}</span>
       </Button>
   );

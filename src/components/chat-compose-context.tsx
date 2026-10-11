@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, type ReactNode } from "react";
+import { applyMessageStatus } from "@/lib/message-status";
 
 export type ReplyTarget = {
   waMessageId: string;
@@ -17,10 +18,12 @@ export type ChatMessage = {
   payload: Record<string, unknown>;
   attachment_url?: string;
   status?: string;
+  statuses?: { status: string; timestamp?: number; error_message?: string }[];
   error_message?: string;
-  auto_load_media?: boolean;
   preview_html?: string;
   preview_dark_html?: string;
+  edited?: boolean;
+  deleted?: boolean;
 };
 
 export type ChatMessageStatus = { wa_message_id: string; status: string };
@@ -30,6 +33,7 @@ type ChatComposeContextValue = {
   setReplyTarget: (target: ReplyTarget | null) => void;
   appendedMessages: ChatMessage[];
   appendMessage: (message: ChatMessage) => void;
+  removeMessage: (id: number) => void;
   updateMessageStatus: (status: ChatMessageStatus) => void;
 };
 
@@ -44,17 +48,15 @@ export function ChatComposeProvider({ children }: { children: ReactNode }) {
         replyTarget,
         setReplyTarget,
         appendedMessages,
+        removeMessage: (id) =>
+          setAppendedMessages((current) => current.filter((message) => message.id !== id)),
         appendMessage: (message) =>
           setAppendedMessages((current) =>
             current.some((item) => item.id === message.id) ? current : [...current, message],
           ),
         updateMessageStatus: (status) =>
           setAppendedMessages((current) =>
-            current.map((message) =>
-              message.wa_message_id === status.wa_message_id
-                ? { ...message, status: status.status }
-                : message,
-            ),
+            current.map((message) => applyMessageStatus(message, status)),
           ),
       }}
     >

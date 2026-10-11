@@ -48,6 +48,60 @@ new header, while keeping the older `x-user-access-token` name as a compatibilit
 - **Data fetching** — server components use `serverFetch()`; client components use
   `apiFetch()` through TanStack Query.
 
+### Chat message updates
+
+FAILED messages have a Delete action in their right-click menu. It calls
+`DELETE /v1/wa/messages/{id}` and removes the message only after success;
+failed requests display an error and leave the message available for retry.
+
+Outgoing realtime messages (`sending=true`) update the customer's latest-message
+preview and timestamp and move the customer up the Chats list, without adding an
+unread indicator or an incoming-message toast.
+
+Realtime edit notifications update the original received message and show `edited`
+beside its timestamp. Revoke notifications replace the original displayed content
+with muted `Message deleted` text while retaining its timestamp. Both updates
+also apply when the original is loaded later through pagination or reconnect.
+Media edits with an unchanged media ID retain the existing URL and viewer state,
+so caption changes do not trigger another media lookup or download.
+Sent messages show double green ticks if their current status or any entry in
+`statuses` is `READ` (case-insensitive), even if a later status reports failure.
+Once read, subsequent realtime status notifications cannot downgrade the message.
+
+Chat pagination keeps its numeric page counter independent of the optional API
+page count. An empty older-message response stops pagination without assigning
+the API page count to the counter.
+
+Image, video, audio, and document uploads use `POST /v1/wa/media` with
+`to_meta=true`. The returned `id` is sent in the message's media object instead
+of a `link`; captions and document filenames are preserved.
+
+Media with a nonempty `attachment_url` displays automatically when messages load,
+without an ID-based lookup. Other media loads only after the user clicks its
+attachment button, including media in realtime messages.
+Otherwise, attachments with a media object ID resolve their display/download URL through
+`GET /v1/wa/media?message_id={message.id}&wa_media_id={media.id}`.
+ID-based lookup takes precedence over media links, but not `attachment_url`.
+Attachments without an ID use their media link after the button is clicked.
+
+Sticker placeholders use the normal message bubble styling; downloaded stickers
+display without a bubble background or border.
+
+### Chat attachment checks
+
+Images retain the PNG/JPG/JPEG file-type check, but their encoding, color mode,
+bit depth, and progressive format are not inspected.
+
+Images and videos are uploaded unchanged, without compression. Images have a
+5 MB size limit and videos a 16 MB size limit, checked during selection and before upload.
+Video attachments are inspected locally
+for an MP4/3GP container, H.264 video, and at most one AAC audio stream. Audio
+attachments are checked for AAC, AAC in MP4, AMR, MP3, or Opus in Ogg.
+Checks run during selection and again before upload. MediaInfo runs entirely in
+the browser; files are not sent to an inspection service. `npm install`/`npm ci`
+copies its browser bundle, WASM module, and license into the generated `public/media-info/` directory
+via `scripts/prepare-media-info.mjs`.
+
 ### Business agent API routes
 
 Phone-number-scoped business agent requests use

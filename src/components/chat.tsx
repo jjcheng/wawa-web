@@ -1,7 +1,12 @@
 "use client";
+import { applyMessageStatus, hasReadStatus } from "@/lib/message-status";
+import { resolveChatMediaUrl } from "@/lib/chat-media-url";
+import { applyMessageEdits } from "@/lib/message-edits";
+import { applyMessageRevokes } from "@/lib/message-revokes";
+import { notifyIncomingChatMessage } from "@/components/phone-number-messages-provider";
 
 import EmojiPicker, { EmojiStyle, Theme, type EmojiClickData } from "emoji-picker-react";
-import { ArrowDown, Bot, Check, CheckCheck, ContactRound, Info, Loader2, MessageCircle, Phone, Reply, SmilePlus } from "lucide-react";
+import { ArrowDown, Bot, Check, CheckCheck, ContactRound, Info, Loader2, MessageCircle, Phone, Reply, SmilePlus, Trash2 } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { useEffect, useEffectEvent, useRef, useState, useSyncExternalStore } from "react";
 import { toast } from "@/lib/toast";
@@ -29,7 +34,7 @@ type Message = ChatMessage;
 
 type MessageListResponse = {
   items: Message[];
-  number_of_pages: number;
+  number_of_pages?: number;
 };
 
 type MessageMenu = { message: Message; x: number; y: number };
@@ -54,7 +59,7 @@ const bottomScrollThreshold = 120;
 
 type ChatProps = {
   initialMessages: Message[];
-  numberOfPages: number;
+  numberOfPages?: number;
   phoneNumberId: string;
   customerId: string;
   customerWAId?: string;
@@ -94,6 +99,7 @@ function unsupportedType(message: Message): string | null {
 }
 
 function messageBody(message: Message) {
+  if (message.deleted) return "Message deleted";
   const payload = message.payload;
   const unsupportedMessageType = unsupportedType(message);
   if (message.type === "unsupported") return `Unsupported message: ${unsupportedMessageType ?? "unknown"}`;
@@ -383,7 +389,7 @@ function MessageStatusIcon({ status, hasError }: { status?: string; hasError?: b
   if (hasError) return null;
   const normalized = status?.toLowerCase();
   if (normalized === "failed" || normalized === "error") return null;
-  if (normalized === "delivered") return <CheckCheck className="size-3.5" aria-label="Delivered" />;
+  if (normalized === "delivered") return <CheckCheck className="size-3.5 text-[#667781] dark:text-[#aebac1]" aria-label="Delivered" />;
   if (normalized === "read" || normalized === "played") {
     return <CheckCheck className="size-3.5 text-[#00a884]" aria-label="Read" />;
   }
@@ -538,11 +544,14 @@ function MessageContent({
   buttonResponseContext?: string;
   mapTheme: "light" | "dark";
 }) {
+  if (message.deleted) {
+    return <p className="text-muted-foreground text-sm">Message deleted</p>;
+  }
   const payload = message.payload;
   const media = payload[message.type] as
-    | { id?: string; mime_type?: string; caption?: string; filename?: string; url?: string }
+    | { id?: string; mime_type?: string; caption?: string; filename?: string; url?: string; link?: string }
     | undefined;
-  const attachmentUrl = typeof message.attachment_url === "string" ? message.attachment_url : "";
+  const attachmentUrl = resolveChatMediaUrl(message.attachment_url, media);
   const location = payload.location as
     | { latitude?: number; longitude?: number; name?: string; address?: string }
     | undefined;
@@ -619,14 +628,15 @@ function MessageContent({
       ) : (media?.id || attachmentUrl) && (message.type === "image" || message.type === "sticker" || message.type === "video" || message.type === "audio" || message.type === "document") ? (
         <>
           <ChatMediaViewer
+            key={`${message.id}:${message.type}:${media?.id || attachmentUrl || ""}`}
             mediaId={media?.id}
             messageId={message.id}
             waMessageId={message.wa_message_id}
             mediaUrl={attachmentUrl || undefined}
+            attachmentUrl={message.attachment_url}
             type={message.type as "image" | "sticker" | "video" | "audio" | "document"}
             mimeType={media?.mime_type ?? ""}
             filename={media?.filename}
-            autoLoad={message.auto_load_media}
           />
           {media?.caption ? (
             <p className="mt-2 whitespace-pre-wrap pb-2 px-2">{formatWhatsAppText(media.caption)}</p>
@@ -671,14 +681,17 @@ export function Chat({
   customerMetaUserId,
 }: ChatProps) {
   const viewport = useChatViewport();
-  const { appendMessage, appendedMessages, setReplyTarget, updateMessageStatus } = useChatCompose();
+  const { appendMessage, appendedMessages, replyTarget, setReplyTarget, updateMessageStatus, removeMessage } = useChatCompose();
   const { resolvedTheme } = useTheme();
   const hydrated = useHydrated();
   const [messages, setMessages] = useState(() => initialMessages);
   const [page, setPage] = useState(1);
+  const [reachedLastPage, setReachedLastPage] = useState(false);
   const [loading, setLoading] = useState(false);
   const loadingOlderRef = useRef(false);
   const [menu, setMenu] = useState<MessageMenu | null>(null);
+  const [deletingMessage, setDeletingMessage] = useState(false);
+  const [removedMessageIds, setRemovedMessageIds] = useState<Set<number>>(() => new Set());
   const [showEmojis, setShowEmojis] = useState(false);
   const documentHeightRef = useRef(0);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -730,7 +743,7 @@ export function Chat({
         },
       });
       const recentMessages = response.items.filter(
-        (m) => isDisplayableMessage(m) || m.type === "reaction",
+        (m) => isDisplayableMessage(m) || m.type === "reaction" || m.type === "edit" || m.type === "revoke",
       );
       setMessages((current) => mergeMessages(current, recentMessages));
     } catch (error) {
@@ -741,17 +754,21 @@ export function Chat({
   const handleRealtimeEvent = useEffectEvent((event: { type: "message"; message: Message } | { type: "status"; status: ChatMessageStatus } | { type: "connection"; state: string }) => {
     if (
       event.type === "message" &&
-      (isDisplayableMessage(event.message) || event.message.type === "reaction")
+      (isDisplayableMessage(event.message) || event.message.type === "reaction" || event.message.type === "edit" || event.message.type === "revoke")
     ) {
-      appendMessage({ ...event.message, auto_load_media: true });
+      appendMessage(event.message);
+      if (event.message.sending && isDisplayableMessage(event.message)) {
+        notifyIncomingChatMessage({
+          customer_id: Number(customerId),
+          customer_name: "",
+          notification_content: messageBody(event.message),
+          sending: true,
+        });
+      }
     }
     if (event.type === "status") {
       setMessages((current) =>
-        current.map((message) =>
-          message.wa_message_id === event.status.wa_message_id
-            ? { ...message, status: event.status.status }
-            : message,
-        ),
+        current.map((message) => applyMessageStatus(message, event.status)),
       );
       updateMessageStatus(event.status);
     }
@@ -792,7 +809,7 @@ export function Chat({
   useEffect(() => {
     if (appendedMessages.length === 0) return;
     const latestMessage = appendedMessages[appendedMessages.length - 1];
-    if (latestMessage?.type === "reaction") return;
+    if (latestMessage?.type === "reaction" || latestMessage?.type === "edit" || latestMessage?.type === "revoke") return;
     if (isNearBottomRef.current || latestMessage?.sending) {
       scrollToBottom("smooth");
       setShowScrollToLatest(false);
@@ -805,7 +822,8 @@ export function Chat({
     if (
       loading ||
       loadingOlderRef.current ||
-      page >= numberOfPages ||
+      reachedLastPage ||
+      (numberOfPages !== undefined && page >= numberOfPages) ||
       (messages.length === 0 && appendedMessages.length === 0)
     ) {
       return;
@@ -822,7 +840,7 @@ export function Chat({
         },
       });
       if (response.items.length === 0) {
-        setPage(numberOfPages);
+        setReachedLastPage(true);
         return;
       }
       setMessages((current) => mergeMessages(current, response.items));
@@ -886,7 +904,25 @@ export function Chat({
     void reactToMessage(emojiData.emoji);
   }
 
-  const allMessages = [...messages, ...appendedMessages]
+  async function deleteFailedMessage(message: Message) {
+    if (deletingMessage || message.status?.toLowerCase() !== "failed") return;
+    setDeletingMessage(true);
+    try {
+      await apiFetch(`/v1/wa/messages/${message.id}`, { method: "DELETE" });
+      setRemovedMessageIds((current) => new Set(current).add(message.id));
+      setMessages((current) => current.filter((item) => item.id !== message.id));
+      removeMessage(message.id);
+      if (replyTarget?.waMessageId === message.wa_message_id) setReplyTarget(null);
+      setMenu(null);
+    } catch (error) {
+      toast.error(toApiError(error).message);
+    } finally {
+      setDeletingMessage(false);
+    }
+  }
+
+  const allMessages = applyMessageRevokes(applyMessageEdits([...messages, ...appendedMessages]
+    .filter((message) => !removedMessageIds.has(message.id))
     .sort((a, b) => a.timestamp - b.timestamp)
     .filter(
       (message, index, current) =>
@@ -895,7 +931,7 @@ export function Chat({
             (message.wa_message_id && candidate.wa_message_id === message.wa_message_id) ||
             candidate.id === message.id,
         ) === index,
-    );
+    )));
   const reactionByMessageId = new Map<string, { emoji: string; userId: string }[]>();
   for (const message of allMessages) {
     if (message.type !== "reaction") continue;
@@ -1018,7 +1054,7 @@ export function Chat({
   const emojiPickerTheme = resolvedTheme === "dark" ? Theme.DARK : Theme.LIGHT;
 
   return (
-    <div ref={viewport ?? undefined} className={viewport ? "min-h-0 flex-1 overflow-y-auto px-1" : "pb-20"}>
+    <div ref={viewport ?? undefined} className={viewport ? "min-h-0 flex-1 overflow-y-auto px-5" : "pb-20"}>
       {showScrollToLatest ? (
         <Button
           type="button"
@@ -1031,7 +1067,7 @@ export function Chat({
           <ArrowDown className="size-5" />
         </Button>
       ) : null}
-      {page >= numberOfPages && visibleMessages.length > 0 ? <p className="mb-3 text-center text-xs text-muted-foreground">No more message</p> : null}
+      {(reachedLastPage || (numberOfPages !== undefined && page >= numberOfPages)) && visibleMessages.length > 0 ? <p className="mb-3 text-center text-xs text-muted-foreground">No more message</p> : null}
       {loading ? <p className="mb-3 text-center text-xs text-muted-foreground">Loading...</p> : null}
       {visibleMessages.length === 0 && !loading ? (
         <div className={`flex ${viewport ? "min-h-48" : "min-h-[calc(100svh-18rem)] pb-20"} flex-col items-center justify-center gap-3 text-muted-foreground`}>
@@ -1053,7 +1089,7 @@ export function Chat({
               className={`mb-4 flex flex-col rounded-md transition-colors ${message.sending ? "items-end" : "items-start"} ${flashedMessageKey === (message.wa_message_id?.trim() || String(message.id)) ? "bg-yellow-200/70 dark:bg-yellow-400/20" : ""}`}
             >
               <div
-                className={`flex ${message.type === "image" ? "w-fit min-w-[min(240px,80%)] max-w-[min(80%,400px)]" : "w-fit max-w-[80%]"} flex-col ${
+                className={`flex ${message.type === "image" && !message.deleted ? "w-fit min-w-[min(240px,80%)] max-w-[min(80%,400px)]" : "w-fit max-w-[80%]"} flex-col ${
                   message.sending ? "items-end" : "items-start"
                 }`}
               >
@@ -1063,15 +1099,16 @@ export function Chat({
                     setShowEmojis(false);
                     setMenu({ message, x: event.clientX, y: event.clientY });
                   }}
-                  className={
-                    message.type === "unsupported"
+                  className={[
+                    "has-[[data-loaded-sticker]]:border-0 has-[[data-loaded-sticker]]:bg-transparent dark:has-[[data-loaded-sticker]]:bg-transparent",
+                    message.deleted || message.type === "unsupported"
                       ? "relative mb-1.5 w-full text-sm text-muted-foreground"
-                      : message.type === "message" || message.type === "sticker" || message.type === "template" || message.type === "document" || message.type === "audio"
+                      : message.type === "message" || message.type === "template"
                       ? "relative mb-1.5 w-full text-base leading-[1.35]"
                       : message.sending
-                        ? `relative mb-1.5 min-w-0 w-full overflow-hidden rounded-md [overflow-wrap:anywhere] ${["image", "video", "location"].includes(message.type) ? "rounded-[4px] px-0 py-0" : "rounded-[7.5px] px-2 py-1.5"} rounded-tr-none border border-[#edf0f1] bg-[#d9fdd3] text-base leading-[1.35] text-[#111b21] dark:border-[#087663] dark:bg-[#005c4b] dark:text-[#e9edef]`
-                        : `relative mb-1.5 min-w-0 w-full overflow-hidden rounded-md [overflow-wrap:anywhere] ${["image", "video", "location"].includes(message.type) ? "rounded-[4px] px-0 py-0" : "rounded-[7.5px] px-2 py-1.5"} rounded-tl-none border border-[#edf0f1] bg-white text-base leading-[1.35] text-[#111b21] dark:border-[#314047] dark:bg-[#202c33] dark:text-[#e9edef]`
-                  }
+                        ? `relative mb-1.5 min-w-0 w-full overflow-hidden rounded-md [overflow-wrap:anywhere] ${["image", "video", "sticker", "location"].includes(message.type) ? "rounded-[4px] px-0 py-0" : "rounded-[7.5px] px-2 py-1.5"} rounded-tr-none border border-[#edf0f1] bg-[#d9fdd3] text-base leading-[1.35] text-[#111b21] dark:border-[#087663] dark:bg-[#005c4b] dark:text-[#e9edef]`
+                        : `relative mb-1.5 min-w-0 w-full overflow-hidden rounded-md [overflow-wrap:anywhere] ${["image", "video", "sticker", "location"].includes(message.type) ? "rounded-[4px] px-0 py-0" : "rounded-[7.5px] px-2 py-1.5"} rounded-tl-none border border-[#edf0f1] bg-white text-base leading-[1.35] text-[#111b21] dark:border-[#314047] dark:bg-[#202c33] dark:text-[#e9edef]`
+                  ].join(" ")}
                 >
                   <MessageContent
                     message={message}
@@ -1108,13 +1145,14 @@ export function Chat({
                         </span>
                       ) : null}
                       {messageTime(message.timestamp, hydrated)}
+                      {!message.deleted && !message.sending && message.edited ? <span className="text-blue-600 dark:text-blue-400">edited</span> : null}
                       {message.sending ? (
                         <>
-                          {message.status?.toLowerCase() !== "failed" &&
-                          message.status?.toLowerCase() !== "error" ? (
+                          {hasReadStatus(message) || (message.status?.toLowerCase() !== "failed" &&
+                          message.status?.toLowerCase() !== "error") ? (
                             <MessageStatusIcon
-                              status={message.status}
-                              hasError={Boolean(message.error_message?.trim())}
+                              status={hasReadStatus(message) ? "read" : message.status}
+                              hasError={!hasReadStatus(message) && Boolean(message.error_message?.trim())}
                             />
                           ) : null}
                           <MessageInfoPopover
@@ -1178,6 +1216,12 @@ export function Chat({
         <div ref={menuRef} className={`fixed z-50 max-w-[calc(100vw-1rem)] rounded-md bg-popover p-1 shadow-md ring-1 ring-[#edf0f1] dark:ring-foreground/10 ${showEmojis ? "w-[328px]" : "w-52"}`} style={{ left: Math.max(8, Math.min(menu.x, window.innerWidth - (showEmojis ? 336 : 216))), top: Math.max(8, Math.min(menu.y, window.innerHeight - (showEmojis ? 472 : 80))) }}>
           <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => { setReplyTarget({ waMessageId: menu.message.wa_message_id, preview: messageBody(menu.message) }); setMenu(null); }}><Reply />Reply</Button>
           <Button type="button" variant="ghost" className="w-full justify-start" onClick={() => setShowEmojis(true)}><SmilePlus />React</Button>
+          {menu.message.status?.toLowerCase() === "failed" ? (
+            <Button type="button" variant="ghost" className="w-full justify-start" disabled={deletingMessage} onClick={() => void deleteFailedMessage(menu.message)}>
+              {deletingMessage ? <Loader2 className="animate-spin" /> : <Trash2 />}
+              {deletingMessage ? "Deleting..." : "Delete"}
+            </Button>
+          ) : null}
           {showEmojis ? (
             <div className="border-t p-1.5">
               <EmojiPicker

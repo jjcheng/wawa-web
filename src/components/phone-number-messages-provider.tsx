@@ -10,6 +10,8 @@ import { toast } from "@/lib/toast";
 export type IncomingChatMessage = {
   customer_id: number;
   customer_name: string;
+  customer_is_new?: boolean;
+  sending?: boolean;
   notification_content: string;
 };
 
@@ -40,6 +42,8 @@ function toIncomingChatMessage(data: unknown): IncomingChatMessage | null {
   return {
     customer_id: customerId,
     customer_name: typeof name === "string" ? name : "",
+    customer_is_new: record.customer_is_new === true,
+    sending: record.sending === true,
     notification_content: typeof content === "string" ? content : "",
   };
 }
@@ -68,6 +72,7 @@ export function PhoneNumberMessagesProvider({ user }: { user: User }) {
         return;
       }
       notifyIncomingChatMessage(incoming);
+      if (incoming.sending) return;
       const currentChatCustomerId = pathname.match(/^\/chats\/(\d+)\/chat(?:\/|$)/)?.[1] ??
         (pathname === "/chats" && window.matchMedia("(min-width: 768px)").matches
           ? selectedCustomerId

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { CountryCodeSelect } from "@/components/country-code-select";
 import { CustomerAgentEnabledField } from "@/components/customer-agent-enabled-field";
 import { CustomerInfo } from "@/components/customer-info";
+import { notifyCustomerUpdated } from "@/components/customer-updates";
 import { CustomerTagsSelect } from "@/components/customer-tags-select";
 import {
   Select,
@@ -122,9 +123,11 @@ export function CustomerDetailsButton({
         },
       }),
     onSuccess: (updatedCustomer) => {
+      notifyCustomerUpdated(updatedCustomer);
       onUpdated?.(updatedCustomer);
       setOpen(false);
       toast.success("Customer details updated.");
+      router.refresh();
     },
     onError: (error) => toast.error(toApiError(error).message),
   });
@@ -151,6 +154,7 @@ export function CustomerDetailsButton({
       }),
     onSuccess: (_, nextStatus) => {
       setStatus(nextStatus);
+      notifyCustomerUpdated({ ...customer, status: nextStatus });
       onUpdated?.({ ...customer, status: nextStatus });
       setOpen(false);
       toast.success(nextStatus === "INACTIVE" ? "Customer archived." : "Customer unarchived.");
@@ -214,6 +218,11 @@ export function CustomerDetailsButton({
         />
         <div className="min-h-0 flex-1 !overflow-y-auto">
         {editing ? <div className="grid gap-3">
+          <CustomerAgentEnabledField
+            enabled={agentEnabled}
+            onChange={setAgentEnabled}
+            disabled={actionPending}
+          />
           <label className="grid gap-1 text-sm">
             <span>Name</span>
             <input required value={displayName} onChange={(event) => setDisplayName(event.target.value)} className="border-input h-9 rounded-md border bg-transparent px-3" />
@@ -253,14 +262,9 @@ export function CustomerDetailsButton({
             <span>Tags</span>
             <CustomerTagsSelect value={tags} onChange={setTags} />
           </label>
-          <CustomerAgentEnabledField
-            enabled={agentEnabled}
-            onChange={setAgentEnabled}
-            disabled={updateMutation.isPending}
-          />
           <label className="grid gap-1 text-sm">
             <span>Status</span>
-            <Select value={status} onValueChange={setStatus}>
+            <Select value={status} onValueChange={setStatus} disabled={actionPending}>
               <SelectTrigger className="w-full" aria-label="Customer status">
                 <SelectValue />
               </SelectTrigger>
