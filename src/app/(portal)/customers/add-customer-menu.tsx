@@ -3,7 +3,7 @@
 import { ChevronDown } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "@/lib/toast";
 
 import { Button } from "@/components/ui/button";
@@ -144,9 +144,11 @@ function parseVCardContacts(value: string): ImportedContact[] {
 export function AddCustomerMenu({
   currentUserId,
   onCreated,
+  trigger,
 }: {
   currentUserId: number;
   onCreated?: (customer: Customer) => void;
+  trigger?: ReactNode;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -293,10 +295,12 @@ export function AddCustomerMenu({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button size="sm" className="rounded-full">
-            Add customer
-            <ChevronDown className="size-4" />
-          </Button>
+          {trigger ?? (
+            <Button size="sm" className="rounded-full">
+              Add customer
+              <ChevronDown className="size-4" />
+            </Button>
+          )}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem className="justify-center" onSelect={() => setOpen(true)}>

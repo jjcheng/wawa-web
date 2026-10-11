@@ -19,6 +19,7 @@ import { formatWhatsAppText } from "@/lib/whatsapp-text";
 import type { MessageDetail } from "@/lib/api/types";
 import { applyGoogleMapsTheme } from "@/lib/google-maps";
 import { ChatMediaViewer } from "@/components/chat-media-viewer";
+import { useChatViewport } from "@/components/chat-viewport";
 import { TemplatePreviewHtml } from "@/components/template-preview-html";
 import { useHydrated } from "@/components/use-hydrated";
 import { Button } from "@/components/ui/button";
@@ -669,6 +670,7 @@ export function Chat({
   customerWAId,
   customerMetaUserId,
 }: ChatProps) {
+  const viewport = useChatViewport();
   const { appendMessage, appendedMessages, setReplyTarget, updateMessageStatus } = useChatCompose();
   const { resolvedTheme } = useTheme();
   const hydrated = useHydrated();
@@ -687,8 +689,22 @@ export function Chat({
   const [showScrollToLatest, setShowScrollToLatest] = useState(false);
   const [flashedMessageKey, setFlashedMessageKey] = useState<string | null>(null);
 
+  function scrollMetrics() {
+    const element = viewport?.current;
+    return element
+      ? { height: element.scrollHeight, top: element.scrollTop, visible: element.clientHeight }
+      : { height: document.documentElement.scrollHeight, top: window.scrollY, visible: window.innerHeight };
+  }
+
+  const scrollToBottom = useEffectEvent((behavior: ScrollBehavior = "auto") => {
+    const element = viewport?.current;
+    if (element) element.scrollTo({ top: element.scrollHeight, behavior });
+    else window.scrollTo({ top: document.documentElement.scrollHeight, behavior });
+  });
+
   function updateScrollPosition() {
-    const distanceFromBottom = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
+    const metrics = scrollMetrics();
+    const distanceFromBottom = metrics.height - (metrics.top + metrics.visible);
     const isNearBottom = distanceFromBottom <= bottomScrollThreshold;
     isNearBottomRef.current = isNearBottom;
     if (isNearBottom) {
@@ -699,7 +715,9 @@ export function Chat({
   function scrollToLatest() {
     isNearBottomRef.current = true;
     setShowScrollToLatest(false);
-    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
+    const element = viewport?.current;
+    if (element) element.scrollTo({ top: element.scrollHeight, behavior: "smooth" });
+    else window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
   }
 
   async function refreshRecentMessages() {
@@ -755,10 +773,11 @@ export function Chat({
   });
 
   useEffect(() => {
-    requestAnimationFrame(() => {
-      window.scrollTo({ top: document.documentElement.scrollHeight });
+    const frame = requestAnimationFrame(() => {
+      scrollToBottom();
       initialScrollCompleteRef.current = true;
     });
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {
@@ -775,7 +794,7 @@ export function Chat({
     const latestMessage = appendedMessages[appendedMessages.length - 1];
     if (latestMessage?.type === "reaction") return;
     if (isNearBottomRef.current || latestMessage?.sending) {
-      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
+      scrollToBottom("smooth");
       setShowScrollToLatest(false);
     } else {
       setShowScrollToLatest(true);
@@ -792,7 +811,7 @@ export function Chat({
       return;
     }
     loadingOlderRef.current = true;
-    documentHeightRef.current = document.documentElement.scrollHeight;
+    documentHeightRef.current = scrollMetrics().height;
     setLoading(true);
     try {
       const response = await apiFetch<MessageListResponse>("/v1/wa/messages", {
@@ -809,7 +828,9 @@ export function Chat({
       setMessages((current) => mergeMessages(current, response.items));
       setPage((current) => current + 1);
       requestAnimationFrame(() => {
-        window.scrollBy(0, document.documentElement.scrollHeight - documentHeightRef.current);
+        const delta = scrollMetrics().height - documentHeightRef.current;
+        if (viewport?.current) viewport.current.scrollBy(0, delta);
+        else window.scrollBy(0, delta);
       });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not load older messages.");
@@ -819,16 +840,19 @@ export function Chat({
     }
   });
 
+  const onViewportScroll = useEffectEvent(() => {
+    updateScrollPosition();
+    if (initialScrollCompleteRef.current && scrollMetrics().top <= 8) {
+      void loadOlderMessages();
+    }
+  });
+
   useEffect(() => {
-    const onScroll = () => {
-      updateScrollPosition();
-      if (initialScrollCompleteRef.current && window.scrollY <= 8) {
-        void loadOlderMessages();
-      }
-    };
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [loading, page, numberOfPages]);
+    const target = viewport?.current ?? window;
+    const onScroll = () => onViewportScroll();
+    target.addEventListener("scroll", onScroll);
+    return () => target.removeEventListener("scroll", onScroll);
+  }, [loading, page, numberOfPages, viewport]);
 
   useEffect(() => {
     if (!menu) return;
@@ -994,13 +1018,13 @@ export function Chat({
   const emojiPickerTheme = resolvedTheme === "dark" ? Theme.DARK : Theme.LIGHT;
 
   return (
-    <div className="pb-20">
+    <div ref={viewport ?? undefined} className={viewport ? "min-h-0 flex-1 overflow-y-auto px-1" : "pb-20"}>
       {showScrollToLatest ? (
         <Button
           type="button"
           size="icon-lg"
           variant="outline"
-          className="fixed right-4 bottom-20 z-10 size-11 animate-bounce rounded-full border-0 bg-[#00a884] text-white shadow-md hover:bg-[#008f72] dark:bg-[#00a884] dark:text-white dark:hover:bg-[#008f72]"
+          className={`${viewport ? "absolute right-4 bottom-24" : "fixed right-4 bottom-20"} z-10 size-11 animate-bounce rounded-full border-0 bg-[#00a884] text-white shadow-md hover:bg-[#008f72] dark:bg-[#00a884] dark:text-white dark:hover:bg-[#008f72]`}
           aria-label="Scroll to latest message"
           onClick={scrollToLatest}
         >
@@ -1010,14 +1034,14 @@ export function Chat({
       {page >= numberOfPages && visibleMessages.length > 0 ? <p className="mb-3 text-center text-xs text-muted-foreground">No more message</p> : null}
       {loading ? <p className="mb-3 text-center text-xs text-muted-foreground">Loading...</p> : null}
       {visibleMessages.length === 0 && !loading ? (
-        <div className="flex min-h-[calc(100svh-18rem)] flex-col items-center justify-center gap-3 pb-20 text-muted-foreground">
+        <div className={`flex ${viewport ? "min-h-48" : "min-h-[calc(100svh-18rem)] pb-20"} flex-col items-center justify-center gap-3 text-muted-foreground`}>
           <MessageCircle aria-hidden="true" className="size-10 opacity-70" strokeWidth={1.5} />
           <p className="text-2xl font-normal opacity-70">No message</p>
         </div>
       ) : null}
       {messageGroups.map((group) => (
         <section key={group.date}>
-          <p className="sticky top-[68px] z-30 mx-auto mb-3 w-fit rounded-md bg-[#e9edef] px-2 py-0.5 text-[0.6875rem] leading-5 text-[#54656f] shadow-sm dark:bg-[#182229] dark:text-[#8696a0]">{group.date}</p>
+          <p className={`sticky ${viewport ? "top-0 z-10" : "top-[68px] z-30"} mx-auto mb-3 w-fit rounded-md bg-[#e9edef] px-2 py-0.5 text-[0.6875rem] leading-5 text-[#54656f] shadow-sm dark:bg-[#182229] dark:text-[#8696a0]`}>{group.date}</p>
           {group.messages.map((message) => (
             <div
               key={message.id}

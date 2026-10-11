@@ -1,5 +1,7 @@
 "use client";
 
+import { useChatViewport } from "@/components/chat-viewport";
+
 import EmojiPicker, { EmojiStyle, Theme, type EmojiClickData } from "emoji-picker-react";
 import { ContactRound, FileText, ImageIcon, MapPin, Music2, Paperclip, Reply, Send, SmilePlus, Video, X } from "lucide-react";
 import {
@@ -295,6 +297,7 @@ export function ChatMessageComposer({
   customerId,
   messageId,
 }: ChatMessageComposerProps) {
+  const viewport = useChatViewport();
   const { replyTarget, setReplyTarget } = useChatCompose();
   const { resolvedTheme } = useTheme();
   const [message, setMessage] = useState("");
@@ -571,7 +574,9 @@ export function ChatMessageComposer({
 
   return (
     <form
-      className="bg-background/80 fixed bottom-0 left-4 right-4 z-20 flex flex-col gap-2 pb-3 pt-3 backdrop-blur sm:left-6 sm:right-6 lg:left-[15.5rem] xl:left-[17.5rem]"
+      className={viewport
+        ? "bg-background/80 z-20 flex shrink-0 flex-col gap-2 pt-3 backdrop-blur"
+        : "bg-background/80 fixed bottom-0 left-4 right-4 z-20 flex flex-col gap-2 pb-3 pt-3 backdrop-blur sm:left-6 sm:right-6 lg:left-[15.5rem] xl:left-[17.5rem]"}
       onSubmit={handleSubmit}
     >
       {compressing ? (

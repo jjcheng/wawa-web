@@ -1,18 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { Archive, ArchiveRestore, Loader2, Megaphone, MessageCircle, Pencil } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import {
+  Loader2,
+  Megaphone,
+  MessageCircle,
+  Plus,
+} from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CustomerDetailsButton } from "@/components/customer-details-button";
 import { LoadMoreButton } from "@/components/load-more-button";
-import { PageHeader } from "@/components/page-header";
+import { CustomerDetailsButton } from "@/components/customer-details-button";
 import { RelativeTime } from "@/components/relative-time";
+import { useNavigationProgress } from "@/components/nav/navigation-progress";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import type { Customer, CustomerListResponse } from "@/lib/api/types";
@@ -25,10 +29,6 @@ import { AddCustomerMenu } from "../customers/add-customer-menu";
 import { ChatsFilterPopover } from "./chats-filter-popover";
 import { ChatsSearchInput } from "./chats-search-input";
 
-function initials(customer: Customer) {
-  return (customer.display_name || "?").slice(0, 2).toUpperCase();
-}
-
 export function ChatsView({
   customers: initialCustomers,
   numberOfPages: initialNumberOfPages,
@@ -37,6 +37,7 @@ export function ChatsView({
   selectedTags,
   status,
   currentUserId,
+  selectedCustomerId,
 }: {
   customers: Customer[];
   numberOfPages: number;
@@ -45,6 +46,7 @@ export function ChatsView({
   selectedTags: string[];
   status: "ACTIVE" | "INACTIVE";
   currentUserId: number;
+  selectedCustomerId?: string;
 }) {
   const [customers, setCustomers] = useState(initialCustomers);
   const [nameInput, setNameInput] = useState(name);
@@ -53,30 +55,48 @@ export function ChatsView({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [unreadIds, setUnreadIds] = useState<Set<number>>(new Set());
-  const [bulkActionPending, setBulkActionPending] = useState(false);
   const [broadcastPending, setBroadcastPending] = useState(false);
+  const [statusPending, setStatusPending] = useState(false);
   const router = useRouter();
+  const { startNavigationProgress } = useNavigationProgress();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const filterKey = JSON.stringify({ name, selectedTags, status });
+  const previousSelection = useRef({ selectedCustomerId, filterKey });
   const filteredCustomers = useMemo(() => {
     const query = nameInput.trim().toLowerCase();
     return customers.filter((customer) =>
       (customer.display_name ?? "").toLowerCase().includes(query),
     );
   }, [customers, nameInput]);
-  const allSelected = filteredCustomers.length > 0 && filteredCustomers.every((row) => selectedIds.has(row.id));
-  const someSelected = selectedIds.size > 0 && !allSelected;
   const hasFilters = Boolean(nameInput) || selectedTags.length > 0 || status !== "ACTIVE";
+  const allSelected =
+    filteredCustomers.length > 0 &&
+    filteredCustomers.every((customer) => selectedIds.has(customer.id));
+  const someSelected =
+    !allSelected && filteredCustomers.some((customer) => selectedIds.has(customer.id));
+  const singleSelectedCustomer = selectedIds.size === 1
+    ? customers.find((customer) => selectedIds.has(customer.id))
+    : undefined;
 
   useEffect(() => {
+    const previous = previousSelection.current;
+    previousSelection.current = { selectedCustomerId, filterKey };
+    if (
+      previous.selectedCustomerId !== selectedCustomerId &&
+      previous.filterKey === filterKey
+    ) {
+      return;
+    }
     queueMicrotask(() => {
       setCustomers(initialCustomers);
       setCurrentPage(1);
       setNumberOfPages(initialNumberOfPages);
       setSelectedIds(new Set());
     });
-  }, [initialCustomers, initialNumberOfPages]);
+  }, [initialCustomers, initialNumberOfPages, selectedCustomerId, filterKey]);
 
-  function handleIncomingMessage(message: IncomingChatMessage) {
+  const handleIncomingMessage = useEffectEvent((message: IncomingChatMessage) => {
     setCustomers((current) => {
       if (!current.some((row) => row.id === message.customer_id)) return current;
       return current.map((row) =>
@@ -85,8 +105,10 @@ export function ChatsView({
           : row,
       );
     });
-    setUnreadIds((current) => new Set(current).add(message.customer_id));
-  }
+    if (String(message.customer_id) !== selectedCustomerId) {
+      setUnreadIds((current) => new Set(current).add(message.customer_id));
+    }
+  });
 
   useEffect(() => {
     function onIncomingMessage(event: Event) {
@@ -113,7 +135,7 @@ export function ChatsView({
       const result = await apiFetch<CustomerListResponse>("v1/customers", {
         query: {
           page: String(nextPage),
-          page_size: "50",
+          page_size: "500",
           status,
           tags: selectedTags,
         },
@@ -133,17 +155,6 @@ export function ChatsView({
     router.push(pathname);
   }
 
-  function toggleAll() {
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      for (const customer of filteredCustomers) {
-        if (allSelected) next.delete(customer.id);
-        else next.add(customer.id);
-      }
-      return next;
-    });
-  }
-
   function toggleRow(id: number) {
     setSelectedIds((current) => {
       const next = new Set(current);
@@ -153,30 +164,13 @@ export function ChatsView({
     });
   }
 
-  async function archiveSelected() {
-    const nextStatus = status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
-    setBulkActionPending(true);
-    try {
-      await apiFetch("v1/customers/status", {
-        method: "PATCH",
-        body: { ids: [...selectedIds], status: nextStatus },
-      });
-      setSelectedIds(new Set());
-      router.refresh();
-    } catch (error) {
-      toast.error(toApiError(error).message);
-    } finally {
-      setBulkActionPending(false);
-    }
-  }
-
   function startBroadcast() {
     const invalidCustomers = customers.filter(
       (customer) => selectedIds.has(customer.id) && !customer.wa_id,
     );
     if (invalidCustomers.length > 0) {
       toast.error(
-        "Some selected customers have an invalid phone number. Please use View -> Edit to correct them.",
+        "Some selected customers have an invalid phone number. Please open their chat and edit their details to correct them.",
       );
       return;
     }
@@ -185,163 +179,227 @@ export function ChatsView({
     router.push("/chats/new-broadcast");
   }
 
+  async function updateSelectedStatus() {
+    if (statusPending || selectedIds.size === 0) return;
+    const nextStatus = status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+    const ids = [...selectedIds];
+    setStatusPending(true);
+    try {
+      await apiFetch("v1/customers/status", {
+        method: "PATCH",
+        body: { ids, status: nextStatus },
+      });
+      setCustomers((current) => current.filter((customer) => !ids.includes(customer.id)));
+      setSelectedIds(new Set());
+      toast.success(
+        nextStatus === "INACTIVE" ? "Customers archived." : "Customers unarchived.",
+      );
+      router.refresh();
+    } catch (error) {
+      toast.error(toApiError(error).message);
+    } finally {
+      setStatusPending(false);
+    }
+  }
+
   return (
-    <>
-      <PageHeader
-        title="Chats"
-        action={
-          selectedIds.size > 0 ? (
-            <div className="flex items-center gap-2">
-              {selectedIds.size === 1 ? (
-                <CustomerDetailsButton
-                  customer={customers.find((row) => selectedIds.has(row.id))!}
-                  startInEditMode
-                  onUpdated={() => router.refresh()}
-                  trigger={
-                    <Button type="button" size="sm" variant="outline">
-                      <Pencil className="size-4" />
-                      Edit
-                    </Button>
-                  }
-                />
-              ) : null}
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={archiveSelected}
-                disabled={bulkActionPending}
-              >
-                {bulkActionPending ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : status === "ACTIVE" ? (
-                  <Archive className="size-4" />
-                ) : (
-                  <ArchiveRestore className="size-4" />
-                )}
-                {status === "ACTIVE" ? "Archive" : "Unarchive"}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={startBroadcast}
-                disabled={broadcastPending}
-              >
-                {broadcastPending ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Megaphone className="size-4" />
-                )}
-                {broadcastPending ? "Loading..." : "Broadcast"}
-              </Button>
+    <div className="relative flex min-h-48 flex-col md:h-full">
+      <div className="min-h-0 flex-1 pb-20 md:overflow-y-auto">
+        <div className="bg-card divide-border divide-y rounded-md border">
+          <div className="bg-card sticky top-14 z-10 rounded-t-md shadow-sm md:top-0">
+            <div className="flex items-center gap-2 px-4 py-2">
+              <Checkbox
+                checked={allSelected}
+                ref={(element) => {
+                  if (element) element.indeterminate = someSelected;
+                }}
+                disabled={filteredCustomers.length === 0}
+                onChange={(event) => {
+                  const checked = event.target.checked;
+                  setSelectedIds((current) => {
+                    const next = new Set(current);
+                    for (const customer of filteredCustomers) {
+                      if (checked) next.add(customer.id);
+                      else next.delete(customer.id);
+                    }
+                    return next;
+                  });
+                }}
+                aria-label="Select all customers"
+              />
+              <ChatsSearchInput value={nameInput} onChange={setNameInput} />
+              <ChatsFilterPopover tags={tags} selectedTags={selectedTags} status={status} />
             </div>
-          ) : (
-            <AddCustomerMenu currentUserId={currentUserId} onCreated={() => router.refresh()} />
-          )
-        }
-      />
-      {filteredCustomers.length === 0 ? (
-        <div className="bg-card divide-border divide-y overflow-hidden rounded-md border">
-          <div className="flex items-center gap-2 px-4 py-2">
-            <Checkbox checked={false} disabled aria-label="Select all chats" />
-            <ChatsSearchInput value={nameInput} onChange={setNameInput} />
-            <ChatsFilterPopover tags={tags} selectedTags={selectedTags} status={status} />
-          </div>
-          <div className="flex min-h-32 flex-col items-center justify-center gap-2 p-6 text-center">
-            <MessageCircle className="text-muted-foreground size-8" />
-            <p className="text-muted-foreground text-base">No customers found.</p>
-            {hasFilters ? (
-              <Button type="button" size="sm" variant="outline" onClick={resetFilters}>
-                Reset filters
-              </Button>
+            {selectedIds.size > 0 ? (
+              <div className="flex flex-wrap items-center gap-2 border-t px-4 py-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="bg-green-600 text-white hover:bg-green-700"
+                  onClick={startBroadcast}
+                  disabled={broadcastPending || statusPending}
+                >
+                  {broadcastPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Megaphone className="size-4" />
+                  )}
+                  Broadcast
+                </Button>
+                {singleSelectedCustomer ? (
+                  <CustomerDetailsButton
+                    customer={singleSelectedCustomer}
+                    startInEditMode
+                    onUpdated={() => router.refresh()}
+                    onDeleted={() => router.refresh()}
+                    trigger={
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="bg-accent text-accent-foreground hover:bg-accent/80"
+                        disabled={statusPending || broadcastPending}
+                      >
+                        Edit
+                      </Button>
+                    }
+                  />
+                ) : null}
+                <Button
+                  type="button"
+                  size="sm"
+                  className="bg-accent text-accent-foreground hover:bg-accent/80"
+                  onClick={updateSelectedStatus}
+                  disabled={statusPending || broadcastPending}
+                >
+                  {statusPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : null}
+                  {status === "ACTIVE" ? "Archive" : "Unarchive"}
+                </Button>
+              </div>
             ) : null}
           </div>
-        </div>
-      ) : (
-        <div className="bg-card divide-border overflow-hidden divide-y rounded-md border">
-          <div className="flex items-center gap-2 px-4 py-2">
-            <Checkbox
-              checked={allSelected}
-              ref={(element) => {
-                if (element) element.indeterminate = someSelected;
-              }}
-              onChange={toggleAll}
-              aria-label="Select all chats"
-            />
-            <ChatsSearchInput value={nameInput} onChange={setNameInput} />
-            <ChatsFilterPopover tags={tags} selectedTags={selectedTags} status={status} />
-          </div>
-            {filteredCustomers.map((customer) => (
-            <div
-              key={customer.id}
-              className="hover:bg-accent/60 relative flex items-center gap-3 px-4 py-3 transition-colors"
-            >
-              <Checkbox
-                checked={selectedIds.has(customer.id)}
-                onChange={() => toggleRow(customer.id)}
-                aria-label={`Select ${customer.display_name}`}
-                className="absolute top-2 left-2 z-10"
-              />
-              <Link
-                href={`/chats/${customer.id}/chat?return_to=%2Fchats`}
-                className="flex min-w-0 flex-1 items-start gap-3"
-                onClick={() => clearUnread(customer.id)}
+          {filteredCustomers.length === 0 ? (
+            <div className="flex min-h-32 flex-col items-center justify-center gap-2 p-6 text-center">
+              <MessageCircle className="text-muted-foreground size-8" />
+              <p className="text-muted-foreground text-base">No customers found.</p>
+              {hasFilters ? (
+                <Button type="button" size="sm" variant="outline" onClick={resetFilters}>
+                  Reset filters
+                </Button>
+              ) : null}
+            </div>
+          ) : (
+            filteredCustomers.map((customer) => (
+              <div
+                key={customer.id}
+                className={`hover:bg-accent/60 relative flex items-center gap-3 px-4 py-3 transition-colors ${String(customer.id) === selectedCustomerId ? "md:bg-accent" : ""}`}
               >
-                <Avatar className="relative size-10 shrink-0">
-                  <AvatarFallback>{initials(customer)}</AvatarFallback>
+                <div className="relative shrink-0">
+                  <Checkbox
+                    checked={selectedIds.has(customer.id)}
+                    onChange={() => toggleRow(customer.id)}
+                    aria-label={`Select ${customer.display_name}`}
+                  />
                   {unreadIds.has(customer.id) ? (
                     <span
                       aria-label="Unread messages"
-                      className="border-background absolute -top-0.5 -left-0.5 size-2.5 rounded-full border-2 bg-red-500"
+                      className="border-background pointer-events-none absolute -top-1 -left-1 size-2.5 rounded-full border-2 bg-red-500"
                     />
                   ) : null}
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                    <p className="min-w-0 truncate font-medium leading-5">{customer.display_name}</p>
-                    {customer.tags?.length ? (
-                      <div className="flex flex-wrap gap-1">
-                        {customer.tags.map((customerTag) => (
-                          <Badge
-                            key={customerTag}
-                            className="h-5 px-1.5 text-[10px] leading-none bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
-                          >
-                            {customerTag}
-                          </Badge>
-                        ))}
-                      </div>
+                </div>
+                <Link
+                  href={`/chats/${customer.id}/chat?return_to=%2Fchats`}
+                  data-navigation-progress="manual"
+                  className="flex min-w-0 flex-1 items-start gap-3"
+                  aria-current={
+                    String(customer.id) === selectedCustomerId ? "page" : undefined
+                  }
+                  onClick={(event) => {
+                    clearUnread(customer.id);
+                    if (
+                      !window.matchMedia("(min-width: 768px)").matches ||
+                      event.metaKey ||
+                      event.ctrlKey ||
+                      event.shiftKey ||
+                      event.altKey
+                    )
+                      return;
+                    event.preventDefault();
+                    if (String(customer.id) === selectedCustomerId) return;
+                    const params = new URLSearchParams(searchParams);
+                    params.set("customer_id", String(customer.id));
+                    const nextRoute = `/chats?${params}`;
+                    startNavigationProgress(nextRoute);
+                    router.push(nextRoute, { scroll: false });
+                  }}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                      <p className="min-w-0 truncate leading-5 font-medium">
+                        {customer.display_name}
+                      </p>
+                      {customer.tags?.length ? (
+                        <div className="flex flex-wrap gap-1">
+                          {customer.tags.map((customerTag) => (
+                            <Badge
+                              key={customerTag}
+                              className="h-5 bg-green-100 px-1.5 text-[10px] leading-none text-green-700 dark:bg-green-950 dark:text-green-300"
+                            >
+                              {customerTag}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                    {customer.latest_message_content ? (
+                      <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">
+                        {customer.latest_message_content}
+                      </p>
+                    ) : (
+                      <p className="text-muted-foreground text-sm">No message</p>
+                    )}
+                    {customer.latest_message_content && customer.last_message_timestamp ? (
+                      <p className="text-muted-foreground mt-1 text-xs sm:hidden">
+                        <RelativeTime value={customer.last_message_timestamp} />
+                      </p>
                     ) : null}
                   </div>
-                  {customer.latest_message_content ? (
-                    <p className="text-muted-foreground line-clamp-2 text-sm mt-1">
-                      {customer.latest_message_content}
-                    </p>
-                  ) : (
-                    <p className="text-muted-foreground text-sm">No message</p>
-                  )}
-                  {customer.latest_message_content && customer.last_message_timestamp ? (
-                    <p className="text-muted-foreground mt-1 text-xs sm:hidden">
-                      <RelativeTime value={customer.last_message_timestamp} />
-                    </p>
-                  ) : null}
-                </div>
-                <div className="ml-auto flex max-w-[45%] shrink-0 flex-col items-end gap-1 text-right">
-                  {customer.status === "INACTIVE" ? <Badge variant="secondary">Inactive</Badge> : null}
-                  {customer.latest_message_content && customer.last_message_timestamp ? (
-                    <p className="text-muted-foreground hidden text-xs sm:block">
-                      <RelativeTime value={customer.last_message_timestamp} />
-                    </p>
-                  ) : null}
-                </div>
-              </Link>
-            </div>
-          ))}
+                  <div className="ml-auto flex max-w-[45%] shrink-0 flex-col items-end gap-1 text-right">
+                    {customer.status === "INACTIVE" ? (
+                      <Badge variant="secondary">Inactive</Badge>
+                    ) : null}
+                    {customer.latest_message_content && customer.last_message_timestamp ? (
+                      <p className="text-muted-foreground hidden text-xs sm:block">
+                        <RelativeTime value={customer.last_message_timestamp} />
+                      </p>
+                    ) : null}
+                  </div>
+                </Link>
+              </div>
+            ))
+          )}
         </div>
-      )}
-      {customers.length > 0 && currentPage < numberOfPages ? (
-        <LoadMoreButton loading={isLoadingMore} onClick={loadMore} />
-      ) : null}
-    </>
+        {customers.length > 0 && currentPage < numberOfPages ? (
+          <LoadMoreButton loading={isLoadingMore} onClick={loadMore} />
+        ) : null}
+      </div>
+      <div className="fixed right-4 bottom-[calc(var(--tab-bar-height)+1rem)] z-20 flex flex-col items-end gap-2 md:absolute md:right-4 md:bottom-4 md:z-10">
+        <AddCustomerMenu
+          currentUserId={currentUserId}
+          onCreated={() => router.refresh()}
+          trigger={
+            <Button
+              type="button"
+              size="icon-lg"
+              aria-label="Add customer"
+              className="size-12 shadow-lg"
+            >
+              <Plus className="size-6" />
+            </Button>
+          }
+        />
+      </div>
+    </div>
   );
 }

@@ -85,6 +85,7 @@ export function ChatsFilterPopover({
                   key={option}
                   type="button"
                   onClick={() => setStatus(option)}
+                  aria-pressed={status === option}
                   className={cn(
                     "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                     status === option

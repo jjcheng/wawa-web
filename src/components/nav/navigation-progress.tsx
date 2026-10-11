@@ -79,6 +79,10 @@ export function NavigationProgressProvider({ children }: { children: ReactNode }
 
         const link = target.closest<HTMLAnchorElement>("a[href]");
       if (!link || link.target || link.hasAttribute("download")) return;
+      if (
+        link.dataset.navigationProgress === "manual" &&
+        window.matchMedia("(min-width: 768px)").matches
+      ) return;
 
       const url = new URL(link.href, window.location.href);
       const currentUrl = new URL(window.location.href);

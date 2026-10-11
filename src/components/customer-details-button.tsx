@@ -143,6 +143,22 @@ export function CustomerDetailsButton({
     },
     onError: (error) => toast.error(toApiError(error).message),
   });
+  const statusMutation = useMutation({
+    mutationFn: (nextStatus: "ACTIVE" | "INACTIVE") =>
+      apiFetch("v1/customers/status", {
+        method: "PATCH",
+        body: { ids: [customer.id], status: nextStatus },
+      }),
+    onSuccess: (_, nextStatus) => {
+      setStatus(nextStatus);
+      onUpdated?.({ ...customer, status: nextStatus });
+      setOpen(false);
+      toast.success(nextStatus === "INACTIVE" ? "Customer archived." : "Customer unarchived.");
+      router.refresh();
+    },
+    onError: (error) => toast.error(toApiError(error).message),
+  });
+  const actionPending = updateMutation.isPending || mutation.isPending || statusMutation.isPending;
 
   function handleOpenChange(nextOpen: boolean) {
     if (nextOpen) {
@@ -303,15 +319,31 @@ export function CustomerDetailsButton({
         </div> : <CustomerInfo customer={customer} />}
         </div>
         <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between shrink-0">
-          <Button
-            variant="destructive"
-            onClick={() => setConfirmOpen(true)}
-          >
-            Delete
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="destructive"
+              onClick={() => setConfirmOpen(true)}
+              disabled={actionPending}
+            >
+              Delete
+            </Button>
+            {editing ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => statusMutation.mutate(customer.status === "INACTIVE" ? "ACTIVE" : "INACTIVE")}
+                disabled={actionPending}
+              >
+                {statusMutation.isPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : null}
+                {customer.status === "INACTIVE" ? "Unarchive" : "Archive"}
+              </Button>
+            ) : null}
+          </div>
           {editing ? (
             <>
-              <Button onClick={handleSave} disabled={updateMutation.isPending}>Save</Button>
+              <Button onClick={handleSave} disabled={actionPending}>Save</Button>
             </>
           ) : <Button variant="outline" onClick={() => { setSaveErrors({}); setEditing(true); }}>Edit</Button>}
         </DialogFooter>

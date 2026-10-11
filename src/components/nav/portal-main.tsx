@@ -13,7 +13,7 @@ export function PortalMain({ children }: { children: ReactNode }) {
   return (
     <main
       className={cn(
-        "flex-1 px-4 pt-4 sm:px-6 sm:pt-6 lg:pb-6",
+        "flex-1 px-4 pt-4 sm:px-6 sm:pt-6 md:pb-6",
         showTabBar ? "pb-[calc(var(--tab-bar-height)+1rem)]" : "pb-4 sm:pb-6",
       )}
     >

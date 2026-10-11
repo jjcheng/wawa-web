@@ -24,7 +24,7 @@ export function BottomTabBar({ userType }: { userType: User["type"] }) {
   if (!isMainRoute(pathname)) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] md:hidden">
       <nav
         aria-label="Primary"
         className="glass-surface-float glass-surface-float-subtle flex w-full max-w-md items-stretch justify-around gap-1 rounded-full p-1.5"

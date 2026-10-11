@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 import type { User } from "@/lib/api/types";
@@ -52,6 +52,7 @@ function toIncomingChatMessage(data: unknown): IncomingChatMessage | null {
 export function PhoneNumberMessagesProvider({ user }: { user: User }) {
   const router = useRouter();
   const pathname = usePathname();
+  const selectedCustomerId = useSearchParams().get("customer_id");
 
   useEffect(() => {
     const phoneNumberIds = (user.assigned_phone_numbers ?? []).map((phoneNumber) =>
@@ -67,7 +68,10 @@ export function PhoneNumberMessagesProvider({ user }: { user: User }) {
         return;
       }
       notifyIncomingChatMessage(incoming);
-      const currentChatCustomerId = pathname.match(/^\/chats\/(\d+)\/chat(?:\/|$)/)?.[1];
+      const currentChatCustomerId = pathname.match(/^\/chats\/(\d+)\/chat(?:\/|$)/)?.[1] ??
+        (pathname === "/chats" && window.matchMedia("(min-width: 768px)").matches
+          ? selectedCustomerId
+          : null);
       if (Number(currentChatCustomerId) === incoming.customer_id) return;
 
       const chatHref = `/chats/${incoming.customer_id}/chat?return_to=%2Fchats`;
@@ -88,7 +92,7 @@ export function PhoneNumberMessagesProvider({ user }: { user: User }) {
       window.removeEventListener("pagehide", unsubscribe);
       unsubscribe();
     };
-  }, [pathname, user.id, router]);
+  }, [pathname, selectedCustomerId, user.id, user.assigned_phone_numbers, router]);
 
   return null;
 }
