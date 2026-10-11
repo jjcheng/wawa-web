@@ -80,8 +80,22 @@ function messageTime(timestamp: number, useLocalTime: boolean) {
   }).format(new Date(timestamp * 1000));
 }
 
+function unsupportedType(message: Message): string | null {
+  if (message.type !== "unsupported") return null;
+  const unsupported = message.payload.unsupported;
+  if (typeof unsupported !== "object" || unsupported === null || !("type" in unsupported)) {
+    return null;
+  }
+  const type = unsupported.type;
+  return typeof type === "string" && type.trim()
+    ? type.trim()
+    : null;
+}
+
 function messageBody(message: Message) {
   const payload = message.payload;
+  const unsupportedMessageType = unsupportedType(message);
+  if (message.type === "unsupported") return `Unsupported message: ${unsupportedMessageType ?? "unknown"}`;
   if (message.type === "text" && typeof payload.text === "object" && payload.text) {
     const text = payload.text as { body?: unknown };
     if (typeof text.body === "string") return text.body;
@@ -106,9 +120,11 @@ function messageBody(message: Message) {
       body?: { text?: unknown };
       button_reply?: { title?: unknown };
       list_reply?: { title?: unknown };
+      product?: { title?: unknown };
     };
     if (typeof interactive.button_reply?.title === "string") return interactive.button_reply.title;
     if (typeof interactive.list_reply?.title === "string") return interactive.list_reply.title;
+    if (typeof interactive.product?.title === "string") return interactive.product.title;
     if (typeof interactive.body?.text === "string") return interactive.body.text;
   }
   if (message.type === "button" && typeof payload.button === "object" && payload.button) {
@@ -160,10 +176,12 @@ function interactiveDetails(message: Message) {
     body?: { text?: unknown };
     button_reply?: { title?: unknown; id?: unknown };
     list_reply?: { title?: unknown; description?: unknown; id?: unknown };
+    product?: { title?: unknown };
   };
   const reply = data.button_reply ?? data.list_reply;
-  const title = typeof reply?.title === "string"
-    ? reply.title
+  const content = reply ?? data.product;
+  const title = typeof content?.title === "string"
+    ? content.title
     : typeof data.body?.text === "string"
       ? data.body.text
       : "Interactive message";
@@ -530,12 +548,11 @@ function MessageContent({
   const contacts = payload.contacts as
     | { name?: { formatted_name?: string }; phones?: { phone: string }[] }[]
     | undefined;
-  const errors = payload.errors as { title?: unknown; message?: unknown } | undefined;
-  const errorData = payload.error_data as { details?: unknown } | null | undefined;
   const hasReply = message.type === "text" && Boolean(payload.context);
   const template = templateDetails(message);
   const interactive = interactiveDetails(message);
   const button = buttonDetails(message);
+  const unsupportedMessageType = unsupportedType(message);
 
   return (
     <>
@@ -549,10 +566,7 @@ function MessageContent({
         </button>
       ) : null}
       {message.type === "unsupported" ? (
-        <div className="space-y-1">
-          <p className="font-medium">{typeof errors?.title === "string" ? errors.title : "Unsupported message"}</p>
-          {typeof errorData?.details === "string" ? <p className="text-sm opacity-70">{errorData.details}</p> : typeof errors?.message === "string" ? <p className="text-sm opacity-70">{errors.message}</p> : null}
-        </div>
+        <p className="text-muted-foreground text-sm">Unsupported message: {unsupportedMessageType ?? "unknown"}</p>
       ) : message.type === "template" && (message.preview_html || message.preview_dark_html) ? (
         <TemplatePreviewHtml
           lightHtml={message.preview_html}
@@ -709,7 +723,6 @@ export function Chat({
   const handleRealtimeEvent = useEffectEvent((event: { type: "message"; message: Message } | { type: "status"; status: ChatMessageStatus } | { type: "connection"; state: string }) => {
     if (
       event.type === "message" &&
-      event.message.type !== "unsupported" &&
       (isDisplayableMessage(event.message) || event.message.type === "reaction")
     ) {
       appendMessage({ ...event.message, auto_load_media: true });
@@ -1016,7 +1029,7 @@ export function Chat({
               className={`mb-4 flex flex-col rounded-md transition-colors ${message.sending ? "items-end" : "items-start"} ${flashedMessageKey === (message.wa_message_id?.trim() || String(message.id)) ? "bg-yellow-200/70 dark:bg-yellow-400/20" : ""}`}
             >
               <div
-                className={`flex ${message.type === "image" ? "w-full max-w-[min(80vw,400px)]" : "w-fit max-w-[80%]"} flex-col ${
+                className={`flex ${message.type === "image" ? "w-fit min-w-[min(240px,80%)] max-w-[min(80%,400px)]" : "w-fit max-w-[80%]"} flex-col ${
                   message.sending ? "items-end" : "items-start"
                 }`}
               >
@@ -1027,7 +1040,9 @@ export function Chat({
                     setMenu({ message, x: event.clientX, y: event.clientY });
                   }}
                   className={
-                    message.type === "message" || message.type === "sticker" || message.type === "template" || message.type === "document" || message.type === "audio"
+                    message.type === "unsupported"
+                      ? "relative mb-1.5 w-full text-sm text-muted-foreground"
+                      : message.type === "message" || message.type === "sticker" || message.type === "template" || message.type === "document" || message.type === "audio"
                       ? "relative mb-1.5 w-full text-base leading-[1.35]"
                       : message.sending
                         ? `relative mb-1.5 min-w-0 w-full overflow-hidden rounded-md [overflow-wrap:anywhere] ${["image", "video", "location"].includes(message.type) ? "rounded-[4px] px-0 py-0" : "rounded-[7.5px] px-2 py-1.5"} rounded-tr-none border border-[#edf0f1] bg-[#d9fdd3] text-base leading-[1.35] text-[#111b21] dark:border-[#087663] dark:bg-[#005c4b] dark:text-[#e9edef]`

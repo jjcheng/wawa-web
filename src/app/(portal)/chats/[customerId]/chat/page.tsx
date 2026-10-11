@@ -17,6 +17,7 @@ import { ApiError, toApiError } from "@/lib/api/errors";
 import { serverFetch } from "@/lib/api/server-client";
 import type { Customer, PhoneNumberListResponse } from "@/lib/api/types";
 import { BUSINESS_AGENT_ENABLED } from "@/lib/feature-flags";
+import { formatPhoneNumber } from "@/lib/format";
 
 type MessageListResponse = {
 	items: ChatMessage[];
@@ -115,13 +116,20 @@ export default async function CustomerChatPage({
 			/>
 			<PageHeader
 				title={customer.display_name}
+				titleClassName="text-lg"
 				description={
 					customer.sending_phone_number?.display_phone_number
 						? `Sending from: ${customer.sending_phone_number.display_phone_number}`
 						: undefined
 				}
 				titleAction={
-					customer.tags?.length ? (
+					<>
+					{customer.phone_number ? (
+						<span className="text-muted-foreground text-sm">
+							{formatPhoneNumber(customer.phone_number, customer.country_code)}
+						</span>
+					) : null}
+					{customer.tags?.length ? (
 						<div className="flex flex-wrap gap-1.5">
 							{customer.tags.map((tag) => (
 								<Badge
@@ -132,7 +140,8 @@ export default async function CustomerChatPage({
 								</Badge>
 							))}
 						</div>
-					) : null
+					) : null}
+					</>
 				}
 			/>
 			{loadError ? (

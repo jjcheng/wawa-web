@@ -1,10 +1,14 @@
+import { cn } from "@/lib/utils";
+
 export function PageHeader({
   title,
+  titleClassName,
   description,
   titleAction,
   action,
 }: {
   title: string;
+  titleClassName?: string;
   description?: React.ReactNode;
   titleAction?: React.ReactNode;
   action?: React.ReactNode;
@@ -13,7 +17,7 @@ export function PageHeader({
     <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
       <div>
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+          <h1 className={cn("text-2xl font-semibold tracking-tight", titleClassName)}>{title}</h1>
           {titleAction}
         </div>
         {description ? (

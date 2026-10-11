@@ -145,7 +145,6 @@ export function EmbeddedSignupFlow({
     ) {
       return;
     }
-    console.log(session);
 
     isSubmittingRef.current = true;
     setSignupStarted(true);
@@ -267,7 +266,6 @@ export function EmbeddedSignupFlow({
       toast.error("WhatsApp onboarding was cancelled.");
       return;
     }
-    // console.log("ES Response Code:", code);
     authorizationCodeRef.current = code;
     submitSignup();
   }
