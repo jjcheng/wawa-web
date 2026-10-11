@@ -50,6 +50,10 @@ new header, while keeping the older `x-user-access-token` name as a compatibilit
 
 ### Chat message updates
 
+In the Chats Inactive list, selecting one or more customers exposes a danger-colored
+Delete action. After confirmation, it calls `DELETE /v1/customers` with `{ ids }`
+and removes the selected customers after success.
+
 FAILED messages have a Delete action in their right-click menu. It calls
 `DELETE /v1/wa/messages/{id}` and removes the message only after success;
 failed requests display an error and leave the message available for retry.

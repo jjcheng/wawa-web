@@ -13,8 +13,8 @@ import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadMoreButton } from "@/components/load-more-button";
-import { CustomerDetailsButton } from "@/components/customer-details-button";
 import { CUSTOMER_UPDATED_EVENT } from "@/components/customer-updates";
 import { RelativeTime } from "@/components/relative-time";
 import { useNavigationProgress } from "@/components/nav/navigation-progress";
@@ -59,6 +59,8 @@ export function ChatsView({
   const [unreadIds, setUnreadIds] = useState<Set<number>>(new Set());
   const [broadcastPending, setBroadcastPending] = useState(false);
   const [statusPending, setStatusPending] = useState(false);
+  const [deletePending, setDeletePending] = useState(false);
+  const [deleteIds, setDeleteIds] = useState<number[]>([]);
   const router = useRouter();
   const { startNavigationProgress } = useNavigationProgress();
   const pathname = usePathname();
@@ -80,9 +82,6 @@ export function ChatsView({
     filteredCustomers.every((customer) => selectedIds.has(customer.id));
   const someSelected =
     !allSelected && filteredCustomers.some((customer) => selectedIds.has(customer.id));
-  const singleSelectedCustomer = selectedIds.size === 1
-    ? customers.find((customer) => selectedIds.has(customer.id))
-    : undefined;
 
   useEffect(() => {
     const previous = previousSelection.current;
@@ -163,6 +162,32 @@ export function ChatsView({
       next.delete(customerId);
       return next;
     });
+  }
+
+  async function deleteSelectedCustomers() {
+    if (deletePending || deleteIds.length === 0) return;
+    const ids = [...deleteIds];
+    setDeletePending(true);
+    try {
+      await apiFetch("v1/customers", { method: "DELETE", body: { ids } });
+      setCustomers((current) => current.filter((customer) => !ids.includes(customer.id)));
+      setSelectedIds((current) => new Set([...current].filter((id) => !ids.includes(id))));
+      setUnreadIds((current) => new Set([...current].filter((id) => !ids.includes(id))));
+      for (const id of ids) notifications.current.delete(id);
+      setDeleteIds([]);
+      toast.success(ids.length === 1 ? "Customer deleted." : "Customers deleted.");
+      if (selectedCustomerId && ids.includes(Number(selectedCustomerId))) {
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete("customer_id");
+        router.replace(`${pathname}?${params.toString()}`);
+      } else {
+        router.refresh();
+      }
+    } catch (error) {
+      toast.error(toApiError(error).message);
+    } finally {
+      setDeletePending(false);
+    }
   }
 
   useEffect(() => {
@@ -292,7 +317,7 @@ export function ChatsView({
                   size="sm"
                   className="bg-green-600 text-white hover:bg-green-700"
                   onClick={startBroadcast}
-                  disabled={broadcastPending || statusPending}
+                  disabled={broadcastPending || statusPending || deletePending}
                 >
                   {broadcastPending ? (
                     <Loader2 className="size-4 animate-spin" />
@@ -301,35 +326,23 @@ export function ChatsView({
                   )}
                   Broadcast
                 </Button>
-                {singleSelectedCustomer ? (
-                  <CustomerDetailsButton
-                    customer={singleSelectedCustomer}
-                    startInEditMode
-                    onDeleted={() => router.refresh()}
-                    trigger={
-                      <Button
-                        type="button"
-                        size="sm"
-                        className="bg-accent text-accent-foreground hover:bg-accent/80"
-                        disabled={statusPending || broadcastPending}
-                      >
-                        Edit
-                      </Button>
-                    }
-                  />
-                ) : null}
                 <Button
                   type="button"
                   size="sm"
                   className="bg-accent text-accent-foreground hover:bg-accent/80"
                   onClick={updateSelectedStatus}
-                  disabled={statusPending || broadcastPending}
+                  disabled={statusPending || broadcastPending || deletePending}
                 >
                   {statusPending ? (
                     <Loader2 className="size-4 animate-spin" />
                   ) : null}
                   {status === "ACTIVE" ? "Archive" : "Unarchive"}
                 </Button>
+                {status === "INACTIVE" ? (
+                  <Button type="button" size="sm" variant="destructive" onClick={() => setDeleteIds([...selectedIds])} disabled={statusPending || broadcastPending || deletePending}>
+                    Delete
+                  </Button>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -454,6 +467,23 @@ export function ChatsView({
           }
         />
       </div>
+      <Dialog open={deleteIds.length > 0} onOpenChange={(open) => { if (!open && !deletePending) setDeleteIds([]); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{deleteIds.length === 1 ? "Delete this customer?" : "Delete selected customers?"}</DialogTitle>
+            <DialogDescription>
+              {deleteIds.length === 1 ? "The selected customer will" : `${deleteIds.length} selected customers will`} be permanently removed from your customers.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-row items-center justify-between gap-3 sm:justify-between">
+            <Button type="button" variant="outline" onClick={() => setDeleteIds([])} disabled={deletePending}>Cancel</Button>
+            <Button type="button" variant="destructive" onClick={() => void deleteSelectedCustomers()} disabled={deletePending}>
+              {deletePending ? <Loader2 className="size-4 animate-spin" /> : null}
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
