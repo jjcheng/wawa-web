@@ -23,7 +23,7 @@ export function CopyErrorButton({ text }: { text: string }) {
       className="border-border text-foreground hover:bg-muted mt-2 inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-colors"
     >
       {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-      {copied ? "Copied" : "Copy error"}
+      {copied ? "Copied" : "Copy"}
     </button>
   );
 }

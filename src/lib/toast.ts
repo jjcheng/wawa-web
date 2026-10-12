@@ -2,12 +2,12 @@ import { createElement, type ReactNode } from "react";
 import { toast as sonnerToast } from "sonner";
 
 import { CopyErrorButton } from "@/components/copy-error-button";
+import { CloseErrorToastsButton } from "@/components/close-error-toasts-button";
 
 type ErrorData = Parameters<typeof sonnerToast.error>[1];
 
-function withCopyButton(message: unknown, data: ErrorData): ErrorData {
+function withErrorActions(message: unknown, data: ErrorData): ErrorData {
   const text = typeof message === "string" || typeof message === "number" ? String(message) : null;
-  if (!text) return data;
   const rawDescription = data?.description;
   const description: ReactNode = typeof rawDescription === "function" ? rawDescription() : rawDescription;
   return {
@@ -16,12 +16,17 @@ function withCopyButton(message: unknown, data: ErrorData): ErrorData {
       "div",
       null,
       description ?? null,
-      createElement(CopyErrorButton, { text }),
+      createElement(
+        "div",
+        { className: "flex flex-wrap gap-2" },
+        text ? createElement(CopyErrorButton, { text }) : null,
+        createElement(CloseErrorToastsButton),
+      ),
     ),
   };
 }
 
-/** Error toasts stay open until the user dismisses them and include a copy button; other toast types keep sonner's defaults. */
+/** Error toasts stay open and include copy/dismiss-all controls; other types keep sonner's defaults. */
 export const toast: typeof sonnerToast = Object.assign(
   (...args: Parameters<typeof sonnerToast>) => sonnerToast(...args),
   {
@@ -29,7 +34,7 @@ export const toast: typeof sonnerToast = Object.assign(
     error: ((message, data) =>
       sonnerToast.error(message, {
         duration: Infinity,
-        ...withCopyButton(message, data),
+        ...withErrorActions(message, data),
       })) as typeof sonnerToast.error,
   },
 );

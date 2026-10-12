@@ -36,6 +36,9 @@ new header, while keeping the older `x-user-access-token` name as a compatibilit
 
 ## Architecture
 
+Error toasts remain open until dismissed. Their **Close all errors** button
+dismisses all error toasts at once while leaving other notifications open.
+
 - **BFF proxy** — the browser never talks to the API directly. Requests go to
   `/api/bff/<upstream path>`, which forwards them server-side with the `x-user-access-token`
   header (and compatibility fallback) and the portal cookie when present. Only paths on the
