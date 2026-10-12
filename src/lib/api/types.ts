@@ -206,7 +206,8 @@ export type Customer = {
   token?: string;
   tags?: string[];
   latest_message_content?: string;
-  last_message_timestamp?: string | number;
+  latest_message_read?: boolean;
+  latest_message_timestamp?: string | number;
   additional_data?: Record<string, unknown>;
 };
 

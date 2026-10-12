@@ -5,6 +5,7 @@ export type CustomerNotification = {
   message: IncomingChatMessage;
   receivedAt: string;
   order: number;
+  read?: boolean;
 };
 
 /** Keep notification order even when customer-detail requests finish out of order. */
@@ -25,7 +26,8 @@ export function applyCustomerNotification(
   const updated = {
     ...customer,
     latest_message_content: notification.message.notification_content,
-    last_message_timestamp: notification.receivedAt,
+    latest_message_timestamp: notification.receivedAt,
+    latest_message_read: notification.read ?? notification.message.sending === true,
   };
   return [updated, ...customers.filter((row) => row.id !== customerId)].sort(
     (first, second) =>

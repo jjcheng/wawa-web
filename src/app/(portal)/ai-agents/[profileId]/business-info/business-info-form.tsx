@@ -14,7 +14,7 @@ import { toApiError } from "@/lib/api/errors";
 import type { InputError } from "@/lib/api/types";
 import { toast } from "@/lib/toast";
 
-const TITLE_MAX_LENGTH = 30;
+const TITLE_MAX_LENGTH = 255;
 const DESCRIPTION_MAX_LENGTH = 2000;
 
 export type BusinessInfoItem = {

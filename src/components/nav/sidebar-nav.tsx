@@ -35,6 +35,7 @@ import { toApiError } from "@/lib/api/errors";
 import type { User } from "@/lib/api/types";
 import { toast } from "@/lib/toast";
 import { BUSINESS_AGENT_ENABLED } from "@/lib/feature-flags";
+import { useHasUnreadChats } from "@/lib/unread-chats-store";
 import { useUnreadNotificationsCount } from "@/lib/unread-notifications-store";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +55,7 @@ const ASSET_ITEMS = [
 export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user: User }) {
   const pathname = usePathname();
   const unreadNotificationsCount = useUnreadNotificationsCount();
+  const hasUnreadChats = useHasUnreadChats();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
@@ -121,10 +123,11 @@ export function SidebarNav({ onNavigate, user }: { onNavigate?: () => void; user
               )}
             />
             {item.label}
+            {item.href === "/chats" && hasUnreadChats ? (
+              <span aria-label="Unread messages" className="ml-auto size-2 rounded-full bg-red-500" />
+            ) : null}
             {item.href === "/tasks" && unreadNotificationsCount > 0 ? (
-              <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-medium text-white">
-                {unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount}
-              </span>
+              <span aria-label="Unread notifications" className="ml-auto size-2 rounded-full bg-red-500" />
             ) : null}
           </Link>
         );

@@ -57,7 +57,7 @@ export function OtherSettingsForm({
     <form className="w-full max-w-xl space-y-4" onSubmit={(event) => void save(event)}>
       <div className="bg-card space-y-4 rounded-xl border p-4">
         <div className="space-y-2">
-          <Label htmlFor="handover-message">Handover message</Label>
+          <Label htmlFor="handover-message">Reply when handing over to human agent</Label>
           <Textarea
             id="handover-message"
             name="handover_message"

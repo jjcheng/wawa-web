@@ -3,9 +3,11 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
-import type { User } from "@/lib/api/types";
+import { apiFetch } from "@/lib/api/client";
+import type { CustomerListResponse, User } from "@/lib/api/types";
 import { subscribeToPhoneNumberMessages } from "@/lib/phone-number-realtime";
 import { toast } from "@/lib/toast";
+import { beginUnreadChatsSeed, seedUnreadChats, setChatUnread } from "@/lib/unread-chats-store";
 
 export type IncomingChatMessage = {
   customer_id: number;
@@ -59,6 +61,21 @@ export function PhoneNumberMessagesProvider({ user }: { user: User }) {
   const selectedCustomerId = useSearchParams().get("customer_id");
 
   useEffect(() => {
+    const controller = new AbortController();
+    beginUnreadChatsSeed();
+    void apiFetch<CustomerListResponse>("v1/customers", {
+      query: { page: "1", page_size: "500", status: "ACTIVE" },
+      signal: controller.signal,
+    })
+      .then((result) => seedUnreadChats((result.items ?? []).map((customer) => ({
+        id: customer.id,
+        unread: customer.latest_message_read === false,
+      }))))
+      .catch(() => {});
+    return () => controller.abort();
+  }, [user.id]);
+
+  useEffect(() => {
     const phoneNumberIds = (user.assigned_phone_numbers ?? []).map((phoneNumber) =>
       String(phoneNumber.id),
     );
@@ -71,6 +88,7 @@ export function PhoneNumberMessagesProvider({ user }: { user: User }) {
         console.warn("Unrecognized realtime phone-number message payload:", event.message);
         return;
       }
+      if (!incoming.sending) setChatUnread(incoming.customer_id, true);
       notifyIncomingChatMessage(incoming);
       if (incoming.sending) return;
       const currentChatCustomerId = pathname.match(/^\/chats\/(\d+)\/chat(?:\/|$)/)?.[1] ??

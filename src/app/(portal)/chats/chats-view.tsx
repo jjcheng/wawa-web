@@ -19,6 +19,7 @@ import { CUSTOMER_UPDATED_EVENT } from "@/components/customer-updates";
 import { RelativeTime } from "@/components/relative-time";
 import { useNavigationProgress } from "@/components/nav/navigation-progress";
 import { apiFetch } from "@/lib/api/client";
+import { removeUnreadChats, setChatUnread } from "@/lib/unread-chats-store";
 import { toApiError } from "@/lib/api/errors";
 import type { Customer, CustomerListResponse } from "@/lib/api/types";
 import {
@@ -56,7 +57,6 @@ export function ChatsView({
   const [numberOfPages, setNumberOfPages] = useState(initialNumberOfPages);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [unreadIds, setUnreadIds] = useState<Set<number>>(new Set());
   const [broadcastPending, setBroadcastPending] = useState(false);
   const [statusPending, setStatusPending] = useState(false);
   const [deletePending, setDeletePending] = useState(false);
@@ -70,6 +70,9 @@ export function ChatsView({
   const notifications = useRef(new Map<number, CustomerNotification>());
   const notificationOrder = useRef(0);
   const listGeneration = useRef(0);
+  const markingReadIds = useRef(new Set<number>());
+  const markedReadOrders = useRef(new Map<number, number | undefined>());
+  const markReadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const filteredCustomers = useMemo(() => {
     const query = nameInput.trim().toLowerCase();
     return customers.filter((customer) =>
@@ -82,6 +85,15 @@ export function ChatsView({
     filteredCustomers.every((customer) => selectedIds.has(customer.id));
   const someSelected =
     !allSelected && filteredCustomers.some((customer) => selectedIds.has(customer.id));
+
+  function isCustomerConversationVisible(customerId: number) {
+    const currentId = new URLSearchParams(window.location.search).get("customer_id");
+    const panel = document.querySelector<HTMLElement>(`[data-chat-customer-id="${customerId}"]`);
+    return String(customerId) === selectedCustomerId &&
+      currentId === String(customerId) &&
+      document.visibilityState === "visible" &&
+      Boolean(panel?.checkVisibility());
+  }
 
   useEffect(() => {
     const previous = previousSelection.current;
@@ -102,6 +114,12 @@ export function ChatsView({
     });
   }, [initialCustomers, initialNumberOfPages, selectedCustomerId, filterKey]);
 
+  useEffect(() => {
+    for (const customer of customers) {
+      setChatUnread(customer.id, customer.latest_message_read === false);
+    }
+  }, [customers]);
+
   const handleIncomingMessage = useEffectEvent(async (
     message: IncomingChatMessage,
     signal: AbortSignal,
@@ -112,12 +130,17 @@ export function ChatsView({
       message,
       receivedAt: new Date().toISOString(),
       order: ++notificationOrder.current,
+      read: message.sending === true || isCustomerConversationVisible(message.customer_id),
     });
     setCustomers((current) => applyCustomerNotification(
       current, message.customer_id, notifications.current, status, selectedTags,
     ));
-    if (!message.sending && String(message.customer_id) !== selectedCustomerId) {
-      setUnreadIds((current) => new Set(current).add(message.customer_id));
+    if (!message.sending && isCustomerConversationVisible(message.customer_id)) {
+      if (markReadTimer.current !== null) clearTimeout(markReadTimer.current);
+      markReadTimer.current = setTimeout(() => {
+        markReadTimer.current = null;
+        markOpenCustomerRead(message.customer_id);
+      }, 5000);
     }
     if (customers.some((row) => row.id === message.customer_id) ||
       pendingCustomers.has(message.customer_id)) return;
@@ -155,13 +178,58 @@ export function ChatsView({
     };
   }, [filterKey]);
 
-  function clearUnread(customerId: number) {
-    setUnreadIds((current) => {
-      if (!current.has(customerId)) return current;
-      const next = new Set(current);
-      next.delete(customerId);
-      return next;
-    });
+  const markOpenCustomerRead = useEffectEvent((customerId: number) => {
+    if (!isCustomerConversationVisible(customerId)) return;
+    const order = notifications.current.get(customerId)?.order;
+    if (markedReadOrders.current.has(customerId) &&
+      markedReadOrders.current.get(customerId) === order) return;
+    if (markingReadIds.current.has(customerId)) {
+      markReadTimer.current = setTimeout(() => {
+        markReadTimer.current = null;
+        markOpenCustomerRead(customerId);
+      }, 5000);
+      return;
+    }
+    void markCustomerRead(customerId, true);
+  });
+
+  const markSelectedCustomerRead = useEffectEvent(() => {
+    if (selectedCustomerId) void markCustomerRead(Number(selectedCustomerId));
+  });
+
+  useEffect(() => {
+    markSelectedCustomerRead();
+    return () => {
+      if (markReadTimer.current !== null) {
+        clearTimeout(markReadTimer.current);
+        markReadTimer.current = null;
+      }
+    };
+  }, [selectedCustomerId, filterKey]);
+
+  async function markCustomerRead(customerId: number, force = false) {
+    if (!isCustomerConversationVisible(customerId) ||
+      (!force && customers.find((customer) => customer.id === customerId)?.latest_message_read !== false) ||
+      markingReadIds.current.has(customerId)) return;
+    markingReadIds.current.add(customerId);
+    const notificationOrder = notifications.current.get(customerId)?.order;
+    try {
+      await apiFetch("v1/wa/messages/mark-read", {
+        method: "POST",
+        query: { customer_id: String(customerId) },
+      });
+      markedReadOrders.current.set(customerId, notificationOrder);
+      const notification = notifications.current.get(customerId);
+      if (notification?.order !== notificationOrder) return;
+      if (notification) notifications.current.set(customerId, { ...notification, read: true });
+      setCustomers((current) => current.map((row) =>
+        row.id === customerId ? { ...row, latest_message_read: true } : row,
+      ));
+    } catch (error) {
+      toast.error(toApiError(error).message);
+    } finally {
+      markingReadIds.current.delete(customerId);
+    }
   }
 
   async function deleteSelectedCustomers() {
@@ -172,8 +240,8 @@ export function ChatsView({
       await apiFetch("v1/customers", { method: "DELETE", body: { ids } });
       setCustomers((current) => current.filter((customer) => !ids.includes(customer.id)));
       setSelectedIds((current) => new Set([...current].filter((id) => !ids.includes(id))));
-      setUnreadIds((current) => new Set([...current].filter((id) => !ids.includes(id))));
       for (const id of ids) notifications.current.delete(id);
+      removeUnreadChats(ids);
       setDeleteIds([]);
       toast.success(ids.length === 1 ? "Customer deleted." : "Customers deleted.");
       if (selectedCustomerId && ids.includes(Number(selectedCustomerId))) {
@@ -368,12 +436,6 @@ export function ChatsView({
                     onChange={() => toggleRow(customer.id)}
                     aria-label={`Select ${customer.display_name}`}
                   />
-                  {unreadIds.has(customer.id) ? (
-                    <span
-                      aria-label="Unread messages"
-                      className="border-background pointer-events-none absolute -top-1 -left-1 size-2.5 rounded-full border-2 bg-red-500"
-                    />
-                  ) : null}
                 </div>
                 <Link
                   href={`/chats/${customer.id}/chat?return_to=%2Fchats`}
@@ -383,7 +445,7 @@ export function ChatsView({
                     String(customer.id) === selectedCustomerId ? "page" : undefined
                   }
                   onClick={(event) => {
-                    clearUnread(customer.id);
+                    if (String(customer.id) === selectedCustomerId) void markCustomerRead(customer.id);
                     if (
                       !window.matchMedia("(min-width: 768px)").matches ||
                       event.metaKey ||
@@ -426,21 +488,25 @@ export function ChatsView({
                     ) : (
                       <p className="text-muted-foreground text-sm">No message</p>
                     )}
-                    {customer.latest_message_content && customer.last_message_timestamp ? (
-                      <p className="text-muted-foreground mt-1 text-xs sm:hidden">
-                        <RelativeTime value={customer.last_message_timestamp} />
-                      </p>
-                    ) : null}
                   </div>
                   <div className="ml-auto flex max-w-[45%] shrink-0 flex-col items-end gap-1 text-right">
                     {customer.status === "INACTIVE" ? (
                       <Badge variant="secondary">Inactive</Badge>
                     ) : null}
-                    {customer.latest_message_content && customer.last_message_timestamp ? (
-                      <p className="text-muted-foreground hidden text-xs sm:block">
-                        <RelativeTime value={customer.last_message_timestamp} />
-                      </p>
-                    ) : null}
+                    <div className="flex flex-col items-end gap-1 whitespace-nowrap">
+                      {customer.latest_message_content && customer.latest_message_timestamp ? (
+                        <p className="text-muted-foreground text-xs">
+                          <RelativeTime value={customer.latest_message_timestamp} />
+                        </p>
+                      ) : null}
+                      {customer.latest_message_read === false ? (
+                        <span
+                          role="img"
+                          aria-label="Unread messages"
+                          className="pointer-events-none mt-2 size-2.5 shrink-0 rounded-full bg-red-500"
+                        />
+                      ) : null}
+                    </div>
                   </div>
                 </Link>
               </div>

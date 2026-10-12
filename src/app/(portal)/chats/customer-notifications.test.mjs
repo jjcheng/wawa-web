@@ -17,7 +17,8 @@ test("existing notified customer moves to top with updated preview and timestamp
   const rows = applyCustomerNotification([customer(1), customer(2)], 2, notifications, "ACTIVE", []);
   assert.deepEqual(rows.map((row) => row.id), [2, 1]);
   assert.equal(rows[0].latest_message_content, "New message");
-  assert.equal(rows[0].last_message_timestamp, notifications.get(2).receivedAt);
+  assert.equal(rows[0].latest_message_timestamp, notifications.get(2).receivedAt);
+  assert.equal(rows[0].latest_message_read, false);
 });
 
 test("outgoing realtime messages update customer preview, timestamp, and ordering", () => {
@@ -27,7 +28,14 @@ test("outgoing realtime messages update customer preview, timestamp, and orderin
   const rows = applyCustomerNotification([customer(1), customer(2)], 2, notifications, "ACTIVE", []);
   assert.deepEqual(rows.map((row) => row.id), [2, 1]);
   assert.equal(rows[0].latest_message_content, "Sent reply");
-  assert.equal(rows[0].last_message_timestamp, outgoing.receivedAt);
+  assert.equal(rows[0].latest_message_timestamp, outgoing.receivedAt);
+  assert.equal(rows[0].latest_message_read, true);
+});
+
+test("notifications for an open conversation stay read", () => {
+  const incoming = { ...notification(2, 1), read: true };
+  const rows = applyCustomerNotification([customer(2)], 2, new Map([[2, incoming]]), "ACTIVE", []);
+  assert.equal(rows[0].latest_message_read, true);
 });
 
 test("new customer is inserted once using fetched details", () => {

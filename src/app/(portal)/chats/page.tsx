@@ -51,6 +51,7 @@ export default async function ChatsPage({ searchParams }: PageProps<"/chats">) {
       </section>
       <section
         aria-label="Conversation"
+        data-chat-customer-id={selectedCustomerId}
         className="bg-card hidden min-h-0 min-w-0 rounded-xl border md:block"
       >
         {selectedCustomerId ? (
@@ -62,7 +63,7 @@ export default async function ChatsPage({ searchParams }: PageProps<"/chats">) {
         ) : (
           <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-3 p-4 text-center">
             <MessageCircle className="size-10" aria-hidden="true" />
-            <p>Select a customer to view their messages.</p>
+            <p>Select a customer to chat.</p>
           </div>
         )}
       </section>

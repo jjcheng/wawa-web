@@ -53,6 +53,26 @@ dismisses all error toasts at once while leaving other notifications open.
 
 ### Chat message updates
 
+The Chats list shows a red dot at the right edge when a customer's
+`latest_message_read` is `false`, including after refresh and pagination.
+Realtime incoming messages update this flag. Clicking an unread customer calls
+`POST /v1/wa/messages/mark-read?customer_id={id}` and clears the dot after success.
+Failed requests leave the dot visible and show an error.
+Incoming messages for the currently open customer keep the dot hidden and restart
+a five-second debounce. After five seconds without another incoming message for
+that customer, the same mark-read API is called. Pending timers are cancelled when
+switching customers or leaving the list.
+Successful mark-read requests acknowledge the current notification batch, so a
+pending retry cannot mark the same batch twice.
+Mark-read requests only run for the currently open customer; no request is sent
+when no customer is selected in the conversation panel.
+The matching conversation panel must be visible in the active tab; a stale
+customer ID in the URL or a panel hidden on mobile does not trigger mark-read.
+The side menu and bottom tab bar Chats items show a red dot while any customer has
+unread messages. It is seeded from the first page of active customers, set by
+incoming realtime messages, kept in sync with the Chats list, and cleared once all
+known unread customers are marked read.
+
 In the Chats Inactive list, selecting one or more customers exposes a danger-colored
 Delete action. After confirmation, it calls `DELETE /v1/customers` with `{ ids }`
 and removes the selected customers after success.

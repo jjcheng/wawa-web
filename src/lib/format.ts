@@ -47,7 +47,9 @@ export function formatRelativeTime(
   if (absoluteSeconds < 60) return relativeTimeFormatter.format(seconds, "second");
 
   const minutes = Math.round(seconds / 60);
-  if (absoluteSeconds < 60 * 60) return relativeTimeFormatter.format(minutes, "minute");
+  if (absoluteSeconds < 60 * 60) {
+    return relativeTimeFormatter.format(minutes, "minute").replace(/\bminutes?\b/, "mins");
+  }
 
   const hours = Math.round(seconds / (60 * 60));
   if (absoluteSeconds < 24 * 60 * 60) return relativeTimeFormatter.format(hours, "hour");

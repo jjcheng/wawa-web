@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { isMainRoute } from "@/components/nav/main-routes";
 import type { User } from "@/lib/api/types";
 import { BUSINESS_AGENT_ENABLED } from "@/lib/feature-flags";
+import { useHasUnreadChats } from "@/lib/unread-chats-store";
 import { useUnreadNotificationsCount } from "@/lib/unread-notifications-store";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ const TABS = [
 export function BottomTabBar({ userType }: { userType: User["type"] }) {
   const pathname = usePathname();
   const unreadNotificationsCount = useUnreadNotificationsCount();
+  const hasUnreadChats = useHasUnreadChats();
 
   if (!isMainRoute(pathname)) return null;
 
@@ -52,10 +54,11 @@ export function BottomTabBar({ userType }: { userType: User["type"] }) {
                   )}
                   strokeWidth={active ? 2.4 : 2}
                 />
+                {tab.href === "/chats" && hasUnreadChats ? (
+                  <span aria-label="Unread messages" className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-red-500" />
+                ) : null}
                 {tab.href === "/tasks" && unreadNotificationsCount > 0 ? (
-                  <span className="absolute -top-1 -right-3 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-semibold text-white">
-                    {unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount}
-                  </span>
+                  <span aria-label="Unread notifications" className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-red-500" />
                 ) : null}
               </span>
               <span className="relative">
