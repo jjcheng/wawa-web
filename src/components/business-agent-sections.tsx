@@ -90,25 +90,25 @@ export function BusinessAgentSections({
         href={`${basePath}/faqs`}
         icon={MessageCircleQuestion}
         title="FAQs"
-        description="Frequently asked questions this business agent can provide."
+        description="Frequently asked questions this AI agent can provide."
       />
       <SectionLink
         href={`${basePath}/files`}
         icon={FileText}
         title="Files"
-        description="Documents this business agent can learn from."
+        description="Documents this AI agent can learn from."
       />
       <SectionLink
         href={`${basePath}/websites`}
         icon={Globe}
         title="Websites"
-        description="Web pages this business agent can reference."
+        description="Web pages this AI agent can reference."
       />
       <SectionLink
         href={`${basePath}/skills`}
         icon={Sparkles}
         title="Skills"
-        description="Tell this business agent how to handle your customers."
+        description="Tell this AI agent how to handle your customers."
       />
       {showKeywords ? (
         <SectionLink
@@ -122,13 +122,13 @@ export function BusinessAgentSections({
         href={`${basePath}/settings`}
         icon={Settings}
         title="Other settings"
-        description="Other configurations of this business agent."
+        description="Other configurations of this AI agent."
       />
       <SectionLink
         href={`${basePath}/test`}
         icon={FlaskConical}
         title="Test "
-        description="Chat with this business agent before going live."
+        description="Chat with this AI agent before going live."
       />
     </div>
   );

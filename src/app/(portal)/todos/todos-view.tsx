@@ -249,7 +249,7 @@ function NotificationRow({
           </DialogHeader>
           <div className="!overflow-y-auto max-h-[60vh] min-h-0 flex-1">
             {notification.body ? (
-              <TemplatePreviewHtml lightHtml={notification.body} />
+              <TemplatePreviewHtml lightHtml={notification.body.replace(/\r?\n/g, "<br>")} />
             ) : (
               <p className="text-muted-foreground text-sm">No notification content.</p>
             )}

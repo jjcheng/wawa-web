@@ -14,10 +14,8 @@ import {
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import { toast } from "@/lib/toast";
-import { SkillDialog } from "./skill-dialog";
 
 export function AddSkillButton({ profileId }: { profileId: number }) {
-  const [open, setOpen] = useState(false);
   const [addingCommon, setAddingCommon] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const router = useRouter();
@@ -59,7 +57,7 @@ export function AddSkillButton({ profileId }: { profileId: number }) {
           <DropdownMenuItem
             onSelect={() => {
               setErrors([]);
-              setOpen(true);
+              router.push(`/ai-agent/profiles/${profileId}/skills/new`);
             }}
           >
             Create skill
@@ -78,7 +76,6 @@ export function AddSkillButton({ profileId }: { profileId: number }) {
           ))}
         </div>
       ) : null}
-      {open ? <SkillDialog profileId={profileId} open={open} onOpenChange={setOpen} /> : null}
     </div>
   );
 }

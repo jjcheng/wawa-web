@@ -2,18 +2,26 @@
 
 import { useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { RelativeTime } from "@/components/relative-time";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SkillDialog } from "./skill-dialog";
+
+export type AgentSkillInput = {
+  title: string;
+  description: string;
+  required: boolean;
+};
 
 export type AgentSkill = {
   id: number;
   title: string;
   description: string;
+  inputs: AgentSkillInput[];
   added_at: string;
   enabled: boolean;
+  always_apply?: boolean;
 };
 
 export function SkillsList({
@@ -23,8 +31,8 @@ export function SkillsList({
   skills: AgentSkill[];
   profileId: number;
 }) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
-  const [selectedSkill, setSelectedSkill] = useState<AgentSkill | null>(null);
   const filteredSkills = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return skills;
@@ -72,63 +80,59 @@ export function SkillsList({
           </div>
         ) : (
           <ul className="divide-border divide-y">
-            {filteredSkills.map((skill, index) => (
-              <li key={skill.id}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedSkill(skill)}
-                  className="hover:bg-accent/60 flex w-full min-w-0 flex-wrap items-center gap-3 px-4 py-3 text-left transition-colors sm:flex-nowrap"
-                >
-                  <span className="bg-accent flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-medium">
-                    {index + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="mb-1 truncate leading-5 font-medium">{skill.title}</p>
-                    <p className="text-muted-foreground line-clamp-2 text-sm">
-                      {skill.description}
-                    </p>
-                    <p className="text-muted-foreground mt-1 flex items-center gap-2 text-sm sm:hidden">
-                      <RelativeTime value={skill.added_at} />
-                      <span
-                        className={
-                          skill.enabled
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-muted-foreground"
-                        }
-                      >
-                        {skill.enabled ? "Active" : "Inactive"}
-                      </span>
-                    </p>
-                  </div>
-                  <div className="text-muted-foreground ml-auto hidden shrink-0 text-right text-sm sm:block">
-                    <RelativeTime value={skill.added_at} />
-                    <p
-                      className={
-                        skill.enabled
-                          ? "mt-1 text-green-600 dark:text-green-400"
-                          : "text-muted-foreground mt-1"
-                      }
-                    >
-                      {skill.enabled ? "Active" : "Inactive"}
-                    </p>
-                  </div>
-                </button>
-              </li>
-            ))}
+            {filteredSkills.map((skill, index) => {
+              const isDefault = skill.id === 0;
+              const statusClassName = isDefault
+                ? "text-blue-600 dark:text-blue-400"
+                : skill.enabled
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-muted-foreground";
+
+              return (
+                <li key={skill.id}>
+                  <button
+                    type="button"
+                    disabled={isDefault}
+                    onClick={() =>
+                      router.push(`/ai-agent/profiles/${profileId}/skills/${skill.id}/edit`)
+                    }
+                    className="hover:bg-accent/60 flex w-full min-w-0 flex-wrap items-center gap-3 px-4 py-3 text-left transition-colors disabled:hover:bg-transparent sm:flex-nowrap"
+                  >
+                    <span className="bg-accent flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-medium">
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex min-w-0 items-center gap-2">
+                        <p className="truncate leading-5 font-medium">{skill.title}</p>
+                        {skill.always_apply ? (
+                          <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                            Always apply
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="text-muted-foreground line-clamp-2 text-sm">
+                        {skill.description}
+                      </p>
+                      <p className="text-muted-foreground mt-1 flex items-center gap-2 text-sm sm:hidden">
+                        {!isDefault ? <RelativeTime value={skill.added_at} /> : null}
+                        <span className={statusClassName}>
+                          {isDefault ? "Default" : skill.enabled ? "Active" : "Inactive"}
+                        </span>
+                      </p>
+                    </div>
+                    <div className="text-muted-foreground ml-auto hidden shrink-0 text-right text-sm sm:block">
+                      {!isDefault ? <RelativeTime value={skill.added_at} /> : null}
+                      <p className={`mt-1 ${statusClassName}`}>
+                        {isDefault ? "Default" : skill.enabled ? "Active" : "Inactive"}
+                      </p>
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
-      {selectedSkill ? (
-        <SkillDialog
-          key={selectedSkill.id}
-          profileId={profileId}
-          skill={selectedSkill}
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelectedSkill(null);
-          }}
-        />
-      ) : null}
     </>
   );
 }
