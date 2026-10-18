@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { Bot, Loader2, SendHorizontal } from "lucide-react";
 
+import { ChatMessageText } from "@/components/chat-message-text";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,7 +17,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api/client";
 import { toApiError } from "@/lib/api/errors";
 import { toast } from "@/lib/toast";
-import { formatWhatsAppText } from "@/lib/whatsapp-text";
 
 type ChatMessage = {
   id: string;
@@ -65,7 +65,8 @@ function parseConversation(raw: string | null): StoredConversation | null {
     if (typeof parsed.session_id !== "string" || !parsed.session_id) return null;
     return {
       session_id: parsed.session_id,
-      conversation_id: typeof parsed.conversation_id === "string" ? parsed.conversation_id : "",
+      conversation_id:
+        typeof parsed.conversation_id === "string" ? parsed.conversation_id : "",
       messages: Array.isArray(parsed.messages) ? parsed.messages : [],
     };
   } catch {
@@ -107,10 +108,18 @@ function markFailed(key: string, messageId: string) {
 }
 
 function formatTime(value: number) {
-  return new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(new Date(value));
+  return new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(
+    new Date(value),
+  );
 }
 
-export function TestChat({ phoneNumberId, displayNumber }: { phoneNumberId: number; displayNumber: string }) {
+export function TestChat({
+  phoneNumberId,
+  displayNumber,
+}: {
+  phoneNumberId: number;
+  displayNumber: string;
+}) {
   const key = storageKey(phoneNumberId);
   const raw = useSyncExternalStore(
     subscribe,
@@ -137,15 +146,25 @@ export function TestChat({ phoneNumberId, displayNumber }: { phoneNumberId: numb
     const text = draft.trim();
     if (!text || sending) return;
     const { session_id, conversation_id } = readOrCreateConversation(key);
-    const userMessage: ChatMessage = { id: crypto.randomUUID(), role: "user", text, created_at: Date.now() };
+    const userMessage: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: "user",
+      text,
+      created_at: Date.now(),
+    };
     appendMessage(key, userMessage);
     setDraft("");
     setSending(true);
     try {
-      const response = await apiFetch<TestResponse>(`v1/wa/phone-numbers/${phoneNumberId}/business-agent/test`, {
-        method: "POST",
-        body: conversation_id ? { user_message: text, conversation_id } : { user_message: text },
-      });
+      const response = await apiFetch<TestResponse>(
+        `v1/wa/phone-numbers/${phoneNumberId}/business-agent/test`,
+        {
+          method: "POST",
+          body: conversation_id
+            ? { user_message: text, conversation_id }
+            : { user_message: text },
+        },
+      );
       const current = readOrCreateConversation(key);
       // Ignore replies for a conversation that was cleared while waiting.
       if (current.session_id !== session_id) return;
@@ -184,7 +203,8 @@ export function TestChat({ phoneNumberId, displayNumber }: { phoneNumberId: numb
       <div className="mb-4">
         <h1 className="text-2xl font-semibold tracking-tight">Test</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Chat with the business agent for {displayNumber} before it replies to real customers. Tokens consumed while testing are not billed.
+          Chat with the business agent for {displayNumber} before it replies to real customers.
+          Tokens consumed while testing are not billed.
         </p>
       </div>
 
@@ -195,7 +215,9 @@ export function TestChat({ phoneNumberId, displayNumber }: { phoneNumberId: numb
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">Business agent</p>
-            <p className="text-muted-foreground truncate text-xs">{sending ? "typing..." : displayNumber}</p>
+            <p className="text-muted-foreground truncate text-xs">
+              {sending ? "typing..." : displayNumber}
+            </p>
           </div>
           <Button
             type="button"
@@ -204,7 +226,7 @@ export function TestChat({ phoneNumberId, displayNumber }: { phoneNumberId: numb
             onClick={() => setConfirmClear(true)}
             disabled={messages.length === 0 && !sending}
           >
-            Clear chat
+            Clear
           </Button>
         </div>
 
@@ -220,7 +242,10 @@ export function TestChat({ phoneNumberId, displayNumber }: { phoneNumberId: numb
               {messages.map((message) => {
                 const mine = message.role === "user";
                 return (
-                  <div key={message.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
+                  <div
+                    key={message.id}
+                    className={`flex flex-col ${mine ? "items-end" : "items-start"}`}
+                  >
                     <div
                       className={`max-w-[85%] rounded-lg px-2.5 pt-1.5 pb-1 text-sm shadow-sm sm:max-w-[70%] ${
                         mine
@@ -228,9 +253,9 @@ export function TestChat({ phoneNumberId, displayNumber }: { phoneNumberId: numb
                           : "rounded-tl-none bg-white text-[#111b21] dark:bg-[#202c33] dark:text-[#e9edef]"
                       }`}
                     >
-                      <p className="break-words whitespace-pre-wrap">{formatWhatsAppText(message.text)}</p>
+                      <ChatMessageText text={message.text} />
                       {message.note ? (
-                        <p className="mt-1 border-t border-black/10 pt-1 text-xs text-[#667781] italic break-words dark:border-white/10 dark:text-[#8696a0]">
+                        <p className="mt-1 border-t border-black/10 pt-1 text-xs break-words text-[#667781] italic dark:border-white/10 dark:text-[#8696a0]">
                           {message.note}
                         </p>
                       ) : null}
@@ -238,7 +263,9 @@ export function TestChat({ phoneNumberId, displayNumber }: { phoneNumberId: numb
                         {formatTime(message.created_at)}
                       </p>
                     </div>
-                    {message.failed ? <p className="text-destructive mt-0.5 text-xs">Failed to send</p> : null}
+                    {message.failed ? (
+                      <p className="text-destructive mt-0.5 text-xs">Failed to send</p>
+                    ) : null}
                   </div>
                 );
               })}
@@ -298,7 +325,7 @@ export function TestChat({ phoneNumberId, displayNumber }: { phoneNumberId: numb
           </DialogHeader>
           <DialogFooter>
             <Button type="button" variant="destructive" onClick={clearChat}>
-              Clear chat
+              Clear
             </Button>
           </DialogFooter>
         </DialogContent>
